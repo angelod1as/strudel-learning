@@ -1,6 +1,14 @@
 ---
 import Base from './Base.astro';
-import { CHAPTERS } from '../consts';
+import { CHAPTERS, withBase } from '../consts';
+
+interface Props {
+  frontmatter: {
+    slug: string;
+    title?: string;
+    lede?: string;
+  };
+}
 
 const { frontmatter } = Astro.props;
 const slug: string = frontmatter.slug;
@@ -25,12 +33,12 @@ const title: string = frontmatter.title ?? chapter?.title ?? 'Strudel';
   <nav class="pager">
     {
       prev ? (
-        <a href={`/tutorial/${prev.slug}`}>
+        <a href={withBase(`/tutorial/${prev.slug}`)}>
           <span class="dir">← previous</span>
           {prev.title}
         </a>
       ) : (
-        <a href="/">
+        <a href={withBase('/')}>
           <span class="dir">←</span>
           Home
         </a>
@@ -38,7 +46,7 @@ const title: string = frontmatter.title ?? chapter?.title ?? 'Strudel';
     }
     {
       next && (
-        <a class="next" href={`/tutorial/${next.slug}`}>
+        <a class="next" href={withBase(`/tutorial/${next.slug}`)}>
           <span class="dir">next →</span>
           {next.title}
         </a>

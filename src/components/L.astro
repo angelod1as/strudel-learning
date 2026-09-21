@@ -1,0 +1,10 @@
+---
+import { withBase } from '../consts';
+
+interface Props {
+  to: string;
+}
+const { to } = Astro.props;
+---
+
+<a href={withBase(to)}><slot /></a>

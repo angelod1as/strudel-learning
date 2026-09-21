@@ -7,6 +7,7 @@ lede: Loudness, glue, and dirt — plus the modulation effects that live in the 
 
 import Strudel from '../../components/Strudel.astro';
 import Box from '../../components/Box.astro';
+import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
 
 ## gain and postgain
@@ -80,7 +81,7 @@ lo-fi aesthetic.
 
 <Box>
 For **sidechain** pumping, do not reach for this. Strudel's compressor has no sidechain input —
-that job belongs to [`duckorbit`](/tutorial/ducking). Use `compressor` for glue and level control.
+that job belongs to <L to="/tutorial/ducking">`duckorbit`</L>. Use `compressor` for glue and level control.
 </Box>
 
 ## Tremolo
@@ -131,7 +132,7 @@ For a wider, more controllable version, stack a detuned copy of the note instead
 <Strudel code={`s("bd rim sd rim bd ~ cp rim").pan(sine.slow(2))`} label="a signal makes it move" />
 
 `jux` is a shortcut for the most common stereo trick — see
-[Pattern Functions](/tutorial/pattern-functions).
+<L to="/tutorial/pattern-functions">Pattern Functions</L>.
 
 ## Squiz
 

@@ -7,6 +7,7 @@ lede: An orbit is a bus. Understanding them is the difference between a pile of 
 
 import Strudel from '../../components/Strudel.astro';
 import Box from '../../components/Box.astro';
+import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
 
 ## The signal chain
@@ -123,7 +124,7 @@ Mini-notation works here, so a sound can be sent to more than one:
 <Box kind="warn">
 This creates **three copies** of the sound behind the scenes. If they all end up in the same stereo
 output, you have tripled the volume. The gain in that example is deliberately low. The real use for
-this is multi-orbit ducking, in the [next chapter](/tutorial/ducking).
+this is multi-orbit ducking, in the <L to="/tutorial/ducking">next chapter</L>.
 </Box>
 
 ## Multichannel output
@@ -143,7 +144,7 @@ rather than between two speakers.
 | `orbit(n)` / `o(n)` | which bus this event goes to |
 | `dry(x)` | level of the untreated signal leaving the event |
 | `postgain(x)` | gain applied after **all** local effects |
-| `duckorbit(n)` | duck a different orbit — [next chapter](/tutorial/ducking) |
+| `duckorbit(n)` | duck a different orbit — <L to="/tutorial/ducking">next chapter</L> |
 | `channels` | explicit output channel routing |
 
 `postgain` is the one to remember: because it sits at the end of the local chain, it is how you

@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { CHAPTERS, REFERENCE, SITE_TITLE } from '../consts';
+import { CHAPTERS, REFERENCE, SITE_TITLE, withBase } from '../consts';
 
 interface Props {
   title: string;
@@ -31,7 +31,7 @@ const numberOf = (slug: string) => CHAPTERS.findIndex((c) => c.slug === slug) + 
   <body>
     <div class="shell">
       <aside class="sidebar">
-        <a class="brand" href="/">{SITE_TITLE}</a>
+        <a class="brand" href={withBase('/')}>{SITE_TITLE}</a>
         <div class="brand-sub">an interactive Strudel tutorial</div>
         {
           parts.map((group) => (
@@ -40,8 +40,8 @@ const numberOf = (slug: string) => CHAPTERS.findIndex((c) => c.slug === slug) + 
               {group.items.map((chapter) => (
                 <a
                   class="nav-link"
-                  href={`/tutorial/${chapter.slug}`}
-                  aria-current={path === `/tutorial/${chapter.slug}` ? 'page' : undefined}
+                  href={withBase(`/tutorial/${chapter.slug}`)}
+                  aria-current={path === withBase(`/tutorial/${chapter.slug}`) ? 'page' : undefined}
                 >
                   <span class="nav-num">{String(numberOf(chapter.slug)).padStart(2, '0')}</span>
                   <span>{chapter.title}</span>
@@ -55,8 +55,8 @@ const numberOf = (slug: string) => CHAPTERS.findIndex((c) => c.slug === slug) + 
           REFERENCE.map((ref) => (
             <a
               class="nav-link"
-              href={`/reference/${ref.slug}`}
-              aria-current={path === `/reference/${ref.slug}` ? 'page' : undefined}
+              href={withBase(`/reference/${ref.slug}`)}
+              aria-current={path === withBase(`/reference/${ref.slug}`) ? 'page' : undefined}
             >
               <span class="nav-num">·</span>
               <span>{ref.title}</span>
@@ -69,20 +69,15 @@ const numberOf = (slug: string) => CHAPTERS.findIndex((c) => c.slug === slug) + 
       </main>
     </div>
     <script>
-      // Wire up the play/stop button of each embedded REPL. The web component
-      // exposes its StrudelMirror instance as `.editor`, but only once the
-      // unpkg bundle has defined the custom element.
-      const wire = () => {
+      // Listeners only. These are safe to attach before the unpkg bundle has
+      // defined the custom element, because `el.editor` is read lazily.
+      const wireButtons = () => {
         document.querySelectorAll('.strudel').forEach((box) => {
           const el = box.querySelector('strudel-editor');
           const btn = box.querySelector('.strudel-play');
           if (!el || !btn || btn.dataset.wired) return;
           btn.dataset.wired = '1';
           btn.addEventListener('click', () => el.editor?.toggle());
-          // long chains are common in the examples — wrap instead of scrolling
-          try {
-            el.editor?.setLineWrappingEnabled(true);
-          } catch {}
           el.addEventListener('update', (e) => {
             const started = e.detail?.started;
             btn.textContent = started ? '■ stop' : '▶ play';
@@ -90,8 +85,25 @@ const numberOf = (slug: string) => CHAPTERS.findIndex((c) => c.slug === slug) + 
           });
         });
       };
-      customElements.whenDefined('strudel-editor').then(wire);
-      wire();
+
+      // Anything that touches `el.editor` has to wait for the element to be
+      // upgraded, and must not share a guard flag with the listeners above.
+      const configureEditors = () => {
+        document.querySelectorAll('strudel-editor').forEach((el) => {
+          if (!el.editor || el.dataset.configured) return;
+          el.dataset.configured = '1';
+          // long chains are common in the examples — wrap instead of scrolling
+          try {
+            el.editor.setLineWrappingEnabled(true);
+          } catch {}
+        });
+      };
+
+      wireButtons();
+      customElements.whenDefined('strudel-editor').then(() => {
+        wireButtons();
+        configureEditors();
+      });
     </script>
   </body>
 </html>

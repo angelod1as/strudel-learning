@@ -1,6 +1,13 @@
 ---
 import Base from './Base.astro';
 
+interface Props {
+  frontmatter: {
+    title: string;
+    lede?: string;
+  };
+}
+
 const { frontmatter } = Astro.props;
 ---
 

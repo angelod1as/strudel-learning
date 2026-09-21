@@ -7,6 +7,7 @@ lede: Subtractive synthesis in one page — what a lowpass, highpass and bandpas
 
 import Strudel from '../../components/Strudel.astro';
 import Box from '../../components/Box.astro';
+import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
 
 A filter removes part of the frequency spectrum. That is all. Everything else — the squelch, the
@@ -95,7 +96,7 @@ This is the important part. A static filter is an EQ; a moving filter is an inst
 
 ### 1. Filter envelopes — per note
 
-Covered in [Envelopes](/tutorial/envelopes): `lpenv` sets the depth, `lpa`/`lpd`/`lps`/`lpr` the
+Covered in <L to="/tutorial/envelopes">Envelopes</L>: `lpenv` sets the depth, `lpa`/`lpd`/`lps`/`lpr` the
 shape. This moves the filter **on every note**.
 
 <Strudel code={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpq(8).lpf(400).lpa(.1).lpd(.1).lpenv(4)`} />
@@ -125,7 +126,7 @@ cycle. Add events with `seg(16)` — or reach for a real LFO.
 ### 3. LFOs — true audio-rate
 
 `lfo()` modulates the parameter continuously inside the audio engine, no extra events needed. It
-gets [its own chapter](/tutorial/lfo).
+gets <L to="/tutorial/lfo">its own chapter</L>.
 
 <Strudel code={`s("saw").lpf(800).lfo({ r: 2, depthabs: 250 })`} label="continuous, even on one long note" />
 

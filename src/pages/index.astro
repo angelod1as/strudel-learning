@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Strudel from '../components/Strudel.astro';
-import { CHAPTERS, SITE_TITLE } from '../consts';
+import { CHAPTERS, SITE_TITLE, withBase } from '../consts';
 
 const demo = `// press the play button, then edit and press ctrl+enter
 setcpm(120/4)
@@ -46,8 +46,8 @@ $: s("hh*8").gain("[.3 .7]*4").pan(sine.fast(2)).orbit(3)`;
     </li>
     <li>
       Chapters build on each other. Skipping ahead to
-      <a href="/tutorial/ducking">Ducking</a> works, but it assumes
-      <a href="/tutorial/orbits">Orbits</a>.
+      <a href={withBase('/tutorial/ducking')}>Ducking</a> works, but it assumes
+      <a href={withBase('/tutorial/orbits')}>Orbits</a>.
     </li>
     <li>
       Sounds load lazily. The first time you trigger a new sample there may be a short silence.
@@ -58,7 +58,7 @@ $: s("hh*8").gain("[.3 .7]*4").pan(sine.fast(2)).orbit(3)`;
   <div class="card-grid">
     {
       CHAPTERS.map((chapter, i) => (
-        <a class="card" href={`/tutorial/${chapter.slug}`}>
+        <a class="card" href={withBase(`/tutorial/${chapter.slug}`)}>
           <div class="n">
             {String(i + 1).padStart(2, '0')} · {chapter.part}
           </div>

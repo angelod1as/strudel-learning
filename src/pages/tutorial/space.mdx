@@ -7,6 +7,7 @@ lede: The two send effects — and the first place where you need to know what a
 
 import Strudel from '../../components/Strudel.astro';
 import Box from '../../components/Box.astro';
+import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
 
 Nearly every effect in Strudel is **local**: a fresh chain of nodes is built for each event, used,
@@ -14,7 +15,7 @@ and thrown away. Delay and reverb are different. They are **global**: one delay 
 unit exist per *orbit*, and every event in that orbit is sent into the same one.
 
 That is what makes them sound like a room instead of a hundred separate rooms — and it is also the
-source of the most common confusing bug in Strudel, which the [next chapter](/tutorial/orbits)
+source of the most common confusing bug in Strudel, which the <L to="/tutorial/orbits">next chapter</L>
 is about.
 
 ## Delay

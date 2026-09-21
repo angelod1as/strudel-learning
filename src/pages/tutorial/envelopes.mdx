@@ -7,6 +7,7 @@ lede: An envelope is the shape of a value over the life of one note. Get these r
 
 import Strudel from '../../components/Strudel.astro';
 import Box from '../../components/Box.astro';
+import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
 
 Most parameters in Strudel are frozen at the moment a note is triggered. Envelopes are the
@@ -181,7 +182,7 @@ Curve controls make it snap or relax:
 Most parameters are sampled once, when the event is triggered. The ones that genuinely vary
 in time are: the amplitude ADSR, the pitch envelope, the FM envelope, the filter envelopes,
 `tremolo`, `phaser`, `vib`, ducking, and anything driven by `lfo()` or `env()`. Everything else is
-a step value per event. [Chapter 08](/tutorial/signals) explains the workaround for the rest.
+a step value per event. <L to="/tutorial/signals">Chapter 08</L> explains the workaround for the rest.
 </QA>
 
 ## Recap

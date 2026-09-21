@@ -53,6 +53,29 @@ frontmatter, then add an entry to `CHAPTERS` in `src/consts.ts`.
 
 Only one box plays at a time — the web component runs with `solo` enabled.
 
+## Deploying
+
+Pushing to `main` publishes to GitHub Pages via `.github/workflows/deploy.yml`.
+
+The site lives under `https://<owner>.github.io/<repo>/`, so the build needs a
+matching base path. The workflow sets it from the repo name:
+
+```sh
+BASE_PATH=/strudel-learning SITE_URL=https://angelod1as.github.io pnpm build
+```
+
+Internal links must stay base-aware, or they will 404 in production:
+
+- in `.astro` files, wrap paths in `withBase()` from `src/consts.ts`
+- in `.mdx` content, use `<L to="/tutorial/orbits">Orbits</L>` instead of a
+  plain markdown link
+
+(Astro 7 uses Sätteri for Markdown, whose pipeline does not take the rehype
+plugin that would rewrite these automatically.)
+
+To serve from a domain root instead, drop `BASE_PATH` — `withBase()` and `L`
+both become no-ops.
+
 ## Notes
 
 - The REPL bundle is loaded from unpkg at a pinned version (`@strudel/repl@1.3.0`) in
