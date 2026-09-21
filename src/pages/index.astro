@@ -55,15 +55,35 @@ $: s("hh*8").gain("[.3 .7]*4").pan(sine.fast(2)).orbit(3)`;
   </ul>
 
   <h2>The track</h2>
+  <div class="progress-panel" data-progress-ui hidden>
+    <div><span class="count" data-progress-count>0 / 0</span> chapters done</div>
+    <div class="progress-bar" aria-hidden="true">
+      <span data-progress-fill></span>
+    </div>
+    <a
+      class="progress-continue"
+      data-progress-continue
+      href={withBase(`/tutorial/${CHAPTERS[0].slug}`)}
+      hidden
+    >
+      <span data-progress-continue-label>Start with</span>{' '}
+      <span data-progress-continue-title>{CHAPTERS[0].title}</span> →
+    </a>
+    <div class="progress-alldone" data-progress-alldone hidden>✓ every chapter done</div>
+    <button type="button" class="progress-reset" data-progress-reset>Reset progress</button>
+  </div>
   <div class="card-grid">
     {
       CHAPTERS.map((chapter, i) => (
-        <a class="card" href={withBase(`/tutorial/${chapter.slug}`)}>
+        <a class="card" href={withBase(`/tutorial/${chapter.slug}`)} data-progress-slug={chapter.slug}>
           <div class="n">
             {String(i + 1).padStart(2, '0')} · {chapter.part}
           </div>
           <div class="t">{chapter.title}</div>
           <div class="b">{chapter.blurb}</div>
+          <span class="progress-mark">
+            <span class="sr-only">completed</span>✓
+          </span>
         </a>
       ))
     }

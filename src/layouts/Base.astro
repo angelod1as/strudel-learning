@@ -34,6 +34,14 @@ const numberOf = (slug: string) => CHAPTERS.findIndex((c) => c.slug === slug) + 
       <aside class="sidebar">
         <a class="brand" href={withBase('/')}>{SITE_TITLE}</a>
         <div class="brand-sub">an interactive Strudel tutorial</div>
+        <div class="nav-progress" data-progress-ui hidden>
+          <div class="progress-bar" aria-hidden="true">
+            <span data-progress-fill></span>
+          </div>
+          <div class="nav-progress-text">
+            <span class="count" data-progress-count>0 / 0</span> chapters done
+          </div>
+        </div>
         {
           parts.map((group) => (
             <>
@@ -42,10 +50,15 @@ const numberOf = (slug: string) => CHAPTERS.findIndex((c) => c.slug === slug) + 
                 <a
                   class="nav-link"
                   href={withBase(`/tutorial/${chapter.slug}`)}
+                  data-progress-slug={chapter.slug}
+                  data-progress-title={chapter.title}
                   aria-current={path === withBase(`/tutorial/${chapter.slug}`) ? 'page' : undefined}
                 >
                   <span class="nav-num">{String(numberOf(chapter.slug)).padStart(2, '0')}</span>
                   <span>{chapter.title}</span>
+                  <span class="progress-mark">
+                    <span class="sr-only">completed</span>✓
+                  </span>
                 </a>
               ))}
             </>
@@ -69,6 +82,157 @@ const numberOf = (slug: string) => CHAPTERS.findIndex((c) => c.slug === slug) + 
         <slot />
       </main>
     </div>
+    <script is:inline>
+      // Lesson progress. Inline and synchronous on purpose: it runs while the
+      // document is still being parsed, so completed chapters are already
+      // marked at first paint instead of flashing in a moment later.
+      (function () {
+        var KEY = 'strudel-tutorial:progress';
+
+        // Storage throws in private mode and in some embedded browsers. Probe
+        // once; if it is unusable the progress UI simply never appears.
+        var store = null;
+        try {
+          var probe = KEY + ':probe';
+          window.localStorage.setItem(probe, '1');
+          window.localStorage.removeItem(probe);
+          store = window.localStorage;
+        } catch (e) {
+          store = null;
+        }
+
+        var read = function () {
+          if (!store) return [];
+          try {
+            var parsed = JSON.parse(store.getItem(KEY) || '{}');
+            var list = parsed && parsed.completed;
+            if (!Array.isArray(list)) return [];
+            return list.filter(function (slug) {
+              return typeof slug === 'string' && slug !== '';
+            });
+          } catch (e) {
+            return [];
+          }
+        };
+
+        var write = function () {
+          if (!store) return;
+          try {
+            store.setItem(KEY, JSON.stringify({ v: 1, completed: done }));
+          } catch (e) {}
+        };
+
+        var done = read();
+        var isDone = function (slug) {
+          return done.indexOf(slug) !== -1;
+        };
+
+        var chapterLinks = [].slice.call(
+          document.querySelectorAll('.sidebar [data-progress-slug]')
+        );
+
+        var apply = function () {
+          document.querySelectorAll('[data-progress-slug]').forEach(function (el) {
+            var on = isDone(el.getAttribute('data-progress-slug'));
+            if (on) el.setAttribute('data-progress-done', '');
+            else el.removeAttribute('data-progress-done');
+            if (el.hasAttribute('aria-pressed')) {
+              el.setAttribute('aria-pressed', on ? 'true' : 'false');
+            }
+          });
+
+          // The sidebar lists every chapter, so it is the source of truth for
+          // both the total and the order.
+          var total = chapterLinks.length;
+          var count = 0;
+          var upNext = null;
+          chapterLinks.forEach(function (link) {
+            if (isDone(link.getAttribute('data-progress-slug'))) count++;
+            else if (!upNext) upNext = link;
+          });
+
+          document.querySelectorAll('[data-progress-count]').forEach(function (el) {
+            el.textContent = count + ' / ' + total;
+          });
+          document.querySelectorAll('[data-progress-fill]').forEach(function (el) {
+            el.style.width = total ? Math.round((count / total) * 100) + '%' : '0%';
+          });
+
+          var cont = document.querySelector('[data-progress-continue]');
+          var allDone = document.querySelector('[data-progress-alldone]');
+          if (cont) {
+            if (upNext) {
+              cont.href = upNext.href;
+              var label = cont.querySelector('[data-progress-continue-label]');
+              var title = cont.querySelector('[data-progress-continue-title]');
+              if (label) label.textContent = count ? 'Continue with' : 'Start with';
+              if (title) title.textContent = upNext.getAttribute('data-progress-title') || '';
+            }
+            cont.hidden = !upNext;
+          }
+          if (allDone) allDone.hidden = !!upNext || !chapterLinks.length;
+        };
+
+        var mark = function (slug, on) {
+          if (!slug) return;
+          var at = done.indexOf(slug);
+          if (on && at === -1) done.push(slug);
+          else if (!on && at !== -1) done.splice(at, 1);
+          else return;
+          write();
+          apply();
+        };
+
+        // Manual tick / untick on a chapter page.
+        var toggle = document.querySelector('[data-progress-toggle]');
+        if (toggle) {
+          toggle.addEventListener('click', function () {
+            var slug = toggle.getAttribute('data-progress-slug');
+            mark(slug, !isDone(slug));
+          });
+        }
+
+        // Following "next" counts as having finished the current chapter. The
+        // write is synchronous, so it lands before the navigation.
+        var nextLink = document.querySelector('[data-progress-complete]');
+        if (nextLink) {
+          nextLink.addEventListener('click', function () {
+            mark(nextLink.getAttribute('data-progress-complete'), true);
+          });
+        }
+
+        var reset = document.querySelector('[data-progress-reset]');
+        if (reset) {
+          reset.addEventListener('click', function () {
+            if (!done.length) return;
+            if (!window.confirm('Clear your progress? This cannot be undone.')) return;
+            done = [];
+            write();
+            apply();
+          });
+        }
+
+        // Another tab may have changed things, and a page restored from the
+        // back/forward cache keeps whatever it painted last time.
+        window.addEventListener('storage', function (e) {
+          if (e.key !== null && e.key !== KEY) return;
+          done = read();
+          apply();
+        });
+        window.addEventListener('pageshow', function (e) {
+          if (!e.persisted) return;
+          done = read();
+          apply();
+        });
+
+        apply();
+        if (store) {
+          document.querySelectorAll('[data-progress-ui]').forEach(function (el) {
+            el.hidden = false;
+          });
+        }
+      })();
+    </script>
     <script>
       // Listeners only. These are safe to attach before the unpkg bundle has
       // defined the custom element, because `el.editor` is read lazily.

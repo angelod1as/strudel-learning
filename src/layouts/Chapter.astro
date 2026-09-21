@@ -30,6 +30,25 @@ const title: string = frontmatter.title ?? chapter?.title ?? 'Strudel';
   <h1>{title}</h1>
   {frontmatter.lede && <p class="lede">{frontmatter.lede}</p>}
   <slot />
+  {
+    chapter && (
+      <div class="chapter-done">
+        <button
+          type="button"
+          class="progress-toggle"
+          data-progress-toggle
+          data-progress-slug={slug}
+          data-progress-ui
+          aria-pressed="false"
+          hidden
+        >
+          <span class="progress-box" aria-hidden="true"></span>
+          <span class="t-todo">Mark as complete</span>
+          <span class="t-done">Completed</span>
+        </button>
+      </div>
+    )
+  }
   <nav class="pager">
     {
       prev ? (
@@ -46,7 +65,11 @@ const title: string = frontmatter.title ?? chapter?.title ?? 'Strudel';
     }
     {
       next && (
-        <a class="next" href={withBase(`/tutorial/${next.slug}`)}>
+        <a
+          class="next"
+          href={withBase(`/tutorial/${next.slug}`)}
+          data-progress-complete={chapter ? slug : undefined}
+        >
           <span class="dir">next →</span>
           {next.title}
         </a>
