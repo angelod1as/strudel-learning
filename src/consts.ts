@@ -33,6 +33,12 @@ export const CHAPTERS: Chapter[] = [
   },
   {
     part: 'Foundations',
+    slug: 'time',
+    title: 'Writing in Time',
+    blurb: 'Grids, step positions, time signatures, tuplets and groove.',
+  },
+  {
+    part: 'Foundations',
     slug: 'notes',
     title: 'Notes, Scales & Chords',
     blurb: 'note, n + scale, chord + voicing, transpose, arp.',

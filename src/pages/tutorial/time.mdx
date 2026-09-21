@@ -1,0 +1,671 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: time
+title: Writing in Time
+lede: Mini-notation thinks by dividing time. Drum machines think by placing hits on a grid. Learn to write both ways, in any meter, with tuplets and groove.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
+
+<L to="/tutorial/mini-notation">Mini-Notation</L> taught the symbols and
+<L to="/tutorial/tempo">Tempo &amp; Cycles</L> taught the clock. This chapter is about using them to
+write rhythm the way you hear it: on 1, on the "and" of 3, in 7/8, swung, a bit behind the beat.
+
+## Two ways to think about a bar
+
+Mini-notation **subdivides**. You start with one cycle and split it: four slots, and then one of
+those slots split in two. A drum machine **places**. You start with a row of 16 (or 8) equal steps
+and turn some of them on.
+
+Here is one beat written both ways. Kick on 1, snare on 2 and 4, and an extra kick on the "and"
+of 2:
+
+<Strudel code={`s("bd [sd bd] ~ sd, hh*8")`} label="subdividing: beat 2 is split in two" />
+
+<Strudel code={`s("bd ~ sd bd ~ ~ sd ~, hh*8")`} label="placing: 8 equal steps, some switched on" />
+
+They sound the same because the hits start at the same moments: 0, 1/4, 3/8 and 3/4 of the cycle.
+The only difference is how long each event lasts on paper. In the first version the opening
+kick is a quarter of the cycle long. In the second it is an eighth. With drum samples you will not
+hear that, because a sample plays to its end unless you tell it otherwise (more on that under
+"Position vs duration" below).
+
+<Box>
+Both models are valid, and you will use both. **Subdivision** reads best for melodic phrases and for
+rhythms that are "mostly even with a twist". **The grid** reads best for drums, for anything you
+would program on a step sequencer, and whenever you are thinking "on step 11".
+</Box>
+
+## Make one cycle one bar
+
+A grid only means something once you know how long a cycle is. The convention that makes
+everything line up:
+
+<Box>
+`setcpm(bpm / 4)` makes **one cycle = one bar of 4/4**. From then on, `n` equal steps per cycle
+means `n` notes per bar.
+</Box>
+
+<Strudel
+  code={`setcpm(120/4)
+s("bd*4, hh*16")`}
+  label="120 bpm: kick on quarters, hats on sixteenths"
+/>
+
+With that convention in place, every note value is a step count:
+
+| Note value | Per bar | Mini-notation |
+| --- | --- | --- |
+| whole notes | 1 | `"x"` |
+| half notes | 2 | `"x*2"` |
+| quarter notes | 4 | `"x*4"` |
+| quarter-note triplets | 6 | `"x*6"` |
+| eighth notes | 8 | `"x*8"` |
+| eighth-note triplets | 12 | `"x*12"` |
+| sixteenth notes | 16 | `"x*16"` |
+| sixteenth-note triplets | 24 | `"x*24"` |
+| one note every 2 bars | 1/2 | `"x/2"` |
+
+Time offsets work the same way. Everything that takes a time, such as `late`, `early` or `off`,
+counts in **cycles**, so here it counts in **bars**. `1/4` is a beat, `1/8` an eighth and `1/16` a
+sixteenth.
+
+<Strudel
+  code={`setcpm(120/4)
+$: s("bd*4")
+$: s("hh*4").late(1/8)`}
+  label="hats moved one eighth later: offbeat hats"
+/>
+
+<QA q="Do I have to use setcpm(bpm/4)?">
+No. It is a convention, not a rule. If you prefer one cycle to be one beat, use `setcpm(bpm)` and
+write `"x*4"` for sixteenths. If you think in two-bar phrases, use `setcpm(bpm/8)`. What matters is
+that you pick one and keep to it, because every step count and every `late(…)` value depends on
+it. This chapter uses one cycle = one bar throughout.
+</QA>
+
+## Writing on a grid
+
+### Step strings
+
+The simplest grid is a string of equal steps, with `-` or `~` for "off". Both mean rest. `-` is
+easier to scan.
+
+<Strudel
+  code={`setcpm(100/4)
+s("bd - - - sd - - bd - - bd - sd - - -")`}
+  label="16 steps, one bar"
+/>
+
+Sixteen tokens in a row is hard to count. Mini-notation has a separator for this: a lone `.`
+splits a sequence into equal groups, exactly as if each group were wrapped in `[ ]`. Put one
+between every beat and the grid reads like a score:
+
+<Strudel
+  code={`setcpm(100/4)
+s("bd - - - . sd - - bd . - - bd - . sd - - -")`}
+  label="the same bar, with a . between beats"
+/>
+
+<Box kind="warn">
+`.` divides time **equally** between the groups, just like `[ ]`. It works as a bar-line only when
+every group has the same number of steps. `"bd hh . sd hh hh"` is not five equal steps. It is two
+halves, the first holding two steps and the second three. You also cannot mix `.` and `,` at
+the same level. Write `"[bd - . sd -], [hh hh . hh hh]"` with brackets, not `"bd - . sd -, hh hh . hh hh"`.
+</Box>
+
+### One row per instrument
+
+That gives you a drum-machine workflow. Put each instrument on its own `$:` line, pad the tokens to
+the same width, and the columns line up:
+
+<Strudel
+  code={`setcpm(100/4)
+$: s("bd -  -  -  . -  -  bd -  . -  -  bd -  . -  -  -  - ").bank("RolandTR909")
+$: s("-  -  -  -  . sd -  -  -  . -  -  -  -  . sd -  -  sd").bank("RolandTR909")
+$: s("hh hh hh hh . hh hh oh -  . hh hh hh hh . hh hh oh - ").bank("RolandTR909")`}
+  label="a step sequencer, one lane per line"
+/>
+
+The <L to="/tutorial/mini-notation">Mini-Notation</L> chapter shows the other layout: one big
+backtick string, with lanes separated by `,`. Use whichever you find easier to edit. Separate `$:`
+lanes have one advantage: each lane can have its own effects and nudges.
+
+### struct: the rhythm from a grid, the values from elsewhere
+
+A step string mixes two things: *when* something happens and *what* happens. `struct` separates
+them. You write the grid with `x` for "on", and the sound or note comes from the pattern you chain
+it onto:
+
+<Strudel
+  code={`s("bd").struct("x - - x - - x - - - x - x - - -")`}
+  label="struct: a grid of x's"
+/>
+
+<Strudel
+  code={`note("<c2 eb2 f2 g1>").s("sawtooth").lpf(800)
+  .struct("x - - x - - x - . - - x - x - - -")`}
+  label="a bass line: the notes change per bar, the rhythm stays"
+/>
+
+In a `struct` grid, `1` works the same as `x`, and `0`, `~` and `-` all mean "off".
+
+### mask: punch holes in something that already exists
+
+`mask` goes the other way. It keeps the rhythm of the pattern on the left and silences whatever
+falls where the mask is `0`:
+
+<Strudel code={`s("hh*16").mask("1 1 1 0 1 1 1 0 1 1 1 0 1 0 1 1")`} label="a 16th hat line with gaps" />
+
+The difference shows up when the two grids have different sizes:
+
+<Strudel code={`s("hh*8").struct("x ~ x x")`} label="struct: 3 hits, rhythm from the grid" />
+
+<Strudel code={`s("hh*8").mask("1 0 1 1")`} label="mask: 6 hits, the second quarter removed" />
+
+### beat: "put a hit on step N of M"
+
+`beat(positions, steps)` is the most literal grid tool there is. It splits the cycle into `steps`
+equal steps and puts a hit on each listed position, **counting from 0**:
+
+<Strudel
+  code={`setcpm(100/4)
+$: s("bd").beat("0,7,10", 16).bank("RolandTR909")
+$: s("sd").beat("4,12", 16).bank("RolandTR909")
+$: s("hh").beat("0,2,4,6,8,10,11,12,14", 16).bank("RolandTR909")`}
+  label="beat: step numbers out of 16"
+/>
+
+Counting from 0 means that, on a 16-step grid, beat 1 is step 0, beat 2 is step 4, beat 3 is step
+8 and beat 4 is step 12. The "and" of each beat is 2 steps after it.
+
+<Box kind="try">
+The positions are a pattern, so they can change per bar. Try
+`s("bd").beat("<[0,7,10] [0,3,6,10]>", 16)`.
+</Box>
+
+### binaryN: a grid as a number
+
+If you think in bits, `binaryN(number, bits)` turns a number into a pattern of 1s and 0s, most
+significant bit first. JavaScript's `0b…` literals make it a literal grid:
+
+<Strudel
+  code={`s("bd").struct(binaryN(0b1000001000100000, 16))`}
+  label="steps 0, 6 and 10 of 16"
+/>
+
+<Strudel code={`s("hh").struct(binaryN("<55532 43690>", 16))`} label="two grids, one per bar" />
+
+`binary(n)` does the same without padding, so it uses as many bits as the number needs.
+`binary(5)` is `"1 0 1"`.
+
+<QA q="struct vs mask, one more time?">
+`struct` **creates** events. There is one event for every `x` in the grid, and each takes its value
+from the pattern on the left. `mask` **filters** events. It keeps the ones the left pattern already
+had, but only where the mask is truthy. If you want the rhythm to come from the grid, use `struct`.
+If you want to take an existing rhythm and switch parts of it off, use `mask`.
+</QA>
+
+## Position vs duration
+
+Four tools get confused all the time. Three of them decide **when** events start. One decides only
+how long they **last**. Take this as the baseline, four notes in four equal slots:
+
+<Strudel code={`note("c3 e3 g3 c4").s("sawtooth").lpf(1200)`} label="baseline: 4 slots" />
+
+<Strudel code={`note("c3@2 e3 g3").s("sawtooth").lpf(1200)`} label="@ widens a slot: c3 takes 2 of 4, everything after moves" />
+
+<Strudel code={`note("c3!2 e3 g3").s("sawtooth").lpf(1200)`} label="! adds slots: two c3's, each a full slot" />
+
+<Strudel code={`note("c3*2 e3 g3 c4").s("sawtooth").lpf(1200)`} label="* subdivides a slot: two c3's squeezed into slot 1" />
+
+<Strudel code={`note("c3 e3 g3 c4").s("sawtooth").lpf(1200).clip(.25)`} label="clip: same starts, each note a quarter as long" />
+
+| Tool | Changes the number of slots? | Moves later events? | Changes how long the note lasts? |
+| --- | --- | --- | --- |
+| `a@n` | the slot gets `n` times the weight | yes | yes, it is longer |
+| `a!n` | adds `n-1` more slots | yes | no, each copy is one slot |
+| `a*n` | no, it splits one slot | no | yes, each copy is shorter |
+| `a _ _` | like `a@3`, drawn as grid steps | yes | yes |
+| `.clip(x)` | no | no | multiplies the length by `x` |
+
+Two rules follow from this:
+
+- **On a grid, `@n` and `_` count as `n` steps.** `"bd@3 sd"` is a 4-step grid, not a 2-step one.
+  Use `_` when you want the grid to stay readable: `"c3 _ _ e3"`.
+- **Duration is not the same as start time.** `clip` (also called `legato`) never moves a note. It
+  only changes when the note ends. This is covered in detail in <L to="/tutorial/envelopes">Envelopes</L>.
+
+<Box kind="warn">
+Samples ignore event length by default. A drum sample plays until the end of the file, whether its
+slot is a sixteenth or a whole bar. Event length only cuts a sample off once you set `clip`
+(or `release`, or `loop`). Synths are different: they always use the event length. So if `@` seems
+to do nothing to your drums, that is why. Hear the difference with
+`s("oh*4").bank("RolandTR909").clip("<1 .1>")`.
+</Box>
+
+## Tuplets
+
+A tuplet is just "n equal events where there would normally be m", and in Strudel that is simply
+a subdivision. Put three things in the space of one beat and you have eighth-note triplets:
+
+<Strudel
+  code={`setcpm(90/4)
+s("bd [hh hh hh] sd [hh hh hh]")`}
+  label="eighth-note triplets on beats 2 and 4"
+/>
+
+To stretch a triplet over **two** beats (quarter-note triplets), give the group a weight of 2:
+
+<Strudel
+  code={`setcpm(90/4)
+note("[c4 eb4 g4]@2 bb4 g4").s("triangle")`}
+  label="three notes across beats 1 and 2, then two quarters"
+/>
+
+To fill a whole bar with triplets, use `*` with a multiple of 3. `*12` gives eighth-note
+triplets, which is the 12/8 feel under a lot of blues and gospel:
+
+<Strudel
+  code={`setcpm(70/4)
+$: s("hh*12").gain("[.9 .4 .6]*4")
+$: s("bd ~ ~ sd ~ ~ bd ~ bd sd ~ ~")`}
+  label="12/8 feel: 4 beats, each split in 3"
+/>
+
+Quintuplets, septuplets and so on work the same way. Mini-notation does not care about the number:
+
+<Strudel code={`s("bd hh*3 sd hh*5")`} label="3 in beat 2, 5 in beat 4" />
+
+### Swing by hand
+
+Swing is a triplet in disguise. Split each beat into three and let the first note take two of the
+three parts:
+
+<Strudel code={`setcpm(96/4)
+s("[hh@2 hh]*4, bd ~ sd ~")`} label="[x@2 x]: long-short, triplet shuffle" />
+
+Change the weights to change the feel. `[hh@3 hh]` sits the offbeat on the last sixteenth, which
+is a harder dotted-eighth feel. `[hh@3 hh@2]` is a lighter swing.
+
+### swingBy and swing
+
+`swingBy(amount, n)` cuts each cycle into `n` slices and delays whatever lies in the **second half**
+of each slice. The amount is a fraction of that half-slice:
+
+- `0` means straight.
+- `1/3` puts the offbeat exactly on the triplet, just like `[hh@2 hh]`.
+- `1/2` delays it by a quarter of the slice.
+- `1` brings you back to straight.
+
+`swing(n)` is shorthand for `swingBy(1/3, n)`.
+
+<Strudel code={`setcpm(96/4)
+$: s("hh*8").swingBy(1/3, 4)
+$: s("bd ~ sd ~")`} label="swingBy(1/3, 4): swung eighths" />
+
+<Box>
+**Choosing `n`:** set it to half the number of notes you want to swing per cycle. For swung eighths
+(8 per bar) use `n = 4`. For swung sixteenths (16 per bar) use `n = 8`. If `n` is too small, several
+notes fall in the same second half and they all move together.
+</Box>
+
+If you know swing as a percentage from an MPC, the offbeat lands at `50% + amount × 50%` of the
+beat. So 50% is `0`, about 58% is `.16`, and 66% is `1/3`.
+
+<Strudel code={`setcpm(92/4)
+$: s("hh*16").swingBy("<0 .16 .33>", 8).gain("[.8 .4]*8")
+$: s("bd ~ ~ bd ~ ~ sd ~ ~ bd ~ ~ ~ ~ sd ~")`} label="swung 16ths: straight, 58%, 66%, one per bar" />
+
+`swingBy` moves notes, but it does not shorten them. The `@` version changes the lengths too. With
+drum samples you will not hear any difference. With a synth you will.
+
+## Time signatures
+
+Strudel has no time signature setting. A time signature is two decisions:
+
+1. **What does one cycle hold?** That is the number of steps you write.
+2. **How fast is it?** Use `setcpm(beatsPerMinute / beatsPerCycle)`.
+
+### 3/4
+
+<Strudel
+  code={`setcpm(150/3)
+s("bd rim rim, hh*6").bank("RolandTR909")`}
+  label="a waltz: 3 beats per cycle"
+/>
+
+### 5/4
+
+Five beats per cycle. "Take Five"-style tunes group them as 3 + 2, which here means weighting two
+groups:
+
+<Strudel
+  code={`setcpm(170/5)
+s("[bd hh hh]@3 [sd hh]@2, ~ rim ~ ~ rim").bank("RolandTR909")`}
+  label="5/4 grouped 3+2"
+/>
+
+`[bd hh hh]@3 [sd hh]@2` is exactly `bd hh hh sd hh`. The weights mean you can **see** the
+grouping without the pulse changing.
+
+### 7/8 and friends
+
+Odd meters are always grouped in 2s and 3s. With seven eighths, the common groupings are
+2+2+3, 3+2+2 and 2+3+2. Weight each group by its length and the eighth-note pulse stays constant:
+
+<Strudel
+  code={`setcpm(240/7)
+s("[bd hh]@2 [sd hh]@2 [bd hh hh]@3").bank("RolandTR909")`}
+  label="7/8 as 2+2+3, a steady eighth-note pulse"
+/>
+
+<Box kind="try">
+Replace the weighted version with `s("bd hh . sd hh . bd hh hh")`. The `.` gives each group an
+equal share of the bar, so the last group gets rushed. You hear a lopsided three-beat bar, not 7/8.
+This is exactly the difference between subdividing and placing.
+</Box>
+
+Euclidean rhythms are a shortcut here. `(3,7)` gives a kick at the start of each group of 2+2+3,
+and the third number moves the pattern **later** by that many steps, wrapping around. That gives
+you the other two groupings:
+
+<Strudel
+  code={`setcpm(240/7)
+s("bd(3,7,<0 3 5>), hh*7").bank("RolandTR909")`}
+  label="(3,7) = 2+2+3, (3,7,3) = 3+2+2, (3,7,5) = 2+3+2"
+/>
+
+For 5/8 use `(2,5)`, which is 2+3. For 9/8 as 2+2+2+3 use `(4,9)`.
+
+### Changing meter, keeping the pulse
+
+Say you want a bar of 7/8 followed by a bar of 4/4 (eight eighths), with the eighth note the same
+length in both. Weight each bar by its number of eighths. **One cycle is now the two-bar phrase**:
+
+<Strudel
+  code={`setcpm(240/15)
+s("[bd hh sd hh bd hh hh]@7 [bd hh sd hh bd hh sd hh]@8").bank("RolandTR909")`}
+  label="7/8 then 4/4: 15 equal eighths per cycle"
+/>
+
+The alternative, which the <L to="/tutorial/tempo">Tempo</L> chapter uses, makes **one cycle one
+pulse** and puts weighted groups inside `< >`. There, `@7` makes a group last 7 cycles:
+
+<Strudel
+  code={`setcpm(240)
+s("<[bd hh sd hh bd hh hh]@7 [bd hh sd hh bd hh sd hh]@8>").bank("RolandTR909")`}
+  label="same music, 1 cycle = 1 eighth"
+/>
+
+### Changing meter, letting the pulse change
+
+Drop the weights and both bars take one cycle each. The bar length stays the same, so the pulse
+has to change. This is **metric modulation**:
+
+<Strudel
+  code={`setcpm(120/4)
+s("<[bd hh sd hh bd hh hh] [bd hh sd hh bd hh sd hh]>").bank("RolandTR909")`}
+  label="7 then 8 in the same bar length: the eighth note itself changes"
+/>
+
+## Polyrhythm and polymeter
+
+These two words get swapped all the time. Strudel gives them two different symbols.
+
+**Polyrhythm** (`,`): the layers have the **same length** (one cycle) and **different step
+rates**. Three against four:
+
+<Strudel code={`setcpm(90/4)
+s("bd*3, hh*4, ~ rim")`} label="3 kicks and 4 hats per bar, realigned every bar" />
+
+**Polymeter** (`{ }%n`): the layers have the **same step rate** (`n` per cycle) and **different
+lengths**. A five-note riff played as eighths over a 4/4 bar:
+
+<Strudel
+  code={`setcpm(110/4)
+$: s("bd*4, [~ hh]*4").bank("RolandTR909")
+$: note("{c3 eb3 g3 bb3 d4}%8").s("triangle")`}
+  label="5-note loop, 8 steps per bar: realigns every 5 bars"
+/>
+
+| | Polyrhythm `,` | Polymeter `{ }%n` |
+| --- | --- | --- |
+| Same for all layers | length (one cycle) | step rate (`n` per cycle) |
+| Different per layer | step rate | loop length |
+| Realigns | every cycle | after `lcm(lengths)` steps |
+| Example | `"bd*3, hh*4"` | `"{bd sd hh, cp cp cp cp}%4"` |
+
+To count when a polymeter realigns, take the least common multiple of the layer lengths and
+divide by the step rate. Five against the 8-step bar realigns after `lcm(5, 8) = 40` steps, which
+is 5 bars. Three against four at `%4` realigns after 12 steps, which is 3 bars.
+
+<Box>
+Leave out `%n` and the step rate comes from the **first** layer. `"{bd sd hh, cp cp cp cp}"` runs at
+3 steps per cycle, so the 4-step layer takes 1⅓ cycles to go round.
+</Box>
+
+## Groove and micro-timing
+
+A grid is perfectly even. Groove is the small ways real players are not.
+
+### Nudging whole layers
+
+`late` and `early` shift a pattern by a fraction of a cycle. With one cycle = one bar, `0.01` is a
+hundredth of a bar. At 120 bpm that is 20 ms, which is roughly the size of a real "feel". Nudge
+each lane on its own:
+
+<Strudel
+  code={`setcpm(92/4)
+$: s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909")
+$: s("~ sd ~ sd").bank("RolandTR909").late(.012)
+$: s("hh*8").bank("RolandTR909").early(.004).gain(.6)`}
+  label="laid-back snare, hats pushing ahead"
+/>
+
+The formula, if you want milliseconds: `delay in ms = cycles × 60000 / cpm`.
+
+### Humanising
+
+To add a little random timing, give `late` a random signal. **Segment it first**:
+
+<Strudel
+  code={`setcpm(96/4)
+$: s("hh*16").bank("RolandTR909").gain("[.8 .4 .6 .4]*4")
+  .late(rand.range(0, .01).segment(16))
+$: s("bd ~ ~ ~ sd ~ ~ bd ~ ~ bd ~ sd ~ ~ ~").bank("RolandTR909")`}
+  label="each hat up to 1/100 of a bar late"
+/>
+
+<Box kind="warn">
+`.late(rand.range(0, .01))` without `.segment(…)` looks fine but drops or doubles hits. Strudel asks
+for events in short time windows, and a continuous signal gives a different delay in each window,
+so a hit near the edge of a window can move into the next one and be missed or played twice. With
+`.segment(16)` the delay is fixed for the length of each step. Use a segment count at least as fine
+as the rhythm, and keep the nudge shorter than one step. The same applies to `perlin`. See
+<L to="/tutorial/signals">Signals</L>.
+</Box>
+
+`perlin` in place of `rand` gives a drift that wanders slowly instead of jittering. It feels more
+like a drummer rushing and dragging:
+
+<Strudel
+  code={`s("hh*16").late(perlin.range(0, .015).segment(16))`}
+  label="smooth, wandering timing"
+/>
+
+### Accents are rhythm too
+
+Your ear hears a louder hit as a stronger beat. So a gain pattern changes the meter you hear, even
+when the notes stay put:
+
+<Strudel code={`s("hh*12").gain("[1 .4 .4]*4")`} label="12 hats heard as 4 × 3" />
+
+<Strudel code={`s("hh*12").gain("[1 .4 .4 .4]*3")`} label="the same 12 hats heard as 3 × 4" />
+
+That is the cheapest polyrhythm there is. Nothing moves, only the emphasis changes. `?` and
+`degradeBy` belong here too: dropping a few hats at random (`"hh*16?0.1"`) sounds more human than
+dropping none.
+
+## Long-form time
+
+A cycle is a bar. So how do you write minutes of music without writing out hundreds of bars?
+**Put slow alternations in the parameters.**
+
+### Different rates for different things
+
+`< >` advances once per cycle. `< >/4` advances every 4 cycles, and `< >/16` every 16. Give each
+musical layer its own rate and you get a long form almost for free:
+
+<Strudel
+  code={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909")
+$: s("[~ hh]*4").bank("RolandTR909").gain("<.3 .5>/8")
+$: n("<0 2 3 -1>/2").struct("x*8").scale("C2:minor")
+  .s("sawtooth").lpf("<300 600 1200 2400>/4")`}
+  label="chords every 2 bars, filter every 4, hat level every 8"
+/>
+
+<Box kind="warn">
+`/4` stretches **everything** inside it, including the rhythm. As a parameter, for example
+`.lpf("<300 2400>/4")`, that is what you want: a value that holds for 4 bars. As the pattern that
+sets the rhythm, `s("<bd sd>/4")` gives you **one** kick lasting four bars, not four bars of kicks.
+To hold a whole *rhythm* for n bars, repeat it with `!` inside the brackets: `"<[bd sd]!4 [bd bd sd]!4>"`.
+</Box>
+
+### Nested alternation
+
+A `< >` inside a `< >` only moves forward when the outer one reaches it. So it runs at a fraction
+of the outer rate. Three tokens give you a four-bar phrase:
+
+<Strudel
+  code={`s("bd*2, ~ <sd <cp [sd sd]>>, hh*8").bank("RolandTR909")`}
+  label="bar 1 sd, bar 2 cp, bar 3 sd, bar 4 sd sd"
+/>
+
+### Arranging with masks
+
+A `mask` with slow alternation switches a whole layer on or off for a number of bars. `!` counts
+bars:
+
+<Strudel
+  code={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909").mask("<1!12 0!4>")
+$: s("[~ hh]*4").bank("RolandTR909").mask("<0!4 1!12>")
+$: s("~ cp").fast(2).bank("RolandTR909").mask("<0!8 1!8>")`}
+  label="a 16-bar form in three masks"
+/>
+
+### Fills in the last bar
+
+`lastOf(n, f)` applies `f` to the **last** of every `n` cycles, which is where fills go. Note that
+`every(n, f)` does the opposite: it applies `f` to the **first** of every `n` cycles.
+
+<Strudel
+  code={`setcpm(100/4)
+s("bd sd bd sd, hh*8").bank("RolandTR909")
+  .lastOf(4, x => x.ply("1 2"))`}
+  label="bar 4 doubles up in its second half"
+/>
+
+### Sections
+
+`arrange([cycles, pattern], …)` plays each section for the given number of cycles and then loops.
+It is the most direct way to write "4 bars of A, then 2 of B":
+
+<Strudel
+  code={`setcpm(124/4)
+arrange(
+  [4, s("bd*4, [~ hh]*4")],
+  [2, s("bd*4, [~ hh]*4, ~ cp ~ cp")],
+  [2, s("bd [~ bd] sd ~, hh*16")]
+).bank("RolandTR909")`}
+  label="an 8-bar loop in three sections"
+/>
+
+For looping a fixed window of an evolving pattern, see `ribbon` in <L to="/tutorial/tempo">Tempo &amp; Cycles</L>.
+For more conditional tools (`when`, `within`, `someCyclesBy`), see
+<L to="/tutorial/pattern-functions">Pattern Functions</L>.
+
+## Worked exercise: one beat, three ways
+
+> In 4/4 at 96 bpm: kick on 1 and on the "and" of 3. Snare on 2 and 4. A quiet ghost snare on the
+> last sixteenth of beat 2. Closed hats on every eighth, with the final eighth of the bar split into
+> two sixteenths.
+
+First, turn the words into grid positions, counting sixteenths from 0:
+
+| Voice | Musical position | 16-step positions |
+| --- | --- | --- |
+| kick | 1, "and" of 3 | 0, 10 |
+| snare | 2, 4 | 4, 12 |
+| ghost | "a" of 2 | 7 |
+| hats | every eighth + the last sixteenth | 0 2 4 6 8 10 12 14 15 |
+
+**1. Subdividing.** Think in beats, and split only the beats that need it:
+
+<Strudel
+  code={`setcpm(96/4)
+$: s("bd ~ [~ bd] ~, ~ sd ~ sd, hh*2 hh*2 hh*2 [hh hh*2]").bank("RolandTR909")
+$: s("~ [~ ~ ~ sd] ~ ~").bank("RolandTR909").gain(.3)`}
+  label="the tree"
+/>
+
+**2. The grid.** Sixteen steps, with a `.` on every beat and one lane per voice:
+
+<Strudel
+  code={`setcpm(96/4)
+$: s("bd -  -  -  . -  -  -  -  . -  -  bd -  . -  -  -  - ").bank("RolandTR909")
+$: s("-  -  -  -  . sd -  -  -  . -  -  -  -  . sd -  -  - ").bank("RolandTR909")
+$: s("-  -  -  -  . -  -  -  sd . -  -  -  -  . -  -  -  - ").bank("RolandTR909").gain(.3)
+$: s("hh -  hh -  . hh -  hh -  . hh -  hh -  . hh -  hh hh").bank("RolandTR909")`}
+  label="the step sequencer"
+/>
+
+**3. Positions.** Copy the right-hand column of the table straight into `beat`:
+
+<Strudel
+  code={`setcpm(96/4)
+$: s("bd").beat("0,10", 16).bank("RolandTR909")
+$: s("sd").beat("4,12", 16).bank("RolandTR909")
+$: s("sd").beat(7, 16).bank("RolandTR909").gain(.3)
+$: s("hh").beat("0,2,4,6,8,10,12,14,15", 16).bank("RolandTR909")`}
+  label="the step numbers"
+/>
+
+All three produce exactly the same hits. Which one is "right" depends on what you will change
+next. If you are going to vary the hats, the tree is shortest. If you are going to program the
+kick hit by hit, use the grid. If you are going to generate positions or pattern them per bar,
+use `beat`.
+
+<Box kind="try">
+Now swing it. Add `.swingBy(1/3, 4)` to the hat lane in any of the three versions. Then move the
+ghost snare to the "e" of 4 (step 13) in all three. The version that felt easiest to change is the
+one to reach for.
+</Box>
+
+## Recap
+
+| Tool | What it does for time |
+| --- | --- |
+| `setcpm(bpm/4)` | one cycle = one bar of 4/4, so `n` steps = `n`ths |
+| `"a - - b"` | grid steps, with `-` or `~` as off |
+| `.` | equal groups, handy as a beat marker in a grid |
+| `struct("x - x x")` | rhythm from a grid, values from the left |
+| `mask("1 0 1 1")` | silence parts of an existing rhythm |
+| `beat("0,7,10", 16)` | hits on numbered steps, counting from 0 |
+| `binaryN(n, bits)` | a grid from a number |
+| `@` `_` / `!` / `*` | wider slot / more slots / split a slot |
+| `clip` / `legato` | how long a note lasts, never when it starts |
+| `[a b c]`, `[…]@2`, `*12` | triplets in a beat, across two beats, across a bar |
+| `[x@2 x]`, `swingBy(amt, n)`, `swing(n)` | swing by hand, by amount, triplet swing |
+| `[…]@3 […]@2` | odd-meter grouping with a constant pulse |
+| `(3,7,r)` | euclid groupings, where `r` shifts later |
+| `,` vs `{ }%n` | polyrhythm (same length) vs polymeter (same step) |
+| `late` / `early` | nudge a layer by a fraction of a bar |
+| `.late(rand.range(0,.01).segment(16))` | humanise safely |
+| `"< >/n"` in parameters | change a value every `n` bars |
+| `mask("<0!4 1!12>")`, `lastOf`, `arrange` | form, fills, sections |
