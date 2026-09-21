@@ -1,0 +1,153 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: signals
+title: Signals
+lede: Continuous patterns — sine, saw, rand, perlin — and how to aim them at any parameter.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+A **signal** is a pattern with infinitely many values: ask it for any point in time and it hands
+you a number. You use them where you would otherwise type a constant.
+
+<Strudel code={`s("hh*16").gain(sine)`} label="gain follows a sine over each cycle" />
+
+Note there are no quotes — `sine` is a value, not a mini-notation string.
+
+## The catalogue
+
+| Signal | Shape | Range |
+| --- | --- | --- |
+| `sine` | smooth up and down | 0…1 |
+| `cosine` | sine, quarter cycle ahead | 0…1 |
+| `saw` | ramps up, snaps back | 0…1 |
+| `isaw` | ramps down | 0…1 |
+| `tri` | up then down, linear | 0…1 |
+| `square` | jumps between the extremes | 0…1 |
+| `rand` | new random value every time it is read | 0…1 |
+| `perlin` | smoothly wandering noise | 0…1 |
+| `irand(n)` | random **integer** 0…n-1 | 0…n-1 |
+| `brand` | random 0 or 1 | 0 or 1 |
+| `brandBy(p)` | 1 with probability p | 0 or 1 |
+| `mouseX` / `mouseY` | your cursor position | 0…1 |
+
+Each of `sine saw tri square rand` has a bipolar twin — `sine2`, `saw2`, … — that runs −1…1.
+
+<Box kind="warn">
+Signals are *values*, so they cannot be put inside a mini-notation string. `"sine"` is the literal
+word. To alternate between signals, alternate what you apply them to, or use `pick`.
+</Box>
+
+## range — the essential partner
+
+Signals are 0…1, and almost nothing you want to control is. `range(min, max)` rescales:
+
+<Strudel code={`s("hh*16").lpf(saw.range(200, 4000))`} />
+
+<Strudel code={`s("bd rim sd rim bd ~ cp rim").pan(sine.slow(2))`} label="pan is already 0..1, so no range needed" />
+
+Flipping the arguments inverts the shape:
+
+<Strudel code={`s("hh*16").lpf(saw.range(4000, 200))`} label="ramp down instead of up" />
+
+Variants:
+
+| Function | Purpose |
+| --- | --- |
+| `range(a,b)` | linear rescale |
+| `rangex(a,b)` | exponential rescale — correct for frequencies |
+| `range2(a,b)` | for bipolar signals (`sine2`, `saw2`, …) |
+
+<Strudel code={`s("hh*16").lpf(sine.rangex(200, 8000))`} label="rangex: the sweep sounds even to the ear" />
+
+## Making them slower and faster
+
+Signals are patterns, so `slow` and `fast` work on them:
+
+<Strudel
+  code={`note("<[c2 c3]*4 [bb1 bb2]*4>")
+  .s("sawtooth")
+  .lpf(sine.range(100, 2000).slow(4))`}
+  label="one sweep every 4 cycles"
+/>
+
+<Strudel code={`s("hh*16").pan(sine.fast(2))`} />
+
+## The sampling trap
+
+<Box kind="warn">
+A signal is read **at the moment an event is triggered**, and then frozen for that event. Few
+events means coarse modulation. This is the single most common source of "why isn't my modulation
+working".
+</Box>
+
+<Strudel code={`s("supersaw").lpf(tri.range(100, 5000).slow(2))`} label="one event per cycle: the filter never moves" />
+
+Three fixes, in order of how often you want them:
+
+<Strudel code={`s("supersaw").seg(16).lpf(tri.range(100, 5000).slow(2))`} label="1. segment: create 16 events per cycle" />
+
+<Strudel code={`s("supersaw").lpf(500).lfo({ s: 0.5, depthabs: 2000 })`} label="2. lfo(): true continuous modulation" />
+
+<Strudel code={`s("supersaw").lpf(500).lpenv(4).lpa(1).lpd(1)`} label="3. a filter envelope, if per-note is what you meant" />
+
+## segment — turning continuous into discrete
+
+`segment(n)` (alias `seg`) samples a continuous pattern `n` times per cycle, producing actual
+events. It is how you turn a signal into a melody:
+
+<Strudel code={`note(saw.range(40,52).segment(24))`} label="a rising chromatic run from a saw wave" />
+
+<Strudel code={`n(irand(8).segment(8)).scale("C:minor").s("piano")`} label="random walk through a scale" />
+
+<Strudel code={`n(perlin.range(0,14).segment(8)).scale("C:minor").s("piano")`} label="perlin: random, but smooth" />
+
+<Box kind="try">
+Swap `irand(8)` for `perlin.range(0,8)` in the examples above and listen to the difference. `rand`
+jumps anywhere; `perlin` wanders. For melodies and filters, `perlin` almost always sounds more
+intentional.
+</Box>
+
+## Randomness you can repeat
+
+Raw randomness is different every cycle. Two ways to pin it down:
+
+<Strudel code={`n(irand(8).segment(4)).scale("c:pentatonic").ribbon(1337, 2)`} label="ribbon: loop a fixed window" />
+
+<Strudel code={`n(irand(8).segment(8)).scale("c:minor").seed(4).s("piano")`} label="seed: fix the random sequence" />
+
+## Structure from randomness
+
+Randomness is not only for parameters — it is a rhythm generator:
+
+<Strudel code={`s("bd").segment(16).degradeBy(.5).ribbon(16,1)`} label="keep 50% of 16 slots, then freeze it" />
+
+<Strudel code={`s("hh*8").pan(brandBy(0.3))`} label="binary randomness for hard left/right" />
+
+## Mouse control
+
+`mouseX` and `mouseY` are signals. Move your cursor while this plays:
+
+<Strudel code={`s("supersaw").seg(16).lpf(mouseX.range(200,5000)).lpq(mouseY.range(1,20))`} label="the page is now an instrument" />
+
+<QA q="Signals vs LFOs — which do I reach for?">
+Signals modulate at the **pattern** level: they produce a number per event, and they can feed
+anything, including things that are not audio at all (note numbers, sample indices, probabilities).
+LFOs modulate at the **audio** level: continuous, sub-sample-accurate, but only for audio controls
+of a currently sounding voice. Melody, structure, choice → signals. Wobble, movement within a held
+note → LFO.
+</QA>
+
+## Recap
+
+| Function | Purpose |
+| --- | --- |
+| `sine saw tri square cosine` | periodic signals, 0…1 |
+| `sine2 saw2 …` | the same, −1…1 |
+| `rand` `perlin` `irand(n)` `brand` | random signals |
+| `mouseX` `mouseY` | cursor as a signal |
+| `range` `rangex` `range2` | rescale |
+| `segment(n)` / `seg` | sample a signal into n events |
+| `ribbon(off,n)` / `seed(n)` | make randomness repeatable |

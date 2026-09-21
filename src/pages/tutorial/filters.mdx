@@ -1,0 +1,195 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: filters
+title: Filters
+lede: Subtractive synthesis in one page — what a lowpass, highpass and bandpass actually do, and how to make them move.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+A filter removes part of the frequency spectrum. That is all. Everything else — the squelch, the
+sweep, the "it sounds like it's in the next room" — comes from *moving* the filter.
+
+Strudel has three, each with a **cutoff** (where it starts working) and a **q** (how resonant it
+is around the cutoff).
+
+| Filter | Lets through | Cuts | Controls |
+| --- | --- | --- | --- |
+| lowpass | low frequencies | highs | `lpf` (`cutoff`, `lp`), `lpq` |
+| highpass | high frequencies | lows | `hpf` (`hp`, `hcutoff`), `hpq` |
+| bandpass | a band around cutoff | above and below | `bpf` (`bandf`), `bpq` |
+
+## Lowpass — the workhorse
+
+<Strudel
+  code={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth").lpf(800)`}
+/>
+
+<Box kind="try">
+Set `lpf(200)`. The sound gets muffled — you are outside the club with the door shut. Now
+`lpf(5000)`. The door opens. That single number is most of what makes electronic music breathe.
+</Box>
+
+Cutoff is in hertz, and the audible range is roughly 20–20000. Like every argument, it takes a
+pattern:
+
+<Strudel code={`s("bd sd [~ bd] sd, hh*6").lpf("<4000 2000 1000 500 200 100>")`} />
+
+<Strudel
+  code={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth").lpf("200 1000 200 1000")`}
+  label="patterning the filter does not change the rhythm"
+/>
+
+## Highpass — making space
+
+A highpass removes low end. Musically it is how you stop two sounds fighting: the bass owns the
+bottom, everything else gets highpassed out of its way.
+
+<Strudel code={`s("bd sd [~ bd] sd, hh*8").hpf("<4000 2000 1000 500 200 100>")`} />
+
+<Strudel
+  code={`$: s("sawtooth").note("c2 eb2 g2 c2").lpf(500)
+$: s("sawtooth").note("<c4 eb4 g4 bb4>").hpf(800).gain(.5)`}
+  label="lowpass the bass, highpass the pad — no mud"
+/>
+
+## Resonance (q)
+
+Q boosts frequencies right at the cutoff. Low q is gentle; high q whistles and eventually screams.
+
+<Strudel code={`s("bd sd [~ bd] sd,hh*8").lpf(2000).lpq("<0 10 20 30>")`} />
+
+<Strudel code={`s("bd sd [~ bd] sd").bpf(500).bpq("<0 1 2 3>")`} label="bandpass q: from 'thin' to 'telephone'" />
+
+You can also pass q inline after a colon:
+
+<Strudel code={`s("bd*16").lpf("1000:0 1000:10 1000:20 1000:30")` } label='lpf("freq:q")' />
+
+## Filter character: ftype and drive
+
+The cutoff slope and the colouring differ per filter model.
+
+<Strudel
+  code={`note("c f g g a c4 d4").fast(2)
+  .s('sawtooth')
+  .lpf(200).fanchor(0)
+  .lpenv(3).lpq(1)
+  .ftype("<ladder 12db 24db>")`}
+  label="12db = gentle, 24db = steeper, ladder = Moog-ish and aggressive"
+/>
+
+`drive` overdrives the filter itself on supported types:
+
+<Strudel
+  code={`note("{f g g c d a a#}%16".sub(17)).s("supersaw")
+  .lpenv(8).lpf(150).lpq(.8).ftype('ladder').drive("<.5 4>")`}
+/>
+
+## Making the filter move
+
+This is the important part. A static filter is an EQ; a moving filter is an instrument.
+
+### 1. Filter envelopes — per note
+
+Covered in [Envelopes](/tutorial/envelopes): `lpenv` sets the depth, `lpa`/`lpd`/`lps`/`lpr` the
+shape. This moves the filter **on every note**.
+
+<Strudel code={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpq(8).lpf(400).lpa(.1).lpd(.1).lpenv(4)`} />
+
+### 2. Signals — per event
+
+A signal like `sine` is sampled once per event and scaled with `range`:
+
+<Strudel code={`s("hh*16").lpf(saw.range(500, 2000))`} />
+
+<Strudel
+  code={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth")
+  .lpf(sine.range(100, 2000).slow(4))`}
+  label="a 4-cycle-long sweep"
+/>
+
+<Box kind="warn">
+A signal is only read **when an event is triggered**. On a long, sparse note it will not move:
+
+`s("supersaw").lpf(tri.range(100,5000).slow(2))` sounds static, because there is one event per
+cycle. Add events with `seg(16)` — or reach for a real LFO.
+</Box>
+
+<Strudel code={`s("supersaw").seg(16).lpf(tri.range(100, 5000).slow(2))`} label="seg: fake continuous movement with more events" />
+
+### 3. LFOs — true audio-rate
+
+`lfo()` modulates the parameter continuously inside the audio engine, no extra events needed. It
+gets [its own chapter](/tutorial/lfo).
+
+<Strudel code={`s("saw").lpf(800).lfo({ r: 2, depthabs: 250 })`} label="continuous, even on one long note" />
+
+## The one-knob DJ filter
+
+`djf` is a single control that is a lowpass below 0.5 and a highpass above it — the filter knob on
+a DJ mixer.
+
+<Strudel code={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf("<.5 .3 .2 .75>")`} />
+
+<Box kind="try">
+`djf(0.5)` is neutral. Sweeping it towards 0 is the "drop out the highs" transition; towards 1 is
+the "drop out the bass" build. Try `.djf(sine.range(0.2, 0.8).slow(8))`.
+</Box>
+
+## Vowel — the formant filter
+
+`vowel` runs a bank of formant filters so the sound appears to be speaking.
+
+<Strudel code={`note("[c2 <eb2 <g2 g1>>]*2").s('sawtooth').vowel("<a e i <o u>>")`} />
+
+<Strudel code={`s("bd sd mt ht bd [~ cp] ht lt").vowel("[a|e|i|o|u]")`} label="on drums, for texture" />
+
+Available vowels: `a e i o u ae aa oe ue y uh un en an on`.
+
+## A worked example
+
+Everything in this chapter, in one patch:
+
+<Strudel
+  code={`note("[c eb g <f bb>](3,8,<0 1>)".sub(12))
+  .s("<sawtooth>/64")
+  .lpf(sine.range(300,2000).slow(16))
+  .lpa(0.005)
+  .lpd(perlin.range(.02,.2))
+  .lps(perlin.range(0,.5).slow(3))
+  .lpq(sine.range(2,10).slow(32))
+  .release(.5)
+  .lpenv(perlin.range(1,8).slow(2))
+  .ftype('24db')
+  .room(1)
+  .juxBy(.5,rev)
+  .sometimes(add(note(12)))
+  .stack(s("bd*2").bank('RolandTR909'))
+  .gain(.5).fast(2)`}
+  label="filter envelope + signals + q modulation"
+/>
+
+<QA q="Why does my lowpass sound like it does nothing?">
+Three usual causes. (1) The cutoff is above the sound's content — a hihat has nothing below 2 kHz
+to remove, so `lpf(5000)` is inaudible. (2) You patterned it with a signal but there is only one
+event per cycle, so it never re-samples. (3) You applied two lowpasses in one chain — only the
+last one counts, because each effect is single-use per event.
+</QA>
+
+## Recap
+
+| Control | Purpose |
+| --- | --- |
+| `lpf` `lpq` | lowpass cutoff / resonance |
+| `hpf` `hpq` | highpass cutoff / resonance |
+| `bpf` `bpq` | bandpass centre / width |
+| `ftype` | 12db, 24db, or ladder |
+| `drive` | overdrive into the filter |
+| `lpenv lpa lpd lps lpr` | filter envelope |
+| `djf` | one-knob lowpass/highpass |
+| `vowel` | formant filter |

@@ -1,0 +1,182 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: dynamics
+title: Dynamics & Distortion
+lede: Loudness, glue, and dirt — plus the modulation effects that live in the same part of the chain.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+## gain and postgain
+
+`gain` sets level at the **start** of the effect chain (it is where the amplitude envelope is
+applied). `postgain` sets level at the **end**, after everything else.
+
+<Strudel code={`s("hh*8").gain(".4!2 1 .4!2 1 .4 1").fast(2)`} label="gain patterning is where rhythm comes from" />
+
+<Box kind="try">
+Take any flat drum pattern and add a gain pattern to it. `s("bd*4, hh*16")` versus
+`s("bd*4, hh*16").gain("[.25 1]*8")` — the notes are identical and only one of them is music.
+</Box>
+
+The distinction matters as soon as you distort something:
+
+<Strudel code={`s("bd*4").distort(4).gain(.3)`} label="quiet INTO the distortion — less dirt" />
+
+<Strudel code={`s("bd*4").distort(4).postgain(.3)`} label="loud into it, quiet after — same dirt, lower level" />
+
+`velocity` multiplies gain and is conventionally used for expression from MIDI-like data.
+
+## Distortion
+
+`distort` is a waveshaper. The first number is the amount; after a colon you can add a post-gain
+(because distortion makes things loud), and after that a shaping type.
+
+<Strudel code={`s("bd sd [~ bd] sd,hh*8").distort("<0 2 3 10:.5>")`} />
+
+<Strudel code={`note("d1!8").s("sine").penv(36).pdecay(.12).decay(.23).distort("8:.4")`} label="distortion is how a sine kick gets weight" />
+
+<Strudel code={`s("bd:4*4").bank("tr808").distort("3:0.5:diode")`} />
+
+Types available via `distorttype` (or the third slot of `distort`):
+
+<Strudel
+  code={`s("sine").note("F1*2").release(1)
+  .penv(24).pdecay(0.05)
+  .distort(rand.range(1, 8))
+  .distorttype("<fold chebyshev scurve diode asym sinefold>")`}
+/>
+
+<Box kind="warn">
+`distort` gets loud fast, and `shape` (the older, deprecated version) gets loud *unpredictably*.
+Always pair a big `distort` with a post-gain: `distort("8:.3")`.
+</Box>
+
+## Bit crushing and sample rate reduction
+
+<Strudel code={`s("<bd sd>,hh*3").fast(2).crush("<16 8 7 6 5 4 3 2>")`} label="crush: bit depth. 16 is clean, 2 is destroyed" />
+
+<Strudel code={`s("bd sd [~ bd] sd,hh*8").coarse("<1 4 8 16 32>")`} label="coarse: fake sample-rate reduction" />
+
+`crush` sounds like a cheap sampler; `coarse` sounds like aliasing. Together they are the whole
+lo-fi aesthetic.
+
+## Compression
+
+`compressor("threshold:ratio:knee:attack:release")` — the parameters of a standard
+[DynamicsCompressorNode](https://developer.mozilla.org/en-US/docs/Web/API/DynamicsCompressorNode).
+
+<Strudel code={`s("bd sd [~ bd] sd,hh*8").compressor("-20:20:10:.002:.02").postgain(1.5)`} />
+
+| Slot | Meaning |
+| --- | --- |
+| threshold | dB above which compression starts (negative) |
+| ratio | how hard it squashes |
+| knee | how gradually it engages |
+| attack | seconds to clamp down |
+| release | seconds to let go |
+
+<Box>
+For **sidechain** pumping, do not reach for this. Strudel's compressor has no sidechain input —
+that job belongs to [`duckorbit`](/tutorial/ducking). Use `compressor` for glue and level control.
+</Box>
+
+## Tremolo
+
+Amplitude modulation with a continuous waveform — it varies *during* the note.
+
+<Strudel code={`note("d d d# d".fast(4)).s("supersaw").tremolo("<3 2 100>").tremoloskew("<.5>")`} />
+
+| Control | Meaning |
+| --- | --- |
+| `tremolo` / `trem` | speed in Hz |
+| `tremolosync` | speed in cycles instead of Hz |
+| `tremolodepth` | amount |
+| `tremoloshape` | `sine`, `tri`, `square` |
+| `tremoloskew` | asymmetry / pulse width |
+| `tremolophase` | starting phase |
+
+<Strudel code={`note("{f g c d}%16").tremsync(4).tremoloshape("<sine tri square>").s("sawtooth")`} />
+
+## Phaser
+
+A bank of allpass filters sweeping through the spectrum — guitar-pedal swoosh.
+
+<Strudel
+  code={`n(run(8)).scale("D:pentatonic").s("sawtooth").release(0.5)
+  .phaser("<1 2 4 8>")`}
+/>
+
+`phaserdepth`, `phasercenter` and `phasersweep` shape how deep, where, and how wide it moves.
+
+<Strudel
+  code={`n(run(8)).scale("D:pentatonic").s("sawtooth").release(0.5)
+  .phaser(2).phaserdepth("<.3 .75 1>").phasercenter(1000).phasersweep(2000)`}
+/>
+
+## Chorus
+
+<Strudel code={`note("d d a# a").s("sawtooth").chorus(.5)`} />
+
+For a wider, more controllable version, stack a detuned copy of the note instead:
+
+<Strudel code={`note("<g1 bb1 d2 f1>").add(note("0,.1")).s("sawtooth")`} label="two voices, 10 cents apart" />
+
+## Panning
+
+<Strudel code={`s("[bd hh]*2").pan("<.5 1 .5 0>")`} label="0 = left, 1 = right" />
+
+<Strudel code={`s("bd rim sd rim bd ~ cp rim").pan(sine.slow(2))`} label="a signal makes it move" />
+
+`jux` is a shortcut for the most common stereo trick — see
+[Pattern Functions](/tutorial/pattern-functions).
+
+## Squiz
+
+Hard to describe, easy to recognise: part filter, part ring modulator, part pitch shifter.
+
+<Strudel code={`s("bd*4").squiz("2 4/2 6 [8 16]")`} />
+
+## Putting the dirty end together
+
+<Strudel
+  code={`setcpm(130/4)
+
+drums: s("bd*4, [~ cp], [~ hh]*4").bank("RolandTR909")
+  .distort("1.5:.6").compressor("-18:14:8:.003:.06").postgain(1.1)
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(500).lpq(6).decay(.2).sustain(0)
+  .crush(8).orbit(2)
+
+lead: n("<0 3 5 7>*2").scale("C4:minor").s("supersaw")
+  .phaser(2).room(.5).gain(.4).orbit(3)
+
+duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}
+  label="distortion, compression, crush, phaser and a silent ducker"
+/>
+
+<QA q="My mix is loud and muddy. What order should I fix things in?">
+1. Filter first — highpass everything that is not the bass (`hpf(200)` on pads and hats).
+2. Then gain — get the balance right with `gain`/`postgain` before adding anything.
+3. Then ducking — give the kick room instead of turning the bass down.
+4. Only then compression, and only lightly.
+Distortion last, and always with a post-gain.
+</QA>
+
+## Recap
+
+| Control | Purpose |
+| --- | --- |
+| `gain` / `postgain` / `velocity` | level, before and after effects |
+| `distort` / `distorttype` | waveshaping dirt |
+| `crush` / `coarse` | bit depth / sample rate reduction |
+| `compressor` | dynamics glue |
+| `tremolo*` | continuous amplitude modulation |
+| `phaser*` | sweeping allpass bank |
+| `chorus` | thickening |
+| `pan` | stereo position |
+| `squiz` | strange pitch/filter artefacts |

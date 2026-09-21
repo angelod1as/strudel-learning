@@ -1,0 +1,215 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: performing
+title: Putting It Together
+lede: Structuring a patch, seeing what you are doing, and building a track from nothing while it plays.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+## Structure a patch so you can perform it
+
+A patch you cannot change in four seconds is not a live patch. Three habits do most of the work:
+
+1. **One idea per line, named.** `drums:`, `bass:`, `lead:` — not `$:` everywhere.
+2. **Constants at the top.** `setcpm` first, `samples()` next.
+3. **Orbits assigned deliberately**, so reverb and ducking behave.
+
+<Strudel
+  code={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").orbit(1)
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)
+
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw")
+  .room(.6).gain(.4).orbit(3)
+
+duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}
+  label="the skeleton of a live patch"
+/>
+
+<Box kind="try">
+With that playing, try each of these one at a time — each is a single character or word:
+
+- `_lead:` to drop the lead
+- change `128/4` to `132/4`
+- change the bass `lpf(600)` to `lpf(sine.range(300,2000).slow(8))`
+- add `.jux(rev)` to the lead
+</Box>
+
+## Visual feedback
+
+Strudel can draw what it is doing. Every visualiser exists in two forms: plain (draws to the page
+background) and prefixed with `_` (draws inline, so you can have several).
+
+<Strudel code={`note("c a f e").color("white")._punchcard()`} label="punchcard: a piano roll of the pattern" />
+
+<Strudel code={`s("<sawtooth square triangle sine>")._scope()`} label="scope: the waveform" />
+
+<Strudel code={`s("saw").lpf(800).lfo({r: 2, da: 400})._spectrum({height: 200, width: 800})`} label="spectrum: frequency content" />
+
+| Function | Shows |
+| --- | --- |
+| `punchcard` / `_punchcard` | events in time, cheap (reuses the highlighting data) |
+| `pianoroll` / `_pianoroll` | the same, but drawn from the pattern before later transforms |
+| `scope` / `_scope` | oscilloscope |
+| `spectrum` / `_spectrum` | spectrum analyser |
+| `spiral` | cycles drawn as a spiral |
+| `pitchwheel` | pitch classes on a circle |
+| `wordfall` | the event values as falling text |
+
+`color()` sets the highlight colour, and it is patternable — useful for telling layers apart:
+
+<Strudel
+  code={`$: n("0 1 [4 3] 2").s("jazz").pan(0).color("cyan")
+$: n("0 1 [4 3] 2").s("jazz").pan(1).color("magenta").rev()`}
+  label="what jux(rev) actually does"
+/>
+
+## Documenting a patch
+
+Comments starting with `@` are a convention for metadata, used by the official REPL when you share
+a pattern:
+
+```
+// @title Midnight Drive
+// @by Your Name
+// @license CC BY-NC-SA
+```
+
+## Building a track, step by step
+
+Follow along — evaluate each block and notice that only one thing changes each time.
+
+**1. A pulse.**
+
+<Strudel code={`setcpm(128/4)
+drums: s("bd*4").bank("RolandTR909")`} />
+
+**2. Give it a top and a backbeat.**
+
+<Strudel
+  code={`setcpm(128/4)
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")`}
+/>
+
+**3. A bass, on its own orbit because it will be ducked.**
+
+<Strudel
+  code={`setcpm(128/4)
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`}
+/>
+
+**4. Duck the bass with the kick.** Same kick, extra chain.
+
+<Strudel
+  code={`setcpm(128/4)
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}
+/>
+
+**5. Make the bass move** with a filter envelope and a slow signal on the cutoff.
+
+<Strudel
+  code={`setcpm(128/4)
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}
+/>
+
+**6. A lead, in a bigger room, on a third orbit — and duck that too, gently.**
+
+<Strudel
+  code={`setcpm(128/4)
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4)
+  .off(1/8, x => x.add(note(12)).gain(.2)).orbit(3)
+
+duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}
+/>
+
+**7. Arrange it** — mask layers in and out over eight cycles.
+
+<Strudel
+  code={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+  .mask("<1 1 1 1 1 1 1 1>")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+  .mask("<0 0 1 1 1 1 1 1>")
+
+lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4)
+  .off(1/8, x => x.add(note(12)).gain(.2)).orbit(3)
+  .mask("<0 0 0 0 1 1 1 1>")
+
+duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}
+  label="the finished sketch"
+/>
+
+<Box kind="try">
+Ways to keep it moving without touching the structure:
+
+- `.sometimesBy(.15, x => x.speed(2))` on the drums
+- `.every(4, x => x.fast(2))` on the hats
+- `.ribbon(n, 4)` around the lead, changing `n` to browse variations
+- `.djf(sine.range(.3,.7).slow(16))` on the whole lead for filter sweeps
+</Box>
+
+## Going outside the browser
+
+| Package | What it gives you |
+| --- | --- |
+| `@strudel/midi` | `.midi()` to send notes to hardware or a DAW; `midin()` to read MIDI in |
+| `@strudel/osc` | `.osc()` to talk to SuperDirt / SuperCollider |
+| `@strudel/hydra` | live visuals driven by the same patterns |
+| `@strudel/web` | embed Strudel in your own page, like this site does |
+| `@strudel/repl` | the editor web component used on this site |
+| `@strudel/sampler` | serve a local folder of samples |
+
+<QA q="How do I keep a long live set interesting?">
+The same way the language is built: nest alternations at different rates. `<a b>` changes every
+cycle, `<a b>/4` every four, `<a b>/16` every sixteen. Stack several of those at different rates on
+different parameters and the patch stops repeating in any way a listener can track — while the code
+stays short enough to edit live.
+</QA>
+
+## Where to go next
+
+- The [cheat sheet](/reference/cheatsheet) and [signal chain](/reference/signal-chain) pages here.
+- The official [Strudel docs](https://strudel.cc/learn/getting-started/) — the function reference
+  is generated from source and is always current.
+- The [workshop](https://strudel.cc/workshop/getting-started/) if you want a second pass over the
+  basics in a different voice.
+- The `sounds` tab in the [real REPL](https://strudel.cc/): the only complete list of what is
+  loaded.

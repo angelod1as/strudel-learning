@@ -1,0 +1,260 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: mini-notation
+title: Mini-Notation
+lede: The little language inside the double quotes. Learn this and you can write any rhythm.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+Anything inside `"double quotes"` or `` `backticks` `` is not a string — it is a program in a tiny
+rhythm language borrowed from TidalCycles. It is the densest part of Strudel and the part worth
+learning by heart.
+
+## The one rule
+
+**A sequence is squeezed into exactly one cycle.** Add elements and they get shorter; the loop
+length never changes.
+
+<Strudel code={`note("c e g b")`} label="4 events, quarter cycle each" />
+
+<Strudel code={`note("c d e f g a b")`} label="7 events, same total time" />
+
+## Space — sequence
+
+Separate events with spaces. That is the whole of it.
+
+<Strudel code={`s("bd hh sd hh")`} />
+
+## `~` or `-` — rest
+
+<Strudel code={`s("bd ~ sd ~ bd ~ [~ sd] ~")`} />
+
+Both characters mean the same thing. `-` is easier to eyeball in a grid.
+
+## `[ ]` — subdivide
+
+A bracketed group takes up **one slot** of its parent sequence and divides it further.
+
+<Strudel code={`s("bd [hh hh] sd [hh bd]")`} />
+
+Nest as deep as you like:
+
+<Strudel code={`s("bd [[rim rim] hh] bd cp")`} />
+
+<Box>
+This is the heart of the language: you do not lay notes on a grid, you *subdivide time*. Any
+rhythm is a tree of divisions.
+</Box>
+
+## `*` — speed up, `/` — slow down
+
+<Strudel code={`s("bd hh*2 rim hh*3 bd [- hh*2] rim hh*2")`} />
+
+`*` works on groups too, and takes decimals:
+
+<Strudel code={`s("bd [hh rim]*2 bd [hh rim]*1.5")`} />
+
+`/` stretches a group over several cycles:
+
+<Strudel code={`note("[36 34 41 39]/4").s("gm_acoustic_bass")`} label="one note per cycle, 4 cycles to loop" />
+
+<Box kind="try">
+Push `*` far enough and rhythm becomes pitch. Try `s("bd hh*32 rim hh*16")`. At around 20 events
+per second your ear stops hearing repetitions and starts hearing a tone.
+</Box>
+
+## `< >` — one per cycle
+
+Angle brackets play **one element per cycle**. They are shorthand: `<a b c>` is exactly
+`[a b c]/3`.
+
+<Strudel code={`s("<bd hh sd oh>")` } label="one sound per cycle" />
+
+The advantage over `/n` is that adding elements does not require changing a number:
+
+<Strudel code={`note("60 <63 62 65 63>").s("gm_xylophone")`} label="steady note + rotating answer" />
+
+This is how you get variation without writing out every bar. Combine with `*` for "n per cycle,
+rotating":
+
+<Strudel code={`s("<bd bd hh bd rim bd hh bd>*8")` } />
+
+## `,` — parallel
+
+A comma stacks layers inside one pattern. This is polyphony and polyrhythm in one character.
+
+<Strudel code={`s("hh hh hh, bd casio")`} />
+
+Inside a subdivision too:
+
+<Strudel code={`s("bd*2, [~ cp]*2, [~ hh]*4")`} label="classic house" />
+
+## `@` — elongate
+
+`@n` makes an element `n` slots long. Default weight is 1.
+
+<Strudel code={`note("c@3 eb").s("gm_acoustic_bass")`} label="c is 3 units, eb is 1" />
+
+This is how you write swing by hand:
+
+<Strudel
+  code={`setcpm(60)
+n("<[4@2 4] [5@2 5] [6@2 6] [5@2 5]>*2")
+  .scale("<C2:mixolydian F2:mixolydian>/4")
+  .s("gm_acoustic_bass")`}
+  label="shuffle / triplet swing"
+/>
+
+## `!` — replicate
+
+`!n` repeats an element without speeding anything up — unlike `*n`, which divides the slot.
+
+<Strudel code={`note("c!3 e").s("piano")`} label="c c c e" />
+
+<Strudel code={`note("c*3 e").s("piano")`} label="[c c c] e — the three c's share one slot" />
+
+<Box kind="try">
+Play the two above back to back. `!` adds slots, `*` subdivides a slot, `@` widens a slot. Getting
+these three straight is 80% of mini-notation fluency.
+</Box>
+
+## `?` — randomly drop
+
+A trailing `?` gives each event a 50% chance of vanishing. Add a number for other odds.
+
+<Strudel code={`s("hh*8?")` } label="50% of hats survive" />
+
+<Strudel code={`s("hh*16?0.15")` } label="15% chance of removal — subtle humanising" />
+
+## `|` — random choice
+
+Pick one of the alternatives, freshly each cycle.
+
+<Strudel code={`note("[g3,b3,e4] | [a3,c3,e4] | [b3,d3,f#4]")`} />
+
+## `( )` — euclidean rhythms
+
+`x(pulses, steps)` spreads `pulses` hits as evenly as possible over `steps` slots. It is
+astonishingly good at producing rhythms that sound like real music from two numbers.
+
+<Strudel code={`s("bd(3,8)")` } label="the tresillo / pop clave" />
+
+Written out by hand that would be `s("bd ~ ~ bd ~ ~ bd ~")`.
+
+<Strudel code={`s("bd(<3 5 7>,8), hh*8")` } label="pattern the pulse count" />
+
+A third number rotates the pattern:
+
+<Strudel code={`s("bd(3,8,<0 2 5>), hh cp")`} label="same hits, different starting point" />
+
+| Euclid | Rhythm |
+| --- | --- |
+| `(2,8)` | half-note pulse |
+| `(3,8)` | tresillo, Cuban |
+| `(5,8)` | cinquillo |
+| `(7,16,14)` | Brazilian samba-ish |
+| `(3,4)` | three against four |
+
+## `{ }%` — polymeter
+
+Curly braces play sequences of **different lengths at the same step rate**. The `%n` says how many
+steps fit in a cycle.
+
+<Strudel code={`s("{bd rim, hh hh oh}%4")` } label="a 2-step and a 3-step loop, same tempo" />
+
+The two layers drift against each other and realign after 6 steps. Compare with a comma, where
+both layers are stretched to one cycle:
+
+<Strudel code={`s("[bd rim, hh hh oh]")`} label="polyrhythm: same length, different tempo" />
+
+<Box>
+**Polyrhythm** = different tempos, same bar length (`,`).
+**Polymeter** = same tempo, different bar lengths (`{}%`).
+</Box>
+
+## `_` — continue
+
+An underscore extends the previous event, exactly like `@`, but drawn as a grid.
+
+<Strudel code={`note("<[g3,b3,e4] _ [a3,c3,e4] [b3,d3,f#4]>*2")`} />
+
+## `^` — mark the step level (stepwise)
+
+By default, steps are counted at the top level: `"a [b c] d e"` is four steps. Prefix a subpattern
+with `^` to count at that level instead, which matters for the stepwise functions (`stepcat`,
+`expand`, `pace`).
+
+<Strudel code={`stepcat("bd hh hh", "bd hh hh cp hh").s()`} label="steps distributed evenly, not cycles" />
+
+## Multi-line patterns
+
+Backticks let a pattern span lines, which is how you draw a step sequencer:
+
+<Strudel
+  code={`setcpm(90/4)
+s(\`
+[-  -  oh - ] [-  -  -  - ] [-  -  -  - ] [-  -  -  - ],
+[hh hh -  - ] [hh -  hh - ] [hh -  hh - ] [hh -  hh - ],
+[-  -  -  - ] [cp -  -  - ] [-  -  -  - ] [cp -  -  - ],
+[bd -  -  - ] [-  -  -  bd] [-  -  bd - ] [-  -  -  bd]
+\`)`}
+  label="16-step sequencer, by hand"
+/>
+
+## Patterns inside arguments
+
+Mini-notation is not only for `s` and `note`. **Every** function argument accepts it, which is
+what makes Strudel feel alive:
+
+<Strudel
+  code={`s("sawtooth")
+  .note("c2 eb2")
+  .lpf("<400 800 1600 3200>")
+  .room("0 0.4")
+  .gain("[.6 1]*2")`}
+  label="four independently patterned parameters"
+/>
+
+<QA q="How do parameters of different lengths combine?">
+By default the **structure comes from the left**: the pattern you are chaining onto decides when
+events happen, and the argument pattern is sampled at those moments. So `s("bd*4").lpf("100 900")`
+plays four kicks — the first two dark, the last two bright. The `lpf` pattern never adds events.
+</QA>
+
+## Function equivalents
+
+Everything in mini-notation has a JavaScript twin. Use whichever reads better.
+
+| Mini | Function |
+| --- | --- |
+| `"x*2"` | `"x".fast(2)` |
+| `"x/2"` | `"x".slow(2)` |
+| `"x y"` | `seq("x","y")` |
+| `"<x y>"` | `cat("x","y")` |
+| `"x,y"` | `stack("x","y")` |
+| `"x@3 y@2"` | `stepcat([3,"x"],[2,"y"])` |
+| `"x(3,8)"` | `"x".euclid(3,8)` |
+| `"x(3,8,1)"` | `"x".euclidRot(3,8,1)` |
+| `"{a b c, x y}"` | `polymeter(["a","b","c"],["x","y"])` |
+| `"~"` | `silence` |
+
+## Recap
+
+| Symbol | Meaning |
+| --- | --- |
+| space | sequence |
+| `~` `-` | rest |
+| `[ ]` | subdivide a slot |
+| `< >` | one element per cycle |
+| `*` `/` | faster / slower |
+| `@` `_` | longer |
+| `!` | repeat without speeding up |
+| `,` | parallel layers |
+| `?` | randomly drop |
+| `\|` | random choice |
+| `(p,s,r)` | euclidean rhythm |
+| `{ }%n` | polymeter, n steps per cycle |
+| `:` | sample index |

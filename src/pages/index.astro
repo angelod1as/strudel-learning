@@ -1,0 +1,79 @@
+---
+import Base from '../layouts/Base.astro';
+import Strudel from '../components/Strudel.astro';
+import { CHAPTERS, SITE_TITLE } from '../consts';
+
+const demo = `// press the play button, then edit and press ctrl+enter
+setcpm(120/4)
+
+$: s("bd*4").bank("RolandTR909").duckorbit(2).duckattack(0.25).duckdepth(0.9)
+
+$: n("0 [~ 3] 5 [7 ~]").scale("C2:minor")
+  .s("sawtooth").lpf(sine.range(300, 1600).slow(8)).lpq(6)
+  .room(0.4).orbit(2)
+
+$: s("hh*8").gain("[.3 .7]*4").pan(sine.fast(2)).orbit(3)`;
+---
+
+<Base title="Home">
+  <section class="hero">
+    <p class="eyebrow">Interactive</p>
+    <h1>{SITE_TITLE}</h1>
+    <p class="lede">
+      Strudel is live-codeable music in the browser. This is a guided track through its syntax and —
+      more importantly — what its functions actually <em>do</em>: filters, LFOs, envelopes, orbits
+      and ducking. Every code block on this site is a real, editable, playable Strudel REPL.
+    </p>
+  </section>
+
+  <Strudel code={demo} label="taste test — a kick ducking a bassline" />
+
+  <p>
+    That patch already uses most of what this site teaches: mini-notation rhythm, a scale, a
+    resonant lowpass swept by a signal, separate <strong>orbits</strong> for bass and hats, and a
+    kick <strong>ducking</strong> the bass orbit. By the end you will be able to write it from
+    scratch and know why every line is there.
+  </p>
+
+  <h2>How to use this</h2>
+  <ul>
+    <li>
+      <strong>Click into any code box and press <code>ctrl+enter</code></strong> to play it,
+      <code>ctrl+.</code> to stop. Editing is the point — change a number, re-evaluate, listen.
+    </li>
+    <li>
+      Only one box plays at a time. Starting a new one stops the previous.
+    </li>
+    <li>
+      Chapters build on each other. Skipping ahead to
+      <a href="/tutorial/ducking">Ducking</a> works, but it assumes
+      <a href="/tutorial/orbits">Orbits</a>.
+    </li>
+    <li>
+      Sounds load lazily. The first time you trigger a new sample there may be a short silence.
+    </li>
+  </ul>
+
+  <h2>The track</h2>
+  <div class="card-grid">
+    {
+      CHAPTERS.map((chapter, i) => (
+        <a class="card" href={`/tutorial/${chapter.slug}`}>
+          <div class="n">
+            {String(i + 1).padStart(2, '0')} · {chapter.part}
+          </div>
+          <div class="t">{chapter.title}</div>
+          <div class="b">{chapter.blurb}</div>
+        </a>
+      ))
+    }
+  </div>
+
+  <h2>Credits</h2>
+  <p>
+    Built on top of the official <a href="https://strudel.cc/">Strudel</a> documentation and source.
+    The embedded editors are the real thing — the
+    <code>@strudel/repl</code> web component. When in doubt, the
+    <a href="https://strudel.cc/learn/getting-started/">official docs</a> are the source of truth.
+  </p>
+</Base>

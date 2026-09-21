@@ -1,0 +1,118 @@
+---
+layout: ../../layouts/Reference.astro
+title: Signal Chain
+lede: The exact order in which Strudel applies things to a sound, and what that implies.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+
+## Per event
+
+Everything below happens **for each triggered event**, in this fixed order. An effect only appears
+once, so writing it twice just overwrites the value.
+
+```
+1. event triggered        start time + duration (note length, ADSR, clip)
+                          if max polyphony is exceeded, old voices are killed
+                          events whose s is "-", "~" or "_" are skipped
+
+2. source                 sample playback or oscillator
+                          detune-style effects live here:
+                          detune, unison, spread, penv, vib, fm, partials, phases
+
+3. local effect chain     stretch
+                          gain          ← the amplitude ADSR is applied here
+                          lpf
+                          hpf
+                          bandpass
+                          vowel
+                          coarse
+                          crush
+                          shape
+                          distort
+                          tremolo
+                          compressor
+                          pan
+                          phaser
+                          postgain
+
+4. split                  dry     (level: dry)
+                          delay   (level: delay)
+                          reverb  (level: room)
+                          analysers for scope / spectrum
+```
+
+## Per orbit
+
+```
+5. sum                    dry + delay + reverb, for this orbit
+6. duck                   duckorbit modulates the whole orbit's volume
+7. mixer                  out (default: all orbits summed to channels 1+2)
+```
+
+<Box kind="warn">
+**One delay and one reverb per orbit.** Two patterns on the same orbit with different `roomsize`
+or `delaytime` values will fight; the last one evaluated wins. Give them separate
+[orbits](/tutorial/orbits).
+</Box>
+
+<Box kind="warn">
+**Local effects are single-use.** `s("bd").lpf(100).distort(2).lpf(800)` applies only `lpf(800)`.
+To place the same effect twice, or to reorder the chain, use `FX()`.
+</Box>
+
+## Overriding the order with FX()
+
+<Strudel
+  code={`s("[bd <hh [bd | lt | oh]>]*4").dec(.4)
+  .FX(
+    phaser(0.5).gain(2),
+    bpf(800),
+    distort(1.3),
+    room(0.2),
+    delay(0.5).gain(1.25),
+    distort(0.3),
+  ).fxr(1.7)`}
+  label="two distortions, explicit order"
+/>
+
+Chained `FX()` calls nest: the outermost chain is applied last.
+
+<Strudel
+  code={`s("saw").fm(0.5)
+  .delay(0.3)
+  .FX(coarse(4))
+  .FX(lpf(500).lpe(4).lpa(1).lpd(2))
+  .FX(distort(1))`}
+/>
+
+An `lfo()` can address an effect inside an `FX()` chain by index with `fxi`:
+
+<Strudel
+  code={`s("saw").FX(
+  distort(3),
+  gain(0.3), // index 1
+  lpf(400)
+).lfo({s: 16, dr:2, c:"gain", fxi: 1})`}
+/>
+
+## What actually varies during a note
+
+Most parameters are sampled once, when the event is triggered, and then held. These are the
+exceptions — the things that genuinely move while a note sounds:
+
+- the amplitude envelope (`attack`, `decay`, `sustain`, `release`)
+- the pitch envelope (`penv` and its ADSR)
+- the FM envelope (`fmenv`)
+- the filter envelopes (`lpenv`, `hpenv`, `bpenv`)
+- `tremolo`
+- `phaser`
+- `vib`
+- ducking (`duckorbit`)
+- anything driven by `lfo()` or `env()`
+
+<Box>
+If you want a parameter that is not on that list to move continuously, you have two options:
+create more events (`segment`/`seg`), or use `lfo()` to modulate it at audio rate.
+</Box>

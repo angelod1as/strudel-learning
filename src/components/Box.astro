@@ -1,0 +1,13 @@
+---
+interface Props {
+  title?: string;
+  kind?: 'note' | 'try' | 'warn';
+}
+const { kind = 'note', title } = Astro.props;
+const fallback = { note: 'Note', try: 'Try it', warn: 'Careful' }[kind];
+---
+
+<div class="box" data-kind={kind}>
+  <div class="box-title">{title ?? fallback}</div>
+  <slot />
+</div>

@@ -1,0 +1,17 @@
+---
+interface Props {
+  code: string;
+  label?: string;
+  hint?: string;
+}
+const { code, label = 'strudel', hint = 'ctrl+enter · ctrl+.' } = Astro.props;
+---
+
+<div class="strudel">
+  <div class="strudel-label">
+    <button class="strudel-play" type="button" aria-label="play or stop">▶ play</button>
+    <span class="strudel-name">{label}</span>
+    <span class="hint">{hint}</span>
+  </div>
+  <strudel-editor code={code.trim()}></strudel-editor>
+</div>

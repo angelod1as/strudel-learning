@@ -1,0 +1,246 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: ducking
+title: Ducking (Sidechain)
+lede: Making one sound push another one out of the way. In Strudel this is a first-class effect, and it works on orbits.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+## What ducking is
+
+In a DAW you would put a compressor on the bass and feed the kick into its sidechain input, so that
+every kick squashes the bass for a moment. The result is the pumping you hear in house, techno and
+most modern pop.
+
+Strudel skips the compressor entirely. **A pattern can directly duck an orbit.** The kick pattern
+says "whenever I hit, turn orbit 2 down", and that is the whole mechanism.
+
+<Box>
+Because ducking targets an **orbit**, [the orbit chapter](/tutorial/orbits) is a prerequisite. The
+thing you duck is a bus, not a pattern.
+</Box>
+
+## The minimal example
+
+Two patterns. The bass is put on orbit 2; the kick ducks orbit 2.
+
+<Strudel
+  code={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(1)`}
+  label="the canonical ducking patch"
+/>
+
+<Box kind="try">
+Delete `.duckorbit(2)` and re-evaluate. The two patterns still play, but they now sit on top of
+each other and the bass masks the kick. Put it back. That is the entire point of the effect.
+</Box>
+
+Note what the ducking pattern is: a normal, audible kick. It does two jobs at once — you hear it,
+*and* it ducks. If you only want the ducking and not the sound, silence it with `postgain(0)`:
+
+<Strudel
+  code={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0.01).postgain(0)`}
+  label="an inaudible ducker — a pure sidechain trigger"
+/>
+
+## The four controls
+
+| Control | Aliases | Range | Meaning |
+| --- | --- | --- | --- |
+| `duckorbit` | `duck` | orbit number(s) | which orbit(s) to duck |
+| `duckdepth` | — | 0…1 | how far down it goes |
+| `duckonset` | `duckons` | seconds | time to **reach** the lowest volume |
+| `duckattack` | `duckatt`, `datt` | seconds | time to **return** to normal volume |
+
+<Box kind="warn">
+The names are counter-intuitive if you come from compressors. `duckonset` is the *downward* ramp
+(what a compressor calls attack) and `duckattack` is the *recovery* (what a compressor calls
+release). Read them as: onset = going down, attack = coming back.
+</Box>
+
+### duckdepth — how much
+
+<Strudel
+  code={`stack(
+  n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2),
+  s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth("<1 .9 .6 0>")
+)`}
+  label="full duck, then less, then off"
+/>
+
+Depth 1 is a complete gate. Depth 0.3–0.6 is what most records actually use — enough to feel the
+pump, not enough to notice the gap.
+
+### duckattack — how fast it comes back
+
+This is the control that decides the *genre*.
+
+<Strudel
+  code={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2)
+   .duckattack("<0.2 0 0.4>").duckdepth(1)`}
+  label="0.2 = normal pump, 0 = instant (barely audible), 0.4 = long swell"
+/>
+
+Short recovery (0.05–0.1) reads as tightness. Long recovery (0.3–0.5) reads as a breathing,
+building pad. At 0 the duck is over before you perceive it.
+
+### duckonset — how fast it goes down, and clicks
+
+Setting the onset to exactly 0 means an instantaneous volume jump, which is a click:
+
+<Strudel
+  code={`$: freq("63.2388").s("sine").orbit(2).gain(4)
+
+$: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0).postgain(0)`}
+  label="listen for the click at the start of each duck"
+/>
+
+A tiny onset removes it:
+
+<Strudel
+  code={`$: freq("63.2388").s("sine").orbit(2).gain(4)
+
+$: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0.01).postgain(0)`}
+  label="0.01s onset — no click"
+/>
+
+<Box>
+Rule: `duckonset(0.01)` or thereabouts is the safe default. Set it to 0 only if you want the click
+as a percussive artefact.
+</Box>
+
+A **long** onset is not a mistake to avoid — it is a rhythmic effect in its own right. The volume
+slides down slowly rather than dropping:
+
+<Strudel
+  code={`$: s("pink").distort("2:1").orbit(4)
+$: s("hh*16").orbit(7)
+$: s("bd*4").bank("tr909").duckorbit("4:7").duckonset("0.3:0.003").duckattack(0.25)`}
+  label="noise swells down slowly; hats duck instantly"
+/>
+
+## Ducking several orbits at once
+
+`duckorbit` accepts a colon-separated list, and every other duck control can then take a matching
+list — one value per orbit.
+
+<Strudel
+  code={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+$: s("hh*16").orbit(3)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit("2:3").duckattack(0.2).duckdepth(1)`}
+  label="one kick ducking both the bass and the hats"
+/>
+
+Different amounts per orbit — duck the bass hard, the hats lightly:
+
+<Strudel
+  code={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+$: s("hh*16").orbit(3)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit("2:3").duckattack(0.2).duckdepth("1:0.5")`}
+  label="depth 1 on orbit 2, depth 0.5 on orbit 3"
+/>
+
+Different recovery times per orbit:
+
+<Strudel
+  code={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+$: s("hh*16").orbit(5)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit("2:5").duckattack("0.4:0.1")`}
+  label="the bass breathes slowly, the hats snap back"
+/>
+
+<Box kind="warn">
+The per-orbit list syntax only works if you targeted multiple orbits in the first place. Writing
+`duckdepth("1:0.5")` with a single `duckorbit(2)` will not do anything useful.
+</Box>
+
+## Ducking is continuous
+
+Ducking is one of the few effects that genuinely varies **during** a sounding note (along with the
+ADSR envelopes, `tremolo`, `phaser` and `vib`). That is why it works on a long held pad, where a
+pattern-level `gain` would not:
+
+<Strudel
+  code={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
+
+$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)`}
+  label="one note per two cycles, pumping four times a cycle"
+/>
+
+## Recipes
+
+### The house / techno pump
+
+<Strudel
+  code={`setcpm(126/4)
+
+bass: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4)
+  .decay(.2).sustain(0).orbit(2)
+
+pad: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm")
+  .attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
+
+drums: s("bd*4").bank("RolandTR909")
+  .duckorbit("2:3").duckdepth("1:0.6").duckattack("0.18:0.3").duckonset(0.01)
+
+top: s("[~ hh]*4, ~ cp").bank("RolandTR909").gain(.6).orbit(4)`}
+  label="kick ducks bass hard and pad gently; hats and clap untouched"
+/>
+
+### Ducking without a kick on the beat
+
+The ducker does not have to be a kick, or even on the downbeat. Any pattern can be the trigger:
+
+<Strudel
+  code={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
+
+$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7)
+   .duckattack(.1).duckonset(.005).postgain(0)`}
+  label="an offbeat, silent ducker — a rhythm made of absence"
+/>
+
+### Tremolo via ducking
+
+Put a fast silent ducker on an orbit and you have a gate:
+
+<Strudel
+  code={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(800).orbit(2)
+
+$: s("bd*16").duckorbit(2).duckdepth(1).duckattack(.03).duckonset(.003).postgain(0)`}
+  label="16th-note gating"
+/>
+
+<QA q="duckorbit, tremolo, or an lfo on gain — which gate should I use?">
+`duckorbit` when the gate should follow a **rhythm**, and especially when the trigger is a real
+sound in the mix — it is the only one that is genuinely rhythmic and that acts on a whole bus.
+`tremolo` when you want a smooth, continuous wobble on one voice. `lfo({c:'gain', dc:-1})` when you
+need an unusual shape, skew or curve. For sidechain, always `duckorbit`.
+</QA>
+
+<QA q="Can a pattern duck its own orbit?">
+Yes, and it will duck itself — usually not what you want. Keep the ducker on a different orbit
+from its target.
+</QA>
+
+## Recap
+
+| Control | Purpose |
+| --- | --- |
+| `duckorbit(n)` / `duck` | which orbit(s) this pattern ducks |
+| `duckorbit("2:3")` | duck several orbits |
+| `duckdepth(0…1)` | how far down — 1 is a full gate |
+| `duckonset(s)` | time to go down; ~0.01 avoids clicks |
+| `duckattack(s)` | time to come back — this sets the feel |
+| `"a:b"` on any of them | per-orbit values, in the same order |
+| `postgain(0)` | make the ducker silent but still ducking |

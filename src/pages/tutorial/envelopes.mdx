@@ -1,0 +1,197 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: envelopes
+title: Envelopes
+lede: An envelope is the shape of a value over the life of one note. Get these right and everything else sounds better.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+Most parameters in Strudel are frozen at the moment a note is triggered. Envelopes are the
+exception: they move **during** the note. There are four kinds — amplitude, filter, pitch, and FM —
+and they all use the same ADSR shape.
+
+## ADSR
+
+| Stage | Meaning | Unit |
+| --- | --- | --- |
+| `attack` (`att`) | time to fade in to full volume | seconds |
+| `decay` (`dec`) | time to fall from full to the sustain level | seconds |
+| `sustain` (`sus`) | level held while the note lasts | 0–1 |
+| `release` (`rel`) | time to fade out after the note ends | seconds |
+
+<Strudel
+  code={`note("c3 bb2 f3 eb3")
+  .s("sawtooth").lpf(600)
+  .attack(.1)
+  .decay(.1)
+  .sustain(.25)
+  .release(.2)`}
+  label="a pad-ish envelope"
+/>
+
+<Box kind="try">
+Change one value at a time and listen:
+
+- attack `.5` vs `0` — slow swell vs instant hit
+- decay `.5` vs `0`
+- sustain `1` vs `.25` vs `0`
+- release `0` vs `.5` vs `1`
+
+Note that **decay does nothing when sustain is 1** — there is nothing to decay to.
+</Box>
+
+`adsr()` packs all four into one string, which keeps chains short:
+
+<Strudel code={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).adsr(".1:.1:.5:.2")`} />
+
+## The two useful extremes
+
+**Percussive**: sustain 0, short decay. This is how you get plucks, blips, and synth drums out of
+any sound.
+
+<Strudel code={`note("c2*8").s("sawtooth").lpf(1200).decay(.08).sustain(0)`} label="pluck" />
+
+**Pad**: slow attack, sustain 1, long release.
+
+<Strudel code={`note("<c2 eb2 g2 bb1>").s("sawtooth").lpf(700).attack(.6).sustain(1).release(1.5)`} label="pad" />
+
+## Note length is not envelope length
+
+There are three different ways to make a sound shorter, and they are not interchangeable:
+
+<Strudel code={`note("f ab bb c").clip("<2 1 .5 .25>")`} label="clip: multiply the event duration" />
+
+<Strudel code={`note("f ab bb c").release("<2 1 .5 .25>")`} label="release: fade after the note ends" />
+
+<Strudel code={`note("f ab bb c").decay("<2 1 .5 .25>").sustain(0)`} label="decay: fade during the note" />
+
+<Box>
+- `clip` (alias `legato`) changes how long the **event** lasts. `clip(2)` makes notes overlap;
+  `clip(.5)` makes them staccato with gaps.
+- `release` changes what happens **after** the event ends — it is how you get overlapping tails
+  from a non-overlapping pattern.
+- `decay`+`sustain(0)` changes the shape **within** the event.
+</Box>
+
+For samples there is a fourth: `end` cuts relative to the sample's own length.
+
+<Strudel code={`s("oh*4").end("<1 .5 .25 .1>")`} label="end: cut the audio file itself" />
+
+## Filter envelopes
+
+Every filter gets its own envelope, prefixed `lp`, `hp` or `bp`. The extra parameter is `lpenv`,
+the **depth** — how many octaves the cutoff moves.
+
+<Strudel
+  code={`note("g1 bb1 <c2 eb2> d2")
+  .s("sawtooth")
+  .lpf(400).lpenv(4)`}
+  label="decaying filter sweep (the default shape)"
+/>
+
+Set `lpa` (attack) and the sweep goes upward instead:
+
+<Strudel
+  code={`note("g1 bb1 <c2 eb2> d2")
+  .s("sawtooth").lpq(8)
+  .lpf(400).lpa(.2).lpenv(4)`}
+  label="attacking filter"
+/>
+
+Both at once — the classic acid shape:
+
+<Strudel
+  code={`note("g1 bb1 <c2 eb2> d2")
+  .s("sawtooth").lpq(8)
+  .lpf(400).lpa(.1).lpd(.1).lpenv(4)`}
+/>
+
+Full set per filter: `lpattack`/`lpa`, `lpdecay`/`lpd`, `lpsustain`/`lps`, `lprelease`/`lpr`,
+`lpenv`/`lpe`. Same with `hp*` and `bp*`.
+
+<Box kind="try">
+Negative depth flips the envelope: `lpenv(-3)` starts bright and closes down. Try it on the
+example above.
+</Box>
+
+## Pitch envelopes
+
+`penv(semitones)` sweeps the pitch over the note. Small amounts add life; large amounts make drums.
+
+<Strudel code={`note("c").penv("<12 7 1 .5 0 -1 -7 -12>")`} label="pitch envelope depth" />
+
+The single most useful application — a synthesised kick drum:
+
+<Strudel
+  code={`note("g1*4").s("sine")
+  .pdec(.5).penv(32).pcurve(1)
+  .decay(.2).sustain(0)`}
+  label="pitch drops 32 semitones, exponentially = kick"
+/>
+
+| Control | Meaning |
+| --- | --- |
+| `penv` | depth in semitones (negative flips) |
+| `pattack` / `patt` | time to reach the target pitch |
+| `pdecay` / `pdec` | time to fall back |
+| `prelease` | tail after note end |
+| `pcurve` | 0 linear, 1 exponential (use 1 for kicks) |
+| `panchor` | 0 = sweep up from the note, 1 = sweep down to it |
+
+<Strudel code={`note("c c4").penv(12).panchor("<0 .5 1 .5>")`} label="panchor decides where the note sits in the sweep" />
+
+Musical rather than percussive use:
+
+<Strudel
+  code={`n("<-4,0 5 2 1>*<2!3 4>")
+  .scale("<C F>/8:pentatonic")
+  .s("gm_electric_guitar_jazz")
+  .penv("<.5 0 7 -2>*2").vib("4:.1")
+  .phaser(2).delay(.25).room(.3).size(4).fast(1.5)`}
+  label="pitch envelopes as expression"
+/>
+
+## The general-purpose envelope: env()
+
+Newer Strudel has `env({...})`, which can attach an ADSR to **any** control, not just the built-in
+ones. The control being modulated is either named explicitly or taken from whatever came
+immediately before in the chain.
+
+<Strudel code={`s("saw").note("F1").lpf(500).env({ a: 1 })`} label="1 second attack on the lpf" />
+
+<Strudel
+  code={`s("saw").lpf(500).diode(0.3)
+  .env({ c: "lpf", a: 0.5, d: 0.5 })`}
+  label="c: names the target explicitly"
+/>
+
+Curve controls make it snap or relax:
+
+<Strudel
+  code={`s("saw").env({ d: 1 }).note("F1")
+  .lpq(4).lpf(50)
+  .env({ a: 0.1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })`}
+  label="ac / dc / rc: -1 relaxed, 1 snappy"
+/>
+
+<QA q="Which continuous things actually move during a note?">
+Most parameters are sampled once, when the event is triggered. The ones that genuinely vary
+in time are: the amplitude ADSR, the pitch envelope, the FM envelope, the filter envelopes,
+`tremolo`, `phaser`, `vib`, ducking, and anything driven by `lfo()` or `env()`. Everything else is
+a step value per event. [Chapter 08](/tutorial/signals) explains the workaround for the rest.
+</QA>
+
+## Recap
+
+| Control | Purpose |
+| --- | --- |
+| `attack` `decay` `sustain` `release` | amplitude envelope |
+| `adsr("a:d:s:r")` | all four at once |
+| `clip` / `legato` | event duration multiplier |
+| `end` | cut a sample by its own length |
+| `lpa lpd lps lpr lpenv` | filter envelope (also `hp*`, `bp*`) |
+| `penv patt pdec pcurve panchor` | pitch envelope |
+| `env({...})` | ADSR on any control |

@@ -1,0 +1,155 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: getting-started
+title: Getting Started
+lede: What a Strudel program is, how to run it, and how to stack several patterns at once.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+Strudel is a live coding language for music. You write a little JavaScript, press a key, and it
+starts making sound. You keep editing while it plays; nothing ever stops unless you tell it to.
+
+## Your first pattern
+
+<Strudel code={`sound("bd hh sd hh")`} label="click in, then ctrl+enter" />
+
+<Box kind="try">
+1. Click into the text above.
+2. Press `ctrl+enter` — the pattern starts and the currently playing word lights up.
+3. Change `sd` to `cp` and press `ctrl+enter` again. It swaps **without stopping**.
+4. Press `ctrl+.` to stop.
+</Box>
+
+Those three shortcuts are the whole interface:
+
+| Key | Does |
+| --- | --- |
+| `ctrl+enter` | evaluate (start or update) |
+| `ctrl+.` | stop everything |
+| `ctrl+/` | comment / uncomment the current line |
+
+## Reading the syntax
+
+Strudel code is JavaScript, but you only need a sliver of it. Look at this:
+
+<Strudel code={`note("c a f e").s("piano")`} />
+
+- `note` and `s` are **functions**. They take an argument in parentheses.
+- The `.` before `s` makes it a **chained** call: do `note`, then apply `s` to the result.
+- The order of chaining is left to right, like guitar pedals in a row.
+
+Chains get long, and that is normal. Newlines are free:
+
+<Strudel
+  code={`note("a3 c#4 e4 a4")
+  .s("sawtooth")
+  .lpf(500)
+  //.delay(0.5)
+  .room(0.5)`}
+/>
+
+<Box kind="try">
+Delete the `//` in front of `.delay(0.5)` and re-evaluate. `//` is a line comment — the fastest
+mute button in live coding. `ctrl+/` toggles it.
+</Box>
+
+## Double quotes are special
+
+This is the single most important syntax rule in Strudel:
+
+<Box>
+- `"double quotes"` are parsed as **mini-notation** — a pattern.
+- `'single quotes'` are a plain string — **not** a pattern.
+- Backticks `` ` `` are mini-notation too, and can span several lines.
+</Box>
+
+So `"bd sd"` is a two-event sequence, while `'bd sd'` is just some text. This is why a scale name
+with a space has to be single-quoted or colon-joined:
+
+<Strudel code={`n("0 2 4 6").scale('C major').s("piano")`} label="single quotes: one scale name" />
+
+<Strudel code={`n("0 2 4 6").scale("C:major C:minor").s("piano")`} label="double quotes: a pattern of two scales" />
+
+The second version alternates scales across the cycle, because double quotes turned it into a
+pattern. Same function, completely different musical result.
+
+## Playing several patterns at once
+
+Prefix each pattern with `$:` and they all run in parallel:
+
+<Strudel
+  code={`$: s("bd*4").bank("RolandTR909")
+
+$: s("~ cp").bank("RolandTR909")
+
+$: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600)`}
+  label="three voices"
+/>
+
+<Box kind="try">
+Change one `$` to `_$` and re-evaluate. That mutes just that line — the underscore is your
+per-track mute. Change it back to unmute.
+</Box>
+
+You can also name them, which makes a long patch readable and gives you labelled mutes:
+
+<Strudel
+  code={`drums: s("bd*4, ~ cp").bank("RolandTR909")
+
+bass: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600).decay(.2).sustain(0)
+
+hats: s("hh*8").gain("[.3 .8]*4")`}
+  label="named tracks"
+/>
+
+<Box>
+Any `name:` at the start of a line works the same way as `$:`. Prefix it with `_` (`_drums:`) to
+mute it.
+</Box>
+
+## Stopping one voice from inside the code
+
+`hush()` silences the pattern it is chained to. Useful when you want to kill a voice but keep the
+code around:
+
+<Strudel
+  code={`$: s("bd*4").bank("RolandTR909")
+$: s("hh*8").gain(.6).hush()`}
+/>
+
+## What a "cycle" is
+
+Everything in Strudel is measured in **cycles**, not bars. A cycle is one loop of the pattern, and
+by default it lasts 2 seconds. Whatever you put in a sequence gets squeezed into one cycle:
+
+<Strudel code={`sound("bd hh sd hh")`} label="4 events in one cycle" />
+
+<Strudel code={`sound("bd hh sd hh bd hh sd hh")`} label="8 events in the same cycle — twice as fast" />
+
+<Box kind="warn">
+This trips up everyone coming from a DAW. Adding notes does **not** make the pattern longer, it
+makes each note shorter. [Chapter 04](/tutorial/tempo) is all about bending this to your will.
+</Box>
+
+<QA q="Why did my pattern get quieter / not play at all the first time?">
+Samples are lazy-loaded: the audio file is only fetched when you first trigger it. The first hit of
+a new sound can be silent while it downloads. Evaluate again and it will be there.
+</QA>
+
+## Recap
+
+| Thing | Meaning |
+| --- | --- |
+| `ctrl+enter` / `ctrl+.` | evaluate / stop |
+| `.` | chain a function onto a pattern |
+| `"..."` | mini-notation pattern |
+| `'...'` | plain string, not a pattern |
+| `//` | comment — the live coder's mute |
+| `$:` / `name:` | run this line as its own parallel track |
+| `_$:` / `_name:` | mute that track |
+| `.hush()` | silence this pattern |
+
+Next: how to choose *what* makes the sound.

@@ -1,0 +1,178 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: tempo
+title: Tempo & Cycles
+lede: Strudel has no bars and no time signature. It has cycles. Here is how to get a BPM out of them.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+## CPS, not BPM
+
+Tempo in Strudel is **cycles per second**, default `0.5` — one cycle every two seconds.
+
+<Strudel code={`s("bd")`} label="0.5 cps: one kick every 2s" />
+
+<Strudel code={`s("bd bd bd bd")`} label="still 0.5 cps — but it feels like 120 bpm" />
+
+Nothing about the tempo changed between those two. All that changed is how many events you packed
+into the cycle. Perceived tempo is a property of the content, not the clock:
+
+<Strudel code={`s("bd hh bd hh")`} label="same cps again — feels slower, because hats read as offbeats" />
+
+## Setting a tempo you can talk about
+
+`setcpm(x)` sets cycles per **minute**. The useful formula is:
+
+<Box>
+`setcpm(bpm / beatsPerCycle)`
+
+where `beatsPerCycle` is how many beats *you* hear in one cycle.
+</Box>
+
+So a 4-on-the-floor cycle at 128 bpm:
+
+<Strudel
+  code={`setcpm(128/4)
+s("bd*4, [~ cp]*2, hh*8").bank("RolandTR909")`}
+  label="128 bpm, 4 beats per cycle"
+/>
+
+Two beats per cycle at the same bpm:
+
+<Strudel
+  code={`setcpm(128/2)
+s("bd sd, hh*4").bank("RolandTR909")`}
+/>
+
+`setcps(x)` does the same thing in cycles per second. `setcpm(x)` is `setcps(x/60)`.
+
+<Box kind="try">
+Take the 128 bpm example and change `128/4` to just `128`. It becomes absurdly fast — you asked
+for 128 *cycles* per minute, and each cycle holds four kicks.
+</Box>
+
+## There are no bars
+
+Strudel does not know what a bar is. If you want four bars of something, you write four things in
+angle brackets:
+
+<Strudel
+  code={`setcpm(110/4)
+s(\`<
+[bd sd bd rim, hh*8]
+[bd sd bd rim*2, hh*8]
+>\`)`}
+  label="two 'bars' as two cycles"
+/>
+
+But usually you should not. The same music, expressed as a pattern rather than a list:
+
+<Strudel
+  code={`setcpm(110/2)
+s("bd <sd rim*<1 2>>, hh*4")`}
+  label="the same idea, without redundancy"
+/>
+
+<Box>
+Writing bars out is transcription. Nesting `< >` inside `< >` is composition. Strudel rewards the
+second: variation comes from nesting alternation at different rates, not from writing more bars.
+</Box>
+
+## Time signatures
+
+A time signature is just "how many things in the cycle". Seven:
+
+<Strudel code={`s("bd ~ rim bd bd rim ~")`} />
+
+Five:
+
+<Strudel code={`s("bd hh hh bd hh, rim ~ ~ ~ ~")`} />
+
+To switch signatures while keeping the pulse steady, weight the cycles with `@`:
+
+<Strudel
+  code={`setcpm(110*2)
+s(\`<
+[bd hh rim]@3
+[bd hh rim sd]@4
+>\`)`}
+  label="3/4 then 4/4, constant beat length"
+/>
+
+Drop the `@` weights and the beat itself stretches — this is **metric modulation**:
+
+<Strudel
+  code={`setcpm(110/2)
+s(\`<
+[bd hh rim]
+[bd hh rim sd]
+>\`)`}
+  label="three and four share the same cycle: the pulse changes"
+/>
+
+## Changing speed after the fact
+
+`fast` and `slow` scale the time of a whole pattern. They are the function twins of `*` and `/`.
+
+<Strudel code={`s("bd*4, ~ rim ~ cp").slow(2)`} />
+
+Because arguments are patterns, the speed can itself be patterned:
+
+<Strudel code={`s("bd*4, ~ rim ~ cp").fast("<1 [2 4]>")`} />
+
+Stacking several speeds at once gives you phasing for free:
+
+<Strudel code={`note("c2, eb3 g3 [bb3 c4]").s("piano").slow("0.5,1,1.5")`} label="three tempos of one pattern" />
+
+## Nudging: early and late
+
+Move a pattern in time without changing its speed. Values are in cycles.
+
+<Strudel code={`$: s("bd*4")
+$: s("hh*4").late(0.02).gain(.7)`} label="hats dragging just behind the kick" />
+
+Tiny values are a groove tool; large values reorder the music.
+
+## Swing
+
+`swingBy(amount, subdivisions)` splits the cycle into `n` slices and pushes the second half of each
+slice late. `swing(n)` is `swingBy(1/3, n)`.
+
+<Strudel code={`s("hh*8").swingBy(1/3, 4)`} />
+
+<Strudel code={`$: s("hh*8").swing(4)
+$: s("bd ~ sd ~")`} label="swung hats over a straight beat" />
+
+## Looping a slice of time: ribbon
+
+`ribbon(offset, cycles)` takes `cycles` cycles starting at `offset` and loops just that. It turns
+an evolving or random pattern into a fixed, repeatable riff:
+
+<Strudel code={`n(irand(8).segment(4)).scale("c:pentatonic").ribbon(1337, 2)`} label="freeze 2 cycles of randomness" />
+
+<Strudel code={`s("bd!16?").ribbon(29,.5)`} label="a rhythm generator: keep re-rolling the offset" />
+
+<Box kind="try">
+Change `1337` to any other number and re-evaluate. You are browsing an infinite library of
+two-cycle riffs. When you find one you like, the number is the name of the riff.
+</Box>
+
+<QA q="What is the difference between fast(2) and fastGap(2)?">
+`fast(2)` plays the pattern twice per cycle. `fastGap(2)` plays it once, compressed into the first
+half, leaving the rest silent. Compare `s("bd sd").fast(2)` with `s("bd sd").fastGap(2)`.
+</QA>
+
+## Recap
+
+| Function | Purpose |
+| --- | --- |
+| `setcpm(bpm/bpc)` | set tempo in cycles per minute |
+| `setcps(x)` | set tempo in cycles per second |
+| `fast` / `slow` | scale pattern speed |
+| `early` / `late` | nudge in time |
+| `swing` / `swingBy` | shuffle feel |
+| `ribbon(offset, n)` | loop a window of cycles |
+| `fastGap` | speed up but leave a gap |

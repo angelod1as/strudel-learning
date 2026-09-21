@@ -1,0 +1,238 @@
+---
+layout: ../../layouts/Reference.astro
+title: Cheat Sheet
+lede: Everything this tutorial covers, on one page, for when you know what you want but not what it is called.
+---
+
+import Box from '../../components/Box.astro';
+
+<Box>
+This is a *recall* aid, not a full reference. The complete, always-current function list lives in
+the [official docs](https://strudel.cc/learn/getting-started/) — and inside the real REPL, the
+**reference** tab is searchable.
+</Box>
+
+## Keys
+
+| Key | Action |
+| --- | --- |
+| `ctrl+enter` | evaluate |
+| `ctrl+.` | stop |
+| `ctrl+/` | toggle comment |
+
+## Mini-notation
+
+| Symbol | Meaning |
+| --- | --- |
+| space | sequence (all squeezed into one cycle) |
+| `~` `-` | rest |
+| `[ ]` | subdivide one slot |
+| `< >` | one element per cycle (`<a b>` = `[a b]/2`) |
+| `*n` `/n` | faster / slower |
+| `@n` `_` | longer |
+| `!n` | repeat without speeding up |
+| `,` | parallel layers |
+| `?` `?p` | randomly drop (50%, or probability p) |
+| `\|` | pick one at random |
+| `(p,s,r)` | euclidean: p pulses, s steps, r rotation |
+| `{a, b}%n` | polymeter at n steps per cycle |
+| `:n` | sample index |
+| `name:i:g` | sample, index, gain |
+| `..` | range, e.g. `"0 .. 7"` |
+| `^` | mark the step level for stepwise functions |
+
+## Structure
+
+| Function | Mini | |
+| --- | --- | --- |
+| `seq(a,b)` | `"a b"` | sequence |
+| `cat(a,b)` | `"<a b>"` | one per cycle |
+| `stack(a,b)` | `"a,b"` | parallel |
+| `stepcat([3,a],[2,b])` | `"a@3 b@2"` | weighted |
+| `polymeter([a,b],[x,y,z])` | `"{a b, x y z}"` | polymeter |
+| `silence` | `"~"` | nothing |
+| `run(n)` | | 0…n-1 |
+| `binary(n)` `binaryN(n,len)` | | bits as structure |
+
+## Sources
+
+| Function | Purpose |
+| --- | --- |
+| `s()` / `sound()` | sample or synth name |
+| `bank()` | drum machine prefix |
+| `n()` | sample index / scale degree / voice index |
+| `note()` | pitch by name or MIDI number |
+| `freq()` | pitch in Hz |
+| `samples()` | load a sample map |
+| `soundAlias()` | alias an existing sound |
+
+Synth sources: `sine` `triangle` `square` `sawtooth` `supersaw` `pulse` `user` · noise:
+`white` `pink` `brown` `crackle` · wavetables: `wt_*` · ZZFX: `z_*` · General MIDI: `gm_*`
+
+## Pitch
+
+| Function | Purpose |
+| --- | --- |
+| `scale("C:minor")` | interpret `n` as scale degrees |
+| `add()` `sub()` `mul()` `div()` | arithmetic on values |
+| `transpose()` | semitones or interval names (`3M`, `5P`) |
+| `scaleTranspose()` | move by scale steps |
+| `chord()` + `voicing()` | chord symbols to notes |
+| `dict()` `anchor()` `mode()` `offset()` | steer the voicing |
+| `rootNotes(oct)` | chord symbols to bass notes |
+| `arp()` | play a stacked chord index by index |
+
+## Time
+
+| Function | Purpose |
+| --- | --- |
+| `setcpm(bpm/bpc)` `setcps()` | tempo |
+| `fast` `slow` | scale speed |
+| `early` `late` | nudge |
+| `swing(n)` `swingBy(x,n)` | shuffle |
+| `euclid` `euclidRot` `euclidLegato` | euclidean rhythms |
+| `segment(n)` / `seg` | sample a signal into n events |
+| `ply(n)` | repeat each event |
+| `compress` `zoom` `linger` `fastGap` | reshape the cycle window |
+| `inside(n,f)` `outside(n,f)` | apply f at another time scale |
+| `ribbon(offset,n)` | loop a window of cycles |
+| `iter` `chunk` `shuffle` `scramble` `palindrome` | reorder |
+| `clip` / `legato` | event duration multiplier |
+
+## Pattern transforms
+
+| Function | Purpose |
+| --- | --- |
+| `rev` `revv` | reverse |
+| `jux(f)` `juxBy(x,f)` | stereo split with a transform |
+| `off(t,f)` | delayed modified copy |
+| `superimpose(f)` `layer(...f)` | copies, with and without the original |
+| `echo(n,t,fb)` `echoWith(n,t,f)` | repeats |
+| `every(n,f)` `lastOf(n,f)` `when(pat,f)` `within(a,b,f)` | conditional |
+| `sometimesBy(p,f)` `someCyclesBy(p,f)` | probabilistic |
+| `never` `almostNever` `rarely` `sometimes` `often` `almostAlways` `always` | named probabilities |
+| `degradeBy(p)` `undegradeBy(p)` | drop events |
+| `struct(pat)` `mask(pat)` `beat(pos,steps)` | impose or filter rhythm |
+| `pick` `pickF` `squeeze` `inhabit` | choose between patterns / functions |
+| `apply(f)` `tag()` `filter()` | plumbing |
+
+## Signals
+
+| Signal | |
+| --- | --- |
+| `sine` `cosine` `saw` `isaw` `tri` `square` | periodic, 0…1 |
+| `sine2` `saw2` `tri2` … | the same, −1…1 |
+| `rand` `perlin` `irand(n)` `brand` `brandBy(p)` | random |
+| `mouseX` `mouseY` | cursor |
+| `.range(a,b)` `.rangex(a,b)` `.range2(a,b)` | rescale |
+| `.seed(n)` `.ribbon(o,n)` | make randomness repeatable |
+| `choose` `wchoose` `chooseCycles` `wchooseCycles` | pick from a list |
+
+## Envelopes
+
+| Control | |
+| --- | --- |
+| `attack` `decay` `sustain` `release` (`att` `dec` `sus` `rel`) | amplitude |
+| `adsr("a:d:s:r")` | all four |
+| `lpa` `lpd` `lps` `lpr` `lpenv` | lowpass envelope (also `hp*`, `bp*`) |
+| `penv` `patt` `pdec` `prelease` `pcurve` `panchor` | pitch |
+| `fmattack` `fmdecay` `fmsustain` `fmrelease` `fmenv` | FM |
+| `env({c,a,d,s,r,depth,ac,dc,rc}, id)` | generic envelope on any control |
+
+## Filters
+
+| Control | |
+| --- | --- |
+| `lpf` (`cutoff`, `lp`) / `lpq` | lowpass |
+| `hpf` (`hp`) / `hpq` | highpass |
+| `bpf` (`bandf`) / `bpq` | bandpass |
+| `ftype` | `12db`, `24db`, `ladder` |
+| `drive` | filter overdrive |
+| `djf` | one-knob lowpass/highpass |
+| `vowel` | formant filter (`a e i o u ae aa oe ue y uh un en an on`) |
+| `"freq:q"` | q inline |
+
+## LFO
+
+`.lfo({...}, id)` — config keys with aliases:
+
+| Key | Alias | |
+| --- | --- | --- |
+| `control` | `c` | target parameter |
+| `rate` | `r` | speed in Hz |
+| `sync` | `s` | speed in cycles |
+| `depth` | `dr`, `dep` | relative depth |
+| `depthabs` | `da` | absolute depth |
+| `dcoffset` | `dc` | `0` only raises, `-1` only lowers |
+| `shape` | `sh` | `triangle`(0) `sine`(1) `ramp`(2) `saw`(3) `square`(4) |
+| `skew` | `sk` | triangle asymmetry / pulse width |
+| `curve` | `cu` | exponent |
+| `retrig` | `rt` | restart per event |
+| `subControl` | `sc` | which param of a target LFO |
+| `fxi` | | index into an `FX()` chain |
+
+## Audio effects
+
+| Control | |
+| --- | --- |
+| `gain` `postgain` `velocity` `dry` | levels |
+| `pan` | stereo position |
+| `distort("amt:gain:type")` `distorttype` | waveshaping |
+| `crush` `coarse` `squiz` | digital degradation |
+| `compressor("thr:ratio:knee:att:rel")` | dynamics |
+| `tremolo` `tremolosync` `tremolodepth` `tremoloshape` `tremoloskew` | amplitude modulation |
+| `phaser` `phaserdepth` `phasercenter` `phasersweep` | phaser |
+| `chorus` | chorus |
+| `vib("rate:depth")` `vibmod` | vibrato |
+| `fm` `fmh` | FM |
+| `unison` `detune` `spread` | oscillator stacking |
+| `pw` `pwrate` `pwsweep` | pulse width |
+| `noise` `density` | noise mixed into a tone |
+| `partials` `phases` | additive synthesis |
+
+## Sampler
+
+| Control | |
+| --- | --- |
+| `speed` | playback rate (pitch + time) |
+| `stretch` | pitch without time |
+| `begin` `end` | trim the file |
+| `fit` `loopAt(n)` | fit to event / to n cycles |
+| `chop(n)` | consecutive grains |
+| `slice(n,pat)` `splice(n,pat)` | re-sequence pieces (splice fixes speed) |
+| `striate(n)` | interlace pieces of several samples |
+| `scrub` | play from positions |
+| `loop` `loopBegin` `loopEnd` | looped playback |
+| `cut(n)` | cut group: new event stops the previous |
+
+## Global / mix
+
+| Control | |
+| --- | --- |
+| `orbit(n)` / `o(n)` | which bus |
+| `delay` `delaytime` `delayfeedback` `delayspeed` | delay send |
+| `room` `roomsize` `roomlp` `roomdim` `roomfade` `iresponse` | reverb send |
+| `duckorbit("2:3")` | duck other orbits |
+| `duckdepth` `duckonset` `duckattack` | duck shape |
+| `channels` | output routing |
+| `FX(...)` `fxr` | custom effect chain |
+
+## Visuals & output
+
+| Function | |
+| --- | --- |
+| `punchcard` `pianoroll` `scope` `spectrum` `spiral` `pitchwheel` `wordfall` | visualisers (prefix `_` for inline) |
+| `color()` | highlight colour |
+| `log()` | print events to the console |
+| `.midi()` `midin()` | MIDI out / in |
+| `.osc()` | OSC to SuperDirt |
+
+## Track management
+
+| | |
+| --- | --- |
+| `$:` / `name:` | run as a parallel track |
+| `_$:` / `_name:` | mute that track |
+| `.hush()` | silence this pattern |
+| `//` | comment |
+| `// @title` `// @by` | metadata convention |

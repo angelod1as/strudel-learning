@@ -1,0 +1,191 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: samples
+title: Samples
+lede: Playing back audio files, and then cutting them to pieces.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+[Chapter 02](/tutorial/sounds) covered how to *load* and *select* samples. This one is about what
+you can do to them once they are playing.
+
+Most examples below use a drum break, so load one first — the `samples()` call at the top of each
+patch is what makes `amen` available.
+
+## Playback rate
+
+`speed` changes playback rate, which changes pitch and duration together — like a turntable.
+Negative values play backwards.
+
+<Strudel code={`s("bd*6").speed("1 2 4 1 -2 -4")`} />
+
+<Strudel code={`s("bd rim [~ bd] rim").speed("<1 2 -1 -2>").room(.2)`} />
+
+`stretch` changes pitch **without** changing duration, using a phase vocoder:
+
+<Strudel code={`s("gm_flute").stretch("<2 1 0 -2>")`} label="positive = up, 0 = unchanged, negative = down" />
+
+<Box>
+`speed` is cheap and sounds like a sampler. `stretch` is expensive and sounds like a studio. For
+drums, `speed` is usually more musical; for melodic material, `stretch` keeps your timing intact.
+</Box>
+
+## Fitting a sample to the grid
+
+A two-bar break recorded at 174 bpm will not line up with your pattern. Three tools:
+
+<Strudel
+  code={`samples('github:yaxu/clean-breaks')
+s("amen/4").fit()`}
+  label="fit: stretch the sample to the length of its event"
+/>
+
+<Strudel
+  code={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
+s("rhodes").loopAt(2)`}
+  label="loopAt(n): make the sample last exactly n cycles"
+/>
+
+<Strudel code={`s("oh*4").end("<1 .5 .25 .1>")`} label="end: play only the first x of the file" />
+
+`begin` and `end` are both 0…1 fractions of the file:
+
+<Strudel
+  code={`samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
+s("rave").begin("<0 .25 .5 .75>").fast(2)`}
+  label="begin: skip into the file"
+/>
+
+## chop — granular slicing
+
+`chop(n)` cuts every event into `n` consecutive pieces and plays them in order. On its own you hear
+nothing new — the point is what you do to the pieces afterwards.
+
+<Strudel
+  code={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
+s("rhodes").chop(4).rev().loopAt(2)`}
+  label="chopped, then the chunks played in reverse order"
+/>
+
+<Strudel
+  code={`samples('github:yaxu/clean-breaks')
+s("amen/4").fit().chop(16).cut(1)
+  .sometimesBy(.5, ply("2"))
+  .sometimesBy(.25, mul(speed("-1")))`}
+  label="the classic mangled break: random stutters and reversals"
+/>
+
+<Box>
+`cut(1)` puts all these events in cut group 1, meaning each new one **stops** the previous. Without
+it, overlapping chops pile up into mush. Any time you chop, reach for `cut`.
+</Box>
+
+## slice and splice — choosing the order
+
+`chop` plays pieces in order. `slice(n, pattern)` lets you name which piece plays when:
+
+<Strudel
+  code={`samples('github:tidalcycles/dirt-samples')
+s("breaks165").slice(8, "0 1 <2 2*2> 3 [4 0] 5 6 7".every(3, rev)).slow(0.75)`}
+/>
+
+<Strudel
+  code={`samples('github:yaxu/clean-breaks')
+s("amen/4").fit()
+  .slice(8, "<0 1 2 3 4*2 5 6 [6 7]>*2")
+  .cut(1).rarely(ply("2"))`}
+/>
+
+`splice` is `slice` plus automatic speed adjustment, so each piece fills its event exactly:
+
+<Strudel
+  code={`samples('github:yaxu/clean-breaks')
+s("amen")
+  .splice(8, "<0 1 2 3 4*2 5 6 [6 7]>*2")
+  .cut(1).rarely(ply("2"))`}
+  label="no fit() needed — splice handles the timing"
+/>
+
+You can also slice at arbitrary points instead of evenly:
+
+<Strudel
+  code={`samples('github:tidalcycles/dirt-samples')
+s("breaks125").fit().slice([0,.25,.5,.75], "0 1 1 <2 3>")`}
+/>
+
+## striate — interlacing
+
+Where `chop` keeps each sample's pieces together, `striate(n)` plays the **first** piece of every
+sample, then the second of every sample, and so on. It smears a sequence of sounds into each other.
+
+<Strudel code={`s("numbers:0 numbers:1 numbers:2").striate(6).slow(3)`} />
+
+<Box kind="try">
+Replace `striate(6)` with `chop(6)` in that example. Same pieces, completely different result —
+`chop` gives you three separate stuttered words, `striate` gives you one braided texture.
+</Box>
+
+## scrub — the tape head
+
+`scrub` takes positions in the file and plays from there, optionally with a speed after a colon.
+
+<Strudel
+  code={`samples('github:switchangel/pad')
+s("swpad:0").scrub("{0.1!2 .25@3 0.7!2 <0.8:1.5>}%8")`}
+/>
+
+<Strudel
+  code={`samples('github:yaxu/clean-breaks/main');
+s("amen/4").fit().scrub("{0@3 0@2 4@3}%8".div(16))`}
+/>
+
+## Looping
+
+`loop(1)` makes a sample repeat for as long as its event lasts. `loopBegin` and `loopEnd` set the
+loop points — which is how wavetable synthesis works under the hood.
+
+<Strudel code={`note("<c eb g f>").s("bd").loop(1).loopEnd(.05).gain(.2)`} label="looping 5% of a kick = an oscillator" />
+
+## Running through a sample bank
+
+When a sound holds many similar recordings, `run(n)` with `n()` sweeps through them:
+
+<Strudel
+  code={`samples('bubo:fox')
+n(run(8)).s("ftabla")`}
+/>
+
+The musical phrase often does not start at index 0 — nudge the whole thing with `early`:
+
+<Strudel
+  code={`samples('bubo:fox')
+n(run(8)).s("ftabla").early(2/8)
+  .sometimes(mul(speed("1.5")))`}
+/>
+
+<QA q="chop, slice, splice, striate — which one?">
+`chop` when you want to mangle a single sound into grains. `slice` when you want to re-sequence a
+break and you will handle timing yourself. `splice` when you want to re-sequence a break and have
+it stay in time automatically — this is the one you want most of the time. `striate` when you want
+to blend several different samples into one texture.
+</QA>
+
+## Recap
+
+| Function | Purpose |
+| --- | --- |
+| `speed` | playback rate (pitch + time) |
+| `stretch` | pitch without time |
+| `fit` | stretch sample to event length |
+| `loopAt(n)` | stretch sample to n cycles |
+| `begin` `end` | trim the file |
+| `chop(n)` | cut into n consecutive grains |
+| `slice(n, pat)` | play named pieces |
+| `splice(n, pat)` | slice, with speed corrected |
+| `striate(n)` | interlace pieces of several samples |
+| `scrub` | play from arbitrary positions |
+| `loop` `loopBegin` `loopEnd` | looped playback |
+| `cut(n)` | cut group — new event stops the previous |

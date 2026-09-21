@@ -1,0 +1,173 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: space
+title: Delay & Reverb
+lede: The two send effects — and the first place where you need to know what an orbit is.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+Nearly every effect in Strudel is **local**: a fresh chain of nodes is built for each event, used,
+and thrown away. Delay and reverb are different. They are **global**: one delay unit and one reverb
+unit exist per *orbit*, and every event in that orbit is sent into the same one.
+
+That is what makes them sound like a room instead of a hundred separate rooms — and it is also the
+source of the most common confusing bug in Strudel, which the [next chapter](/tutorial/orbits)
+is about.
+
+## Delay
+
+<Strudel code={`s("bd bd").delay("<0 .25 .5 1>")`} label="delay level: how much goes into the delay" />
+
+Three parameters:
+
+| Control | Aliases | Meaning |
+| --- | --- | --- |
+| `delay` | — | send level, 0…1 |
+| `delaytime` | `delayt`, `dt` | time between repeats, in **seconds** |
+| `delayfeedback` | `delayfb`, `dfb` | how much of the output goes back in, 0…1 |
+
+<Strudel
+  code={`$: note("[~ [<[d3,a3,f4]!2 [d3,bb3,g4]!2> ~]]*2")
+  .s("gm_electric_guitar_muted").delay(.5)
+
+$: s("bd rim").bank("RolandTR707").delay(.5)`}
+  label="a dub guitar"
+/>
+
+All three can go in one string, separated by colons — `delay("level:time:feedback")`:
+
+<Strudel code={`s("bd bd").delay("0.65:0.25:0.9 0.65:0.125:0.7")`} />
+
+<Box kind="try">
+Start from `s("bd rim").delay(.5)` and work up:
+- `.delay(".8:.125")` — tighter repeats
+- `.delay(".8:.06:.8")` — a slapback that lingers
+- `delayfeedback(1)` — runaway. Keep a finger on `ctrl+.`
+</Box>
+
+<Box kind="warn">
+`delayfeedback` at or above 1 means the delay gets louder forever. It will not stop when the
+pattern does.
+</Box>
+
+Since `delaytime` is in seconds, it does not follow the tempo. To lock it to the grid, compute it:
+at `setcps(0.5)` a cycle is 2 seconds, so an eighth of a cycle is `2/8`.
+
+<Strudel
+  code={`setcps(0.5)
+note("c3 eb3 g3 bb3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.6).delaytime(2/8).delayfeedback(.7)`}
+  label="delay locked to the cycle"
+/>
+
+`delayspeed` modulates the delay line's playback rate, giving tape-style pitch artefacts:
+
+<Strudel
+  code={`note("d d a# a".fast(2))
+  .s("sawtooth")
+  .delay(.8)
+  .delaytime(1/2)
+  .delayspeed("<2 .5 -1 -2>")`}
+/>
+
+## Reverb
+
+<Strudel code={`s("bd sd [~ bd] sd").room("<0 .2 .4 .6 .8 1>")`} label="room: send level into the reverb" />
+
+| Control | Aliases | Meaning |
+| --- | --- | --- |
+| `room` | — | send level, 0…1 |
+| `roomsize` | `rsize`, `sz`, `size` | size of the space, 0…10 |
+| `roomfade` | — | decay time |
+| `roomlp` | `rlp` | lowpass on the reverb tail, in Hz |
+| `roomdim` | `rdim` | frequency at which the tail is 60 dB down |
+| `iresponse` | — | use an impulse response sample instead |
+
+<Strudel code={`s("bd sd [~ bd] sd").room(.8).rsize("<1 4 8>")`} label="from a booth to a cathedral" />
+
+<Strudel
+  code={`$: s("bd sd [~ bd] sd").room(0.5).rlp(10000)
+$: s("hh*8").gain(.5)`}
+  label="rlp high: bright tail"
+/>
+
+<Strudel
+  code={`$: s("bd sd [~ bd] sd").room(0.5).rlp(3000).rdim(400)
+$: s("hh*8").gain(.5)`}
+  label="rlp low + rdim low: dark, distant tail"
+/>
+
+Level and size also fit in one string:
+
+<Strudel code={`s("bd sd [~ bd] sd").room("<0.9:1 0.9:4>")`} />
+
+<Box kind="warn">
+`roomsize`, `roomlp`, `roomdim` and `roomfade` **rebuild the reverb** when they change. Patterning
+them fast is expensive and will glitch. Pattern `room` (the send level) freely; change the shape of
+the room sparingly.
+</Box>
+
+## Using them musically
+
+Reverb and delay are how you place sounds at different distances. A useful default:
+
+<Strudel
+  code={`$: s("bd*4").bank("RolandTR909")                      // dry, up front
+$: s("~ cp").bank("RolandTR909").room(.2).rsize(1)     // just behind
+$: n("<4 [3@3 4] [<2 0> ~@16] ~>").scale("D4:minor")
+   .s("gm_accordion:2").room(2).gain(.4)               // far away
+$: note("[~ [<[d3,a3,f4]!2 [d3,bb3,g4]!2> ~]]*2")
+   .s("gm_electric_guitar_muted").delay(.5)`}
+  label="a little dub tune"
+/>
+
+<Box kind="try">
+Add `.hush()` to the end of any one of those lines and re-evaluate to hear how much each layer was
+contributing. Then remove the `room` from the accordion — the whole thing collapses to the front of
+the stage.
+</Box>
+
+## The catch
+
+Watch what happens when two patterns with different reverb settings play at once:
+
+<Strudel
+  code={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor')
+  .room(1).roomsize(10)
+
+$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
+  label="the muted kick destroys the pluck's reverb"
+/>
+
+The second pattern is silent (`postgain(0)`) and yet it changed the first one's sound. Both are on
+the default orbit `1`, so they share one reverb — and the last setting wins.
+
+The fix is one word:
+
+<Strudel
+  code={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor')
+  .room(1).roomsize(10).orbit(2)
+
+$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
+  label="separate orbits, separate reverbs"
+/>
+
+<QA q="So should I just put every pattern on its own orbit?">
+No — and the next chapter explains why. Orbits are not free, and sharing one is often exactly what
+you want (it is how several instruments end up sounding like they are in the same room). You want
+a *deliberate* handful of them.
+</QA>
+
+## Recap
+
+| Control | Purpose |
+| --- | --- |
+| `delay` `delaytime` `delayfeedback` | the delay send |
+| `delay("lvl:time:fb")` | all three at once |
+| `delayspeed` | tape-style pitch on the repeats |
+| `room` `roomsize` | the reverb send |
+| `roomlp` `roomdim` `roomfade` | tone and decay of the tail |
+| `iresponse` | convolution with your own impulse |

@@ -1,0 +1,315 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: lfo
+title: LFOs & Modulators
+lede: A low frequency oscillator is a wave you cannot hear, used to move a knob for you. Strudel's lfo() runs inside the audio engine, so it moves smoothly even on a single held note.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+## What an LFO is
+
+An oscillator running below hearing range — typically 0.1 to 20 Hz. You do not hear the wave
+itself; you hear what it does to something else. Point it at:
+
+- a filter cutoff → a wah / wobble
+- gain → tremolo, or a pulsing gate
+- pitch → vibrato
+- pan → the sound circling you
+
+Strudel has two levels of modulation, and picking the right one matters:
+
+| | [Signals](/tutorial/signals) | `lfo()` |
+| --- | --- | --- |
+| Level | pattern | audio |
+| Sampled | once per event | continuously |
+| Works on a held note | no | yes |
+| Can modulate | anything, incl. notes and structure | audio controls of a voice |
+
+## The simplest possible LFO
+
+Call `.lfo()` with no arguments and it modulates **whatever control came immediately before it**.
+With nothing before it, that is the oscillator frequency:
+
+<Strudel
+  code={`s("saw").lfo()
+  .lpf(800)
+  ._spectrum({height: 300, width: 800})`}
+  label="modulating frequency — watch the spectrum"
+/>
+
+<Box kind="try">
+Comment out the `.lfo()` line with `//` and re-evaluate to hear the difference, then bring it back.
+The `._spectrum()` call draws what is happening; it is not part of the sound.
+</Box>
+
+Put it after `lpf` and it modulates the filter instead:
+
+<Strudel
+  code={`s("saw")
+  .lpf(800).lfo()
+  ._spectrum({height: 300, width: 800})`}
+  label="same LFO, now on the lowpass"
+/>
+
+That positional rule is convenient but fragile once chains get long. Which brings us to the config
+object.
+
+## The config object
+
+Everything except the `id` lives in a single `{ key: value }` object. Every key has a short alias,
+and every value can itself be a pattern.
+
+| Key | Alias | Meaning |
+| --- | --- | --- |
+| `control` | `c` | which parameter to modulate |
+| `rate` | `r` | speed in Hz |
+| `sync` | `s` | speed in times per cycle (tempo-locked) |
+| `depth` | `dep`, `dr` | modulation depth, **relative** to the value |
+| `depthabs` | `da` | modulation depth in absolute units |
+| `dcoffset` | `dc` | shifts the centre of the modulation |
+| `shape` | `sh` | waveform |
+| `skew` | `sk` | asymmetry of triangle / pulse width of square |
+| `curve` | `cu` | exponent applied to the wave |
+| `retrig` | `rt` | > 0.5 restarts the LFO on every event |
+| `subControl` | `sc` | when modulating another LFO, which of its parameters |
+| `fxi` | — | index into an `FX()` chain |
+
+### control — aim it anywhere
+
+<Strudel
+  code={`s("saw")
+  .lfo({control:'lpf'})
+  .lpf(800)
+  ._spectrum({height: 300, width: 800})`}
+  label="c: 'lpf' — position in the chain no longer matters"
+/>
+
+It can target controls you never wrote, because they exist implicitly:
+
+<Strudel
+  code={`s("saw")
+  .lfo({control:'gain'})
+  .lpf(800)
+  ._spectrum({height: 300, width: 800})`}
+  label="gain was never set, but it is still there"
+/>
+
+### rate vs sync
+
+`rate` is in hertz — absolute speed, ignores the tempo.
+
+<Strudel
+  code={`s("saw")
+  .lfo({c:'gain', rate:"<2 4>"})
+  .lpf(800)
+  ._spectrum({height: 300, width: 800})`}
+/>
+
+`sync` is in cycles — the LFO locks to the tempo, which is almost always what you want in music.
+
+<Strudel
+  code={`$: s("bd*4").bank("TR909").postgain(0.5)
+$: s("saw")
+  .lpf(800)
+  .lfo({sync: "<2 4 8 0.5>"})
+  ._spectrum({height: 300, width: 800})`}
+  label="sync: 2 = twice per cycle"
+/>
+
+<Box kind="try">
+Delete `sync: "<2 4 8 0.5>"` from that patch. The wobble is still there, but it no longer lines up
+with the kick. Tempo-synced modulation is the difference between "a synth" and "a groove".
+</Box>
+
+### depth vs depthabs
+
+`depth` is **relative**: at the default `1`, the value swings by half of itself in each direction.
+Modulating a frequency of 64 with depth 1 gives a range of 32…96.
+
+<Strudel
+  code={`s("saw").freq(64)
+  .lfo({r: 2, depth: "<1 2 3>"})
+  .lpf(800)
+  ._spectrum({height: 300, width: 800})`}
+/>
+
+`depthabs` is in the parameter's own units — here, exactly ±250 Hz around 800:
+
+<Strudel
+  code={`s("saw")
+  .lpf(800)
+  .lfo({r: 2, depthabs: "250"})`}
+/>
+
+<Box>
+Rule of thumb: `depthabs` when you know the number you want (filter cutoffs, delay times).
+`depth` when you want the modulation to scale with whatever the value happens to be.
+</Box>
+
+### dcoffset — which way it moves
+
+By default the wave is centred on the value, going equally above and below. `dcoffset` slides that
+window. Default is `-0.5` (centred).
+
+- `dc: 0` → modulation only ever **raises** the value
+- `dc: -1` → modulation only ever **lowers** it
+
+<Strudel
+  code={`s("saw")
+  .lpf(600)
+  .lfo({r: 2, da: "200", dcoffset: "<-0.5 -1 -0.5 0>"})`}
+  label="centred, downward only, centred, upward only"
+/>
+
+This matters more than it sounds. A gain LFO with `dc: -1` is a **gate** — it only ducks, never
+boosts, so nothing clips.
+
+### shape
+
+<Strudel
+  code={`s("saw")
+  .lpf(800)
+  .lfo({r: 2, shape: "<triangle sine ramp saw square>"})`}
+/>
+
+| Shape | Number | Character |
+| --- | --- | --- |
+| `triangle` | 0 | symmetric, the default |
+| `sine` | 1 | smoothest |
+| `ramp` | 2 | slow rise, instant fall |
+| `saw` | 3 | instant rise, slow fall |
+| `square` | 4 | on/off, no in-between |
+
+Because shapes have numbers, you can generate them:
+
+<Strudel code={`s("saw").lpf(800).lfo({r: 2, shape: irand(4)})`} label="a different waveform every event" />
+
+### skew
+
+Skew bends `triangle` and `square`. Default `0.5`.
+
+- on a triangle: 0 looks like `saw`, 1 looks like `ramp`
+- on a square: it is the **pulse width**
+
+<Strudel
+  code={`s("saw")
+  .lpf(800)
+  .lfo({r: 2, sh: "<triangle square>/5",
+    skew: "<0 0.25 0.5 0.75 1>"})`}
+/>
+
+### curve
+
+Raises the wave to a power. Default `1`. Above 1 makes the motion more abrupt at the extremes,
+below 1 softens it. Large numbers (10+) get weird, which is sometimes the point.
+
+<Strudel code={`s("saw").lpf(800).lfo({r: 2, sh: "<triangle>", curve: "<1.3 1 0.75 1>"})`} />
+
+## Stacking LFOs
+
+Chain `.lfo()` calls to get several independent modulators:
+
+<Strudel code={`s("saw").lfo().lpf(800).lfo({s: "<4 8 0.5>"})`} label="one on frequency, one on the filter" />
+
+They are numbered from 0 in the order they appear. A later call can reach back and change one by
+index — here, only sometimes:
+
+<Strudel
+  code={`s("saw").lfo().lpf(800)
+  .lfo({s: "<4 8 0.5>"})
+  .sometimes(x => x.lfo({dr: "4"}, 0))`}
+  label="the second argument is the id — 0 targets the first LFO"
+/>
+
+Indices break when you insert an LFO in the middle. Names do not:
+
+<Strudel
+  code={`s("saw").lfo({}, "lfo_freq_saw").lpf(800)
+  .lfo({s: "<4 8 0.5>"}, "lfo_lpf")
+  .sometimes(x => x.lfo({dr: "4"}, "<lfo_lpf lfo_freq_saw>"))`}
+  label="named modulators, and a pattern choosing which one to poke"
+/>
+
+## LFOs modulating LFOs
+
+Point an LFO at another LFO and by default you modulate its **speed**:
+
+<Strudel
+  code={`s("saw").lpf(400).gain(0.8)
+  .lfo({s: 16, dr:2, c:"gain"})
+  .lfo({s: 0.3, dc:-1, dr: 0.8})`}
+  label="a fast gain gate whose rate slowly drops"
+/>
+
+To reach a different parameter of the first LFO, name it with `subControl` / `sc`:
+
+<Strudel
+  code={`s("saw").lpf(400).gain(0.8)
+  .lfo({s: 4, dr:2, c:"gain"})
+  .lfo({s: 0.3, sc: "skew"})`}
+  label="the second LFO sweeps the first one's skew"
+/>
+
+## Targeting a specific effect in an FX chain
+
+When you build an explicit effect chain with `FX()`, you do not need to put the LFO inside it —
+address the effect by index with `fxi`:
+
+<Strudel
+  code={`s("saw").FX(
+  distort(3),
+  gain(0.3), // fx index 1
+  lpf(400)
+).lfo({s: 16, dr:2, c:"gain", fxi: 1})`}
+/>
+
+## Classic recipes
+
+<Strudel
+  code={`s("supersaw").note("<c2 eb2 g1 bb1>")
+  .lpf(500).lpq(8).lfo({sync: "<1 2 4>", depthabs: 400, sh: "sine"})
+  .room(.3)`}
+  label="dubstep-ish wobble bass"
+/>
+
+<Strudel
+  code={`note("<c3 eb3 g3 bb3>").s("sawtooth")
+  .lfo({c: "pan", s: 0.5, sh: "sine"})
+  .room(.4)`}
+  label="auto-pan"
+/>
+
+<Strudel
+  code={`note("<c3 eb3>").s("sawtooth").sustain(1)
+  .gain(0.8).lfo({c: "gain", s: 4, sh: "square", dc: -1, dr: 1})`}
+  label="a hard gate — square wave, downward only"
+/>
+
+<Strudel
+  code={`note("a e").vib("<.5 1 2 4 8 16>:12")._scope()`}
+  label="vibrato is a built-in pitch LFO: vib('rate:depthInSemitones')"
+/>
+
+<QA q="lfo(), vib(), tremolo() and phaser() all modulate things. What is the difference?">
+`vib`, `tremolo` and `phaser` are fixed-purpose modulators wired to pitch, amplitude and a phaser
+bank respectively — fewer controls, instantly musical. `lfo()` is the general mechanism: any
+control, any shape, any depth, and it can modulate other modulators. Reach for the specific ones
+first; reach for `lfo()` when they do not go where you want.
+</QA>
+
+## Recap
+
+| Thing | Purpose |
+| --- | --- |
+| `.lfo()` | modulate the control immediately before it |
+| `{c: 'name'}` | choose the target explicitly |
+| `{r: hz}` / `{s: perCycle}` | speed, free or tempo-synced |
+| `{depth}` / `{depthabs}` | relative or absolute amount |
+| `{dc: 0 / -1}` | only raise / only lower |
+| `{sh, sk, cu}` | shape, skew, curve |
+| `.lfo({...}, 'name')` | name it so you can modify it later |
+| `{sc: 'param'}` | modulate a parameter of another LFO |
+| `{fxi: n}` | target the nth effect in an `FX()` chain |

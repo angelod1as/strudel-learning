@@ -1,0 +1,232 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: pattern-functions
+title: Pattern Functions
+lede: The part of Strudel that has no equivalent in a DAW — functions that take a pattern and give you back a different one.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+Up to now most functions have set a parameter. These do something stranger: they take the whole
+pattern as input and transform its **structure**. This is where Strudel stops being a sequencer.
+
+## rev — reverse
+
+<Strudel code={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").rev()`} />
+
+`rev` reverses each cycle individually. (`revv` reverses a whole pattern's cycle order.)
+
+## jux — the same thing, but different on the right
+
+`jux(f)` plays the pattern hard left and `f(pattern)` hard right.
+
+<Strudel code={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").jux(rev)`} />
+
+It is exactly this, written short:
+
+<Strudel
+  code={`$: n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").pan(0)
+$: n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").pan(1).rev()`}
+/>
+
+`juxBy(amount, f)` narrows the stereo split — 0 is mono, 1 is full:
+
+<Strudel code={`s("bd lt [~ ht] mt cp ~ bd hh").juxBy("<0 .5 1>/2", rev)`} />
+
+<Box kind="try">
+`jux` takes any function: `jux(x => x.speed(2))`, `jux(x => x.add(note(7)))`,
+`jux(x => x.fast(1.5))`. Anything you can do to a pattern, you can do to only one ear.
+</Box>
+
+## off — copy, delay, modify
+
+`off(time, f)` superimposes a modified copy, shifted by `time` cycles. It is a delay line where you
+control what happens to the echo.
+
+<Strudel code={`"c3 eb3 g3".off(1/8, x => x.add(7)).note()`} label="an echo, a fifth up" />
+
+Nested, it builds whole textures:
+
+<Strudel
+  code={`n("0 [4 <3 2>] <2 3> [~ 1]"
+  .off(1/16, x=>x.add(4))
+  .off(1/8, x=>x.add(7))
+).scale("<C5:minor Db5:mixolydian>/2")
+  .s("triangle").room(.5).dec(.1)`}
+/>
+
+<Strudel
+  code={`s("bd sd [rim bd] sd,[~ hh]*4").bank("CasioRZ1")
+  .off(2/16, x=>x.speed(1.5).gain(.25)
+  .off(3/16, y=>y.vowel("<a e i o>*8")))`}
+  label="off inside off"
+/>
+
+## superimpose and layer
+
+`superimpose(f)` is `off` with zero delay — the original plus a modified copy.
+
+<Strudel code={`"<0 2 4 6 ~ 4 ~ 2 0!3 ~!5>*8".superimpose(x=>x.add(2)).scale('C:minor').note()`} />
+
+`layer(...fs)` drops the original and gives you only the transformed versions — the cleanest way to
+make two instruments from one source pattern:
+
+<Strudel
+  code={`note("<g1 bb1 d2 f1>").layer(
+  x => x.s("sawtooth").vib(4),
+  x => x.s("square").add(note(12))
+)`}
+/>
+
+## ply — repeat each event
+
+<Strudel code={`s("hh hh, bd rim [~ cp] rim").bank("RolandTR707").ply(2)`} />
+
+Identical to writing `*2` on every element. Patterning it is where it earns its place:
+
+<Strudel code={`s("bd sd [~ bd] sd").ply("<1 2 3>")`} />
+
+## echo and stut
+
+`echo(times, timeOffset, feedback)` — repeats with decaying volume.
+
+<Strudel code={`s("bd sd").echo(3, 1/6, .8)`} />
+
+`echoWith(times, time, f)` gives you the iteration index, so each repeat can differ:
+
+<Strudel code={`"<0 [2 4]>".echoWith(4, 1/8, (p,n) => p.add(n*2)).scale("C:minor").note()`} />
+
+## Conditional application
+
+| Function | Applies `f`… |
+| --- | --- |
+| `every(n, f)` / `firstOf` | on the first of every n cycles |
+| `lastOf(n, f)` | on the last of every n cycles |
+| `when(binaryPattern, f)` | whenever the pattern is true |
+| `sometimesBy(p, f)` | to a random p of events |
+| `someCyclesBy(p, f)` | to a random p of whole cycles |
+| `within(start, end, f)` | only to part of each cycle |
+
+<Strudel code={`note("c3 d3 e3 g3").every(4, x=>x.rev())`} />
+
+<Strudel code={`"c3 eb3 g3".when("<0 1>/2", x=>x.sub("5")).note()`} />
+
+<Strudel code={`s("hh*8").sometimesBy(.4, x=>x.speed("0.5"))`} />
+
+<Strudel code={`s("bd,hh*8").someCyclesBy(.3, x=>x.speed("0.5"))`} label="whole cycles change, not single hits" />
+
+Named probability shortcuts, from never to always:
+
+| Name | Probability |
+| --- | --- |
+| `never` | 0 |
+| `almostNever` | 0.1 |
+| `rarely` | 0.25 |
+| `sometimes` | 0.5 |
+| `often` | 0.75 |
+| `almostAlways` | 0.9 |
+| `always` | 1 |
+
+<Strudel code={`s("hh*8").often(x => x.gain(.4)).rarely(x => x.speed(2))`} />
+
+## Randomly removing events
+
+<Strudel code={`s("hh*8").degradeBy(0.2)`} label="drop 20% of hits" />
+
+`degrade` is `degradeBy(0.5)`. `undegradeBy` keeps exactly the events that `degradeBy` would have
+dropped — so the two are complementary and can be given different treatments:
+
+<Strudel
+  code={`$: s("hh*16").degradeBy(.5).gain(.8)
+$: s("hh*16").undegradeBy(.5).gain(.3).speed(2)`}
+  label="every hat is played, but two different ways"
+/>
+
+## Reordering
+
+<Strudel code={`note("c d e f").s("piano").shuffle(4)`} label="each part played exactly once per cycle" />
+
+<Strudel code={`note("c d e f").s("piano").scramble(4)`} label="parts chosen at random — repeats allowed" />
+
+<Strudel code={`n("0 1 2 3".scale('A:minor')).iter(4).s("piano")`} label="iter: rotate the start point each cycle" />
+
+<Strudel code={`"0 1 2 3".chunk(4, x=>x.add(7)).scale("A:minor").note()`} label="chunk: apply f to a different quarter each cycle" />
+
+<Strudel code={`note("c d e g").palindrome()`} label="palindrome: forwards, then backwards" />
+
+## Structure from another pattern
+
+`struct` takes the **rhythm** from one pattern and the **values** from another:
+
+<Strudel code={`note("c3 eb3 g3").struct("x ~ x x ~ x ~ x")`} label="values from the left, rhythm from the right" />
+
+<Strudel code={`n(irand(8)).struct("x x*2 x x*3").scale("C:minor").s("piano")`} label="a continuous signal, given a rhythm" />
+
+`mask` is the opposite kind of filter — it keeps the original rhythm but silences events where the
+mask is false:
+
+<Strudel code={`s("hh*8").mask("1 1 1 0")`} />
+
+`beat(positions, steps)` builds a structure from step numbers, which is often the most readable way
+to write a drum part:
+
+<Strudel code={`$: s("bd").beat("0,7,10", 16)
+$: s("sd").beat("4,12", 16)
+$: s("hh*16").gain(.4)`} />
+
+## Zooming and looping parts of time
+
+<Strudel code={`s("bd*2 hh*3 [sd bd]*2 perc").zoom(0.25, 0.75)`} label="zoom: play a window of the cycle, stretched to fill it" />
+
+<Strudel code={`s("lt ht mt cp, [hh oh]*2").linger("<1 .5 .25 .125>")`} label="linger: take the first fraction and repeat it" />
+
+<Strudel code={`"0 1 2 3 4 3 2 1".inside(4, rev).scale('C:major').note()`} label="inside: apply f at a different time scale" />
+
+## Picking between whole patterns
+
+<Strudel
+  code={`note(squeeze("<0@2 [1!2] 2>", ["g a", "f g f g", "g a c d"]))`}
+  label="squeeze: choose a sub-pattern and fit it to the event"
+/>
+
+<Strudel
+  code={`s("bd*4").pickF("<0 1>", [x=>x.fast(2), x=>x.rev()])`}
+  label="pickF: choose a transformation from a list"
+/>
+
+## Building an arrangement
+
+A long-form structure is just a slow alternation:
+
+<Strudel
+  code={`$: s("bd*4").bank("RolandTR909").mask("<1 1 1 1 0 1 1 1>")
+$: s("~ cp").bank("RolandTR909").mask("<0 0 1 1 1 1 1 1>")
+$: s("hh*8").gain(.5).mask("<0 1 1 1 1 1 1 1>")
+$: note("<c2 eb2 g1 bb1>*2").s("sawtooth").lpf(sine.range(300,2000).slow(8))`}
+  label="an 8-cycle intro, written as masks"
+/>
+
+<QA q="When does the argument pattern add events, and when does it not?">
+By default, structure comes from the **left** of the chain: `s("bd*4").speed("1 2")` is four kicks.
+Functions like `struct`, `squeeze` and `ply` explicitly take structure from the right instead.
+`stack`/`,` combines everything. If you are surprised by how many events you get, ask which side
+the structure came from.
+</QA>
+
+## Recap
+
+| Function | Purpose |
+| --- | --- |
+| `rev` `palindrome` | reverse |
+| `jux` `juxBy` | split stereo, modify one side |
+| `off` `superimpose` `layer` | add modified copies |
+| `ply` `echo` `echoWith` | repeat events |
+| `every` `lastOf` `when` `within` | conditional application |
+| `sometimesBy` `someCyclesBy` + named shortcuts | probabilistic application |
+| `degradeBy` `undegradeBy` | drop events |
+| `shuffle` `scramble` `iter` `chunk` | reorder |
+| `struct` `mask` `beat` | impose or filter rhythm |
+| `zoom` `linger` `inside` `outside` | change the time window |
+| `squeeze` `pick` `pickF` | choose between patterns or functions |

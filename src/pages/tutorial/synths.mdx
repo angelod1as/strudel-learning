@@ -1,0 +1,218 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: synths
+title: Synths
+lede: 'Everything Strudel can generate without a sample: oscillators, FM, additive, wavetables and ZZFX.'
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+## The basic waveforms
+
+<Strudel
+  code={`note("c2 <eb2 <g2 g1>>".fast(2))
+  .s("<sawtooth square triangle sine>")
+  ._scope()`}
+/>
+
+| Wave | Harmonics | Sounds like |
+| --- | --- | --- |
+| `sine` | fundamental only | pure, flute-ish, sub bass |
+| `triangle` | odd, weak | soft, hollow |
+| `square` | odd, strong | reedy, chiptune |
+| `sawtooth` | all | bright, buzzy — the classic synth bass/lead |
+
+If you set `note` but no `s`, the default is `triangle`.
+
+Short aliases exist: `saw`, `sqr`, `tri`. There are also `supersaw`, `pulse` and `zow`-style
+variants:
+
+<Strudel code={`note("d f a a# a d3").fast(2).s("supersaw").unison("<1 2 7>")`} label="supersaw: stacked detuned saws" />
+
+| Control | Effect on supersaw / pulse |
+| --- | --- |
+| `unison(n)` | how many stacked voices |
+| `detune(x)` | how far apart they are tuned |
+| `spread(0..1)` | how wide they sit in stereo |
+| `pw(x)` | pulse width of the `pulse` oscillator |
+| `pwrate` / `pwsweep` | LFO on the pulse width |
+
+<Strudel code={`note("d f a a# a d3").fast(2).s("supersaw").detune("<.1 .2 .5 24.1>")`} />
+
+<Strudel code={`n(run(8)).scale("D:pentatonic").s("pulse").pw("0 .75 .5 1")`} label="pulse width modulation by hand" />
+
+<Strudel code={`n(run(8)).scale("D:pentatonic").s("pulse").pw("0.5").pwrate("<5 .1 25>").pwsweep("<0.3 .8>")` } label="PWM by LFO" />
+
+## Noise
+
+<Strudel code={`s("<white pink brown>")._scope()`} label="hard, medium, soft" />
+
+Noise can also be mixed **into** an oscillator rather than replacing it:
+
+<Strudel code={`note("c3").noise("<0.1 0.25 0.5>")._scope()`} label="a bit of grit on a pitched tone" />
+
+<Strudel code={`s("crackle*4").density("<0.01 0.04 0.2 0.5>".slow(2))`} label="crackle: vinyl-style clicks" />
+
+## Vibrato
+
+A built-in pitch LFO. `vib` is the rate in Hz, `vibmod` the depth in semitones — or put both in one
+string separated by `:`.
+
+<Strudel code={`note("a e").vib("<.5 1 2 4 8 16>")._scope()`} />
+
+<Strudel code={`note("a e").vib("<.5 1 2 4 8 16>:12")._scope()`} label="rate:depth — 12 semitones is a siren" />
+
+<Strudel code={`note("a e").vib(4).vibmod("<.25 .5 1 2 12>")._scope()`} />
+
+## FM synthesis
+
+FM modulates the frequency of the carrier with another oscillator, fast enough that you hear it as
+timbre rather than as vibrato.
+
+| Control | Meaning |
+| --- | --- |
+| `fm(i)` | modulation index — how much. 0 is off, high is metallic |
+| `fmh(ratio)` | harmonicity: the modulator's frequency relative to the note |
+| `fmattack` `fmdecay` `fmsustain` `fmrelease` | envelope on the modulation amount |
+| `fmenv('lin'/'exp')` | envelope curve |
+
+<Strudel code={`note("c e g b g e").fm("<0 1 2 4 8 16>")._scope()`} label="index: how much modulation" />
+
+<Strudel code={`note("c e g b g e").fm(4).fmh("<1 2 1.5 1.61>")._scope()`} label="harmonicity: whole numbers are musical, decimals are metallic" />
+
+<Strudel
+  code={`note("c e g b g e").fm(4).fmattack("<0 .05 .1 .2>")._scope()`}
+  label="fm attack: the timbre fades in"
+/>
+
+<Strudel
+  code={`note("c e g b g e").fm(4).fmdecay(.2).fmsustain(0).fmenv("<exp lin>")._scope()`}
+  label="a decaying FM envelope is the classic electric piano / bell"
+/>
+
+<Box kind="try">
+For a bell: `fmh` around 1.4–3.5, `fm` high, `fmdecay` short, `fmsustain(0)`.
+For an electric piano: `fmh(1)`, `fm(3)`, `fmdecay(.3)`, `fmsustain(0)`, plus a short amplitude decay.
+</Box>
+
+## Additive synthesis: partials and phases
+
+`partials` sets the amplitude of each harmonic, as an array. It can spectrally tame a harsh
+waveform:
+
+<Strudel
+  code={`note("c2 <eb2 <g2 g1>>".fast(2))
+  .sound("sawtooth")
+  .partials([1, 1, "<1 0>", "<1 0>", "<1 0>", "<1 0>", "<1 0>"])
+  ._scope()`}
+  label="note that list entries can themselves be patterns"
+/>
+
+With the `user` source you build a waveform from scratch:
+
+<Strudel
+  code={`note("c2 <eb2 <g2 g1>>".fast(2))
+  .sound("user")
+  .partials([1, 0, 0.3, 0, 0.1, 0, 0, 0.3])
+  ._scope()`}
+/>
+
+And since it is JavaScript, you can compute them:
+
+<Strudel
+  code={`note("c2 <eb2 <g2 g1>>").fast(2)
+  .sound("user")
+  .partials(new Array(50).fill(0)
+    .map((_, idx) => ((-1) ** (idx + 1)) / (idx + 1))
+  )
+  ._scope()`}
+  label="that series reconstructs a sawtooth"
+/>
+
+<Strudel code={`note("c2 <eb2 g2>").fast(2).sound("user").partials(randL(10))._scope()`} label="randL: a random list" />
+
+`phases` sets where each harmonic starts in its cycle. It barely changes the spectrum but changes
+the feel:
+
+<Strudel
+  code={`s("saw").seg(16).n(irand(12)).scale("F1:minor")
+  .penv(48).panchor(0).pdec(0.05)
+  .delay(0.25).room(0.25)
+  .compressor(-20).vib(0.3)
+  .partials(randL(200))
+  .phases(randL(200))`}
+/>
+
+## Wavetables
+
+Any sample whose name starts with `wt_` is loaded as a **wavetable**: a single-cycle waveform,
+looped to produce a pitch. Over a thousand from the AKWF set are available.
+
+<Strudel
+  code={`samples('bubo:waveforms');
+note("<[g3,b3,e4]!2 [a3,c3,e4] [b3,d3,f#4]>")
+  .n("<1 2 3 4 5 6 7 8 9 10>/2").room(0.5).size(0.9)
+  .s('wt_flute').velocity(0.25).often(n => n.ply(2))
+  .release(0.125).decay("<0.1 0.25 0.3 0.4>").sustain(0)
+  .lpf("<1000 2000 4000>").fast(4)`}
+/>
+
+Scanning through wavetables with `n` is where the character comes from:
+
+<Strudel
+  code={`samples('github:bubobubobubobubo/dough-waveforms')
+note("c2*8").s("wt_dbass").n(run(8))
+  .lpf(perlin.range(100,1000).slow(8))
+  .lpenv(-3).lpa(.1).room(.5).fast(2)`}
+/>
+
+You can also make a wavetable out of any sample by looping a tiny piece of it:
+
+<Strudel code={`note("<c eb g f>").s("bd").loop(1).loopEnd(.05).gain(.2)`} label="the first 5% of a kick, played as a synth" />
+
+## ZZFX
+
+The "Zuper Zmall Zound Zynth" is a whole second engine, built for game sound effects. Its sounds
+are prefixed `z_`:
+
+<Strudel
+  code={`note("c2 eb2 f2 g2")
+  .s("{z_sawtooth z_tan z_noise z_sine z_square}%4")
+  .zrand(0)
+  .attack(0.001).decay(0.1).sustain(.8).release(.1)
+  .curve(1)         // waveshape 1-3
+  .slide(0)         // +/- pitch slide
+  .deltaSlide(0)
+  .noise(0)
+  .zmod(0)          // fm speed
+  .zcrush(0)        // bit crush 0-1
+  .zdelay(0)
+  .pitchJump(0)     // +/- pitch change after pitchJumpTime
+  .pitchJumpTime(0)
+  .tremolo(0.5)
+  ._scope()`}
+  label="all 20 ZZFX parameters"
+/>
+
+<QA q="How do I make a kick drum from scratch?">
+A sine with a fast, deep, exponential pitch envelope and a short amplitude decay:
+`note("g1*4").s("sine").penv(32).pcurve(1).pdec(.08).decay(.2).sustain(0)`. Add
+`.distort("2:.4")` for weight. The whole trick is that a kick is a pitch envelope, not a
+waveform.
+</QA>
+
+## Recap
+
+| Control | Purpose |
+| --- | --- |
+| `s("sine/tri/square/saw")` | basic oscillators |
+| `s("supersaw")` + `unison` `detune` `spread` | fat stacked saws |
+| `s("pulse")` + `pw` `pwrate` `pwsweep` | pulse width modulation |
+| `s("white/pink/brown")`, `noise`, `crackle` | noise sources |
+| `vib` `vibmod` | vibrato |
+| `fm` `fmh` `fmattack` `fmdecay` `fmenv` | FM synthesis |
+| `partials` `phases` | additive synthesis |
+| `wt_*` samples + `n` | wavetable synthesis |
+| `z_*` sounds | the ZZFX engine |

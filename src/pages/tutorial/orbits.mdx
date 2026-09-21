@@ -1,0 +1,200 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: orbits
+title: Orbits
+lede: An orbit is a bus. Understanding them is the difference between a pile of sounds and a mix.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+## The signal chain
+
+To understand orbits you need to know what happens to a sound between the pattern and your
+speakers. In order:
+
+1. **A sound is triggered** by an event, with a start time and duration.
+2. **The source is produced** — a sample plays, or an oscillator runs. Detune-type effects
+   (`detune`, `penv`, vibrato) happen here.
+3. **The local effect chain** runs, in this fixed order:
+   `stretch` → `gain` (and the amplitude ADSR) → `lpf` → `hpf` → `bandpass` → `vowel` →
+   `coarse` → `crush` → `shape` → `distort` → `tremolo` → `compressor` → `pan` → `phaser` →
+   `postgain`
+4. **The signal splits** into:
+   - the **dry** output (level set by `dry`)
+   - the **delay** send (level set by `delay`)
+   - the **reverb** send (level set by `room`)
+   - analysers for `scope` / `spectrum`
+5. Dry, delay and reverb are summed into **the orbit**.
+6. `duck` modulates the volume of everything in the orbit.
+7. The orbit goes to the mixer and out.
+
+<Box>
+Steps 1–4 happen **per event**. Steps 5–7 happen **per orbit**. That is the entire distinction
+between a local and a global effect.
+</Box>
+
+Two consequences follow, and both bite people:
+
+<Box kind="warn">
+**Local effects are single-use.** Each one appears once in that chain, so writing it twice just
+overwrites the value. `s("bd").lpf(100).distort(2).lpf(800)` does **not** lowpass, distort, then
+lowpass again — it only applies `lpf(800)`. (Use `FX()` if you need a custom order; see below.)
+</Box>
+
+<Box kind="warn">
+**There is exactly one delay and one reverb per orbit.** Two patterns on the same orbit with
+different `roomsize` values are fighting over one knob, and the last one evaluated wins.
+</Box>
+
+## Setting an orbit
+
+<Strudel
+  code={`stack(
+  s("hh*6").delay(.5).delaytime(.25).orbit(1),
+  s("~ sd ~ sd").delay(.5).delaytime(.125).orbit(2)
+)`}
+  label="two delay times, because two orbits"
+/>
+
+The default orbit is `1`. Any number works; they are created on demand.
+
+## The bug this solves
+
+From the previous chapter — a silent kick wrecking a pluck's reverb:
+
+<Strudel
+  code={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor').room(1).roomsize(10)
+$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
+  label="broken: shared orbit"
+/>
+
+<Strudel
+  code={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor').room(1).roomsize(10).orbit(2)
+$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
+  label="fixed: the pluck gets its own orbit"
+/>
+
+<Box kind="try">
+Any time an effect "randomly" changes when you edit an unrelated line, suspect a shared orbit
+first. It is almost always `room`, `roomsize` or `delaytime`.
+</Box>
+
+## How to allocate orbits
+
+Orbits are buses, so use them the way you would use buses in a DAW — one per *space*, not one per
+sound:
+
+| Orbit | Typical use |
+| --- | --- |
+| 1 | drums — dry, or a very short room |
+| 2 | bass |
+| 3 | leads / pads — the big reverb lives here |
+| 4 | a dedicated delay throw |
+
+<Strudel
+  code={`setcpm(126/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+  .room(.12).rsize(1).orbit(1)
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4)
+  .decay(.18).sustain(0).orbit(2)
+
+pad: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm")
+  .attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)
+
+stab: s("rim").beat("3,11",16).delay(".7:.1875:.75").gain(.6).orbit(4)`}
+  label="four orbits, four different spaces"
+/>
+
+<Box kind="try">
+Change the `stab` line's orbit from 4 to 1 and re-evaluate. The rim's delay time is now imposed on
+the whole drum bus — a good demonstration of why you keep a throw on its own bus.
+</Box>
+
+## Sending one sound to several orbits
+
+Mini-notation works here, so a sound can be sent to more than one:
+
+<Strudel code={`s("white").orbit("2,3,4").gain(0.2)`} />
+
+<Box kind="warn">
+This creates **three copies** of the sound behind the scenes. If they all end up in the same stereo
+output, you have tripled the volume. The gain in that example is deliberately low. The real use for
+this is multi-orbit ducking, in the [next chapter](/tutorial/ducking).
+</Box>
+
+## Multichannel output
+
+By default every orbit is summed to channels 1 and 2. Turn on **Multi Channel Orbits** in the
+official REPL's settings and orbit `i` maps to channels `2i` and `2i+1` instead — each orbit
+becomes a separate stereo output. With a virtual audio device such as BlackHole 16, you can record
+every orbit as its own stem into a DAW.
+
+`channels` and `pan` behave accordingly: in a multichannel setup, `pan` moves once around a circle
+rather than between two speakers.
+
+## Related global controls
+
+| Control | Meaning |
+| --- | --- |
+| `orbit(n)` / `o(n)` | which bus this event goes to |
+| `dry(x)` | level of the untreated signal leaving the event |
+| `postgain(x)` | gain applied after **all** local effects |
+| `duckorbit(n)` | duck a different orbit — [next chapter](/tutorial/ducking) |
+| `channels` | explicit output channel routing |
+
+`postgain` is the one to remember: because it sits at the end of the local chain, it is how you
+turn something down **without** changing how hard it hits a distortion or a compressor earlier in
+the chain.
+
+<Strudel
+  code={`s("bd sd [~ bd] sd,hh*8")
+  .compressor("-20:20:10:.002:.02").postgain(1.5)`}
+/>
+
+## Custom effect order with FX()
+
+If the fixed chain order is not what you want, `FX()` lets you build your own, and it can be
+applied several times:
+
+<Strudel
+  code={`s("[bd <hh [bd | lt | oh]>]*4").dec(.4)
+  .FX(
+    phaser(0.5).gain(2),
+    bpf(800),
+    distort(1.3),
+    room(0.2),
+    delay(0.5).gain(1.25),
+    distort(0.3),
+  ).fxr(1.7)`}
+  label="two distortions in one chain — impossible without FX()"
+/>
+
+<Strudel
+  code={`s("saw").fm(0.5)
+  .delay(0.3)                          // outer effects apply last
+  .FX(coarse(4))                       // first coarse
+  .FX(lpf(500).lpe(4).lpa(1).lpd(2))   // then the filter
+  .FX(distort(1))                      // then distortion`}
+/>
+
+<QA q="Is an orbit the same as a track?">
+Not quite. A track is a *pattern* — one `$:` line. An orbit is a *bus* — a shared output with its
+own delay, reverb and duck. Several tracks can share one orbit (and often should, so they sit in
+the same space), and one track can be sent to several orbits.
+</QA>
+
+## Recap
+
+| Idea | |
+| --- | --- |
+| Local effects | built per event, fixed order, single use |
+| Global effects | one delay + one reverb **per orbit** |
+| `orbit(n)` | choose the bus |
+| Shared orbit | shared reverb/delay settings — last one wins |
+| `orbit("2,3")` | send to several buses (duplicates the sound) |
+| `postgain` | level after all local effects |
+| `FX(...)` | build your own effect chain in your own order |

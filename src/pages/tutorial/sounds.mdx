@@ -1,0 +1,191 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: sounds
+title: Picking Sounds
+lede: Every noise Strudel makes comes from s(). Here is how to choose which one.
+---
+
+import Strudel from '../../components/Strudel.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+
+`s()` (long form `sound()`) is the source selector. It does two different jobs depending on the
+name you give it:
+
+- a **sample** name (`bd`, `hh`, `casio`, `jazz`) plays back an audio file
+- a **synth** name (`sawtooth`, `square`, `triangle`, `sine`, `white`) generates the sound live
+
+<Strudel code={`s("bd hh sd hh")`} label="samples" />
+
+<Strudel code={`s("sawtooth square triangle sine")`} label="synths" />
+
+## Drum sounds
+
+Strudel ships with the [tidal-drum-machines](https://github.com/ritchse/tidal-drum-machines)
+library. The names are standardised abbreviations:
+
+| Name | Sound | Name | Sound |
+| --- | --- | --- | --- |
+| `bd` | bass / kick drum | `rd` | ride cymbal |
+| `sd` | snare drum | `cr` | crash cymbal |
+| `rim` | rimshot | `ht` `mt` `lt` | high / mid / low tom |
+| `cp` | clap | `sh` | shaker |
+| `hh` | closed hihat | `cb` | cowbell |
+| `oh` | open hihat | `tb` | tambourine |
+| `perc` | other percussion | `misc` `fx` | odds and ends |
+
+<Strudel code={`s("bd sd, hh*8, ~ ~ oh ~")`} label="a kit" />
+
+## Banks — changing the drum machine
+
+Every drum sample is really named `MachineName_bd`. `bank()` prepends the machine name for you, so
+you can swap the entire kit with one word:
+
+<Strudel code={`s("bd sd, hh*8").bank("RolandTR909")`} />
+
+<Box kind="try">
+Swap `RolandTR909` for `RolandTR808`, `RolandTR707`, `AkaiLinn`, `CasioRZ1`, `ViscoSpaceDrum`,
+`RhythmAce`, `RolandCompurhythm1000`. Each one changes the genre of the beat without touching the
+rhythm.
+</Box>
+
+Because `bank` takes a pattern like everything else, you can alternate machines per cycle:
+
+<Strudel code={`s("bd sd, hh*8").bank("<RolandTR808 RolandTR909>")`} />
+
+<Box kind="warn">
+Not every bank has every sound. If a bank is missing `oh`, you get silence for that event — not an
+error.
+</Box>
+
+## Sample index: `:` and `n()`
+
+One sound name usually holds several audio files. Pick one by appending `:n`:
+
+<Strudel code={`s("casio:0 casio:1 casio:2 casio:0")`} />
+
+Indices wrap around, so `:4` on a four-sample sound plays `:0` again. The same thing can be done
+outside the string with `n()`, which is nicer when the rhythm and the choice of sample are
+different ideas:
+
+<Strudel code={`n("0 1 [4 2] 3*2").s("jazz")`} label="n() sets the index, s() sets the sound" />
+
+<Strudel code={`s("hh*8").bank("RolandTR909").n("0 1 2 3")`} label="four different 909 hihats" />
+
+<Box>
+`n` is heavily overloaded in Strudel. With `s` it picks a **sample index**; with `scale` it picks a
+**scale degree**; with `voicing` it picks a **voice**. Same function, three meanings, decided by
+what else is in the chain.
+</Box>
+
+## Loudness and index in one string
+
+Mini-notation lets you pack `sound:index:gain` into a single token:
+
+<Strudel code={`s("bd:0 bd:1 bd:0:0.3 bd:1:1.4")`} label="third and fourth hit have custom gain" />
+
+## The other sound families
+
+Beyond drums, the default sample set includes instruments from
+[VCSL](https://github.com/sgossner/VCSL) and a full General MIDI soundfont bank. GM sounds all
+start with `gm_`:
+
+<Strudel
+  code={`note("c3 eb3 g3 bb3")
+  .s("<gm_electric_guitar_muted gm_acoustic_bass gm_voice_oohs gm_xylophone>")`}
+  label="general midi instruments"
+/>
+
+And a handful of playful named sets, good for sketching:
+
+<Strudel code={`s("<insect wind jazz metal east crow casio space numbers>")`} label="the workshop set" />
+
+<Box kind="try">
+Open the real [Strudel REPL](https://strudel.cc/) and click the **sounds** tab in the side panel.
+It lists every sound name currently loaded, with the number of samples in brackets, e.g.
+`RolandTR909_hh(4)`. That panel is the only complete, live, accurate index — memorising names is
+not the goal.
+</Box>
+
+## Noise
+
+Three flavours of noise are available as sound sources, from harsh to soft:
+
+<Strudel code={`s("<white pink brown>")._scope()`} />
+
+They make excellent hihats when you cut them short with an envelope:
+
+<Strudel code={`s("bd*2, <white pink brown>*8").decay(.04).sustain(0)`} />
+
+There is also `crackle`, whose `density` controls how busy it is:
+
+<Strudel code={`s("crackle*4").density("<0.01 0.04 0.2 0.5>".slow(2))`} />
+
+## Loading your own samples
+
+`samples()` registers new names. Point it at a base URL plus a map of names to files:
+
+<Strudel
+  code={`samples({
+  bassdrum: 'bd/BT0AADA.wav',
+  hihat: 'hh27/000_hh27closedhh.wav',
+  snaredrum: ['sd/rytm-01-classic.wav', 'sd/rytm-00-hard.wav'],
+}, 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/');
+
+s("bassdrum snaredrum:0 bassdrum snaredrum:1, hihat*16")`}
+  label="custom sample map"
+/>
+
+Shorter ways to get sounds in:
+
+| Form | What it does |
+| --- | --- |
+| `samples('github:user/repo')` | loads `strudel.json` from a GitHub repo |
+| `samples('https://…/strudel.json')` | loads a hosted sample map |
+| `samples('shabda:bass:4,hihat:4')` | grabs samples from freesound.org by keyword |
+| `samples('shabda/speech:hello')` | generates a text-to-speech sample |
+| `samples('http://localhost:5432/')` | serves a local folder via `npx @strudel/sampler` |
+| `soundAlias('RolandTR808_bd', 'kick')` | gives an existing sound a second name |
+
+<Strudel
+  code={`samples('github:tidalcycles/dirt-samples')
+s("bd sd bd sd, hh*16")`}
+  label="a whole classic library in one line"
+/>
+
+<QA q="How do I use samples sitting on my own disk?">
+Two ways. In the official REPL, the **sounds → import-sounds** tab has an "import sounds folder"
+button — subfolder names become sound names, files inside become indices in alphabetical order.
+Or run `npx @strudel/sampler` inside a folder of samples, which generates the `strudel.json` and
+serves it on `localhost:5432`.
+</QA>
+
+## Tuning a sample
+
+If you want to play a sample with `note()` and have it be in tune, tell Strudel what pitch it was
+recorded at:
+
+<Strudel
+  code={`samples({
+  'moog': {
+    'g2': 'moog/004_Mighty%20Moog%20G2.wav',
+    'g3': 'moog/005_Mighty%20Moog%20G3.wav',
+    'g4': 'moog/006_Mighty%20Moog%20G4.wav',
+  }}, 'github:tidalcycles/dirt-samples')
+
+note("g2!2 <bb2 c3>!2, <c4@3 [<eb4 bb3> g4 f4]>").s('moog').clip(1).gain(.5)`}
+  label="multisampled and tuned"
+/>
+
+The sampler picks whichever recording is closest to the note you asked for.
+
+## Recap
+
+| Function | Purpose |
+| --- | --- |
+| `s()` / `sound()` | choose sample or synth |
+| `bank()` | prefix a drum machine name |
+| `n()` | choose sample index (or scale degree elsewhere) |
+| `"name:i:gain"` | index and gain inline |
+| `samples()` | register new sound names |
+| `soundAlias()` | rename an existing sound |

@@ -1,0 +1,48 @@
+---
+import Base from './Base.astro';
+import { CHAPTERS } from '../consts';
+
+const { frontmatter } = Astro.props;
+const slug: string = frontmatter.slug;
+const index = CHAPTERS.findIndex((c) => c.slug === slug);
+const chapter = CHAPTERS[index];
+const prev = index > 0 ? CHAPTERS[index - 1] : undefined;
+const next = index >= 0 && index < CHAPTERS.length - 1 ? CHAPTERS[index + 1] : undefined;
+const title: string = frontmatter.title ?? chapter?.title ?? 'Strudel';
+---
+
+<Base title={title} description={frontmatter.lede ?? chapter?.blurb}>
+  {
+    chapter && (
+      <p class="eyebrow">
+        {chapter.part} · Chapter {String(index + 1).padStart(2, '0')}
+      </p>
+    )
+  }
+  <h1>{title}</h1>
+  {frontmatter.lede && <p class="lede">{frontmatter.lede}</p>}
+  <slot />
+  <nav class="pager">
+    {
+      prev ? (
+        <a href={`/tutorial/${prev.slug}`}>
+          <span class="dir">← previous</span>
+          {prev.title}
+        </a>
+      ) : (
+        <a href="/">
+          <span class="dir">←</span>
+          Home
+        </a>
+      )
+    }
+    {
+      next && (
+        <a class="next" href={`/tutorial/${next.slug}`}>
+          <span class="dir">next →</span>
+          {next.title}
+        </a>
+      )
+    }
+  </nav>
+</Base>
