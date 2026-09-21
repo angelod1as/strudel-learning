@@ -183,11 +183,16 @@ An underscore extends the previous event, exactly like `@`, but drawn as a grid.
 
 ## `^` — mark the step level (stepwise)
 
-By default, steps are counted at the top level: `"a [b c] d e"` is four steps. Prefix a subpattern
-with `^` to count at that level instead, which matters for the stepwise functions (`stepcat`,
-`expand`, `pace`).
+By default, steps are counted at the top level: `"a [b c] d e"` is four steps, because `[b c]`
+counts as one. Put a `^` **inside** a bracket, at the start of the sub-sequence, to count at that
+level instead: `"a [^b c] d e"` is eight steps.
 
-<Strudel code={`stepcat("bd hh hh", "bd hh hh cp hh").s()`} label="steps distributed evenly, not cycles" />
+This only matters for the stepwise functions (`stepcat`, `expand`, `contract`, `pace`), which
+distribute *steps* evenly rather than squashing each pattern into half a cycle:
+
+<Strudel code={`stepcat("bd hh hh", "bd hh hh cp hh").s()`} label="stepcat: steps distributed evenly" />
+
+<Strudel code={`fastcat("bd hh hh", "bd hh hh cp hh").s()`} label="fastcat: half a cycle each — compare" />
 
 ## Multi-line patterns
 
@@ -206,8 +211,8 @@ s(\`
 
 ## Patterns inside arguments
 
-Mini-notation is not only for `s` and `note`. **Every** function argument accepts it, which is
-what makes Strudel feel alive:
+Mini-notation is not only for `s` and `note`. **Almost every** function argument accepts it, which
+is what makes Strudel feel alive:
 
 <Strudel
   code={`s("sawtooth")

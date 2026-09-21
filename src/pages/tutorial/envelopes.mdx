@@ -140,7 +140,7 @@ The single most useful application — a synthesised kick drum:
 | `pdecay` / `pdec` | time to fall back |
 | `prelease` | tail after note end |
 | `pcurve` | 0 linear, 1 exponential (use 1 for kicks) |
-| `panchor` | 0 = sweep up from the note, 1 = sweep down to it |
+| `panchor` | where the note sits in the sweep: 0 = range is `[note, note+penv]`, 1 = range is `[note-penv, note]` |
 
 <Strudel code={`note("c c4").penv(12).panchor("<0 .5 1 .5>")`} label="panchor decides where the note sits in the sweep" />
 

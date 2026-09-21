@@ -130,8 +130,8 @@ this is multi-orbit ducking, in the <L to="/tutorial/ducking">next chapter</L>.
 ## Multichannel output
 
 By default every orbit is summed to channels 1 and 2. Turn on **Multi Channel Orbits** in the
-official REPL's settings and orbit `i` maps to channels `2i` and `2i+1` instead — each orbit
-becomes a separate stereo output. With a virtual audio device such as BlackHole 16, you can record
+official REPL's settings and orbit `i` maps to channels `2i-1` and `2i` instead — orbit 1 to
+channels 1 and 2, orbit 2 to 3 and 4, and so on. Each orbit becomes a separate stereo output. With a virtual audio device such as BlackHole 16, you can record
 every orbit as its own stem into a DAW.
 
 `channels` and `pan` behave accordingly: in a multichannel setup, `pan` moves once around a circle

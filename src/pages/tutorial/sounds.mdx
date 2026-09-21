@@ -54,8 +54,8 @@ Because `bank` takes a pattern like everything else, you can alternate machines 
 <Strudel code={`s("bd sd, hh*8").bank("<RolandTR808 RolandTR909>")`} />
 
 <Box kind="warn">
-Not every bank has every sound. If a bank is missing `oh`, you get silence for that event — not an
-error.
+Not every bank has every sound. If a bank is missing `oh`, `bank("…").s("oh")` resolves to a name that was never registered and Strudel raises `sound … not found! Is it loaded?`. Only the literal
+rests `-`, `~` and `_` are skipped silently.
 </Box>
 
 ## Sample index: `:` and `n()`

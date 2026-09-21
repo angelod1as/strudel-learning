@@ -162,7 +162,7 @@ Synth sources: `sine` `triangle` `square` `sawtooth` `supersaw` `pulse` `user` Â
 | `rate` | `r` | speed in Hz |
 | `sync` | `s` | speed in cycles |
 | `depth` | `dr`, `dep` | relative depth |
-| `depthabs` | `da` | absolute depth |
+| `depthabs` | `da` | absolute depth (total swing) |
 | `dcoffset` | `dc` | `0` only raises, `-1` only lowers |
 | `shape` | `sh` | `triangle`(0) `sine`(1) `ramp`(2) `saw`(3) `square`(4) |
 | `skew` | `sk` | triangle asymmetry / pulse width |
@@ -178,7 +178,7 @@ Synth sources: `sine` `triangle` `square` `sawtooth` `supersaw` `pulse` `user` Â
 | `gain` `postgain` `velocity` `dry` | levels |
 | `pan` | stereo position |
 | `distort("amt:gain:type")` `distorttype` | waveshaping |
-| `crush` `coarse` `squiz` | digital degradation |
+| `crush` `coarse` | digital degradation (`squiz` too, but SuperDirt only) |
 | `compressor("thr:ratio:knee:att:rel")` | dynamics |
 | `tremolo` `tremolosync` `tremolodepth` `tremoloshape` `tremoloskew` | amplitude modulation |
 | `phaser` `phaserdepth` `phasercenter` `phasersweep` | phaser |
@@ -187,7 +187,8 @@ Synth sources: `sine` `triangle` `square` `sawtooth` `supersaw` `pulse` `user` Â
 | `fm` `fmh` | FM |
 | `unison` `detune` `spread` | oscillator stacking |
 | `pw` `pwrate` `pwsweep` | pulse width |
-| `noise` `density` | noise mixed into a tone |
+| `noise` | pink noise mixed into a tone |
+| `density` | crackle noise density |
 | `partials` `phases` | additive synthesis |
 
 ## Sampler
@@ -221,7 +222,8 @@ Synth sources: `sine` `triangle` `square` `sawtooth` `supersaw` `pulse` `user` Â
 
 | Function | |
 | --- | --- |
-| `punchcard` `pianoroll` `scope` `spectrum` `spiral` `pitchwheel` `wordfall` | visualisers (prefix `_` for inline) |
+| `punchcard` `pianoroll` `scope` `spectrum` `spiral` `pitchwheel` | visualisers (prefix `_` for inline) |
+| `wordfall` | visualiser, background only |
 | `color()` | highlight colour |
 | `log()` | print events to the console |
 | `.midi()` `midin()` | MIDI out / in |

@@ -78,7 +78,7 @@ To place the same effect twice, or to reorder the chain, use `FX()`.
   label="two distortions, explicit order"
 />
 
-Chained `FX()` calls nest: the outermost chain is applied last.
+Chained `FX()` calls are concatenated into one flat chain, in the order written, with the controls outside any `FX()` applied last.
 
 <Strudel
   code={`s("saw").fm(0.5)

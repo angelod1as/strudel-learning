@@ -45,8 +45,9 @@ With that playing, try each of these one at a time — each is a single characte
 
 ## Visual feedback
 
-Strudel can draw what it is doing. Every visualiser exists in two forms: plain (draws to the page
-background) and prefixed with `_` (draws inline, so you can have several).
+Strudel can draw what it is doing. Most visualisers exist in two forms: plain (draws to the page
+background) and prefixed with `_` (draws inline, so you can have several). `wordfall` is the
+exception — it has no inline variant.
 
 <Strudel code={`note("c a f e").color("white")._punchcard()`} label="punchcard: a piano roll of the pattern" />
 
@@ -62,7 +63,7 @@ background) and prefixed with `_` (draws inline, so you can have several).
 | `spectrum` / `_spectrum` | spectrum analyser |
 | `spiral` | cycles drawn as a spiral |
 | `pitchwheel` | pitch classes on a circle |
-| `wordfall` | the event values as falling text |
+| `wordfall` | the event values as falling text (no `_` variant) |
 
 `color()` sets the highlight colour, and it is patternable — useful for telling layers apart:
 

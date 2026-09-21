@@ -210,7 +210,7 @@ $: note("<c2 eb2 g1 bb1>*2").s("sawtooth").lpf(sine.range(300,2000).slow(8))`}
 
 <QA q="When does the argument pattern add events, and when does it not?">
 By default, structure comes from the **left** of the chain: `s("bd*4").speed("1 2")` is four kicks.
-Functions like `struct`, `squeeze` and `ply` explicitly take structure from the right instead.
+`struct` is the clean exception: it takes structure from the right. `squeeze` takes it from both sides. `ply` looks like it adds events from the right, but it does not — it subdivides each event the left pattern already had.
 `stack`/`,` combines everything. If you are surprised by how many events you get, ask which side
 the structure came from.
 </QA>

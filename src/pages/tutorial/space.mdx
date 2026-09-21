@@ -82,10 +82,10 @@ note("c3 eb3 g3 bb3").s("sawtooth").decay(.1).sustain(0)
 | --- | --- | --- |
 | `room` | — | send level, 0…1 |
 | `roomsize` | `rsize`, `sz`, `size` | size of the space, 0…10 |
-| `roomfade` | — | decay time |
-| `roomlp` | `rlp` | lowpass on the reverb tail, in Hz |
-| `roomdim` | `rdim` | frequency at which the tail is 60 dB down |
-| `iresponse` | — | use an impulse response sample instead |
+| `roomfade` | `rfade` | decay time |
+| `roomlp` | `rlp` | lowpass cutoff the tail *starts* at, in Hz |
+| `roomdim` | `rdim` | lowpass cutoff the tail glides *to*, by the time it is 60 dB down |
+| `iresponse` | `ir` | use an impulse response sample instead |
 
 <Strudel code={`s("bd sd [~ bd] sd").room(.8).rsize("<1 4 8>")`} label="from a booth to a cathedral" />
 

@@ -36,12 +36,14 @@ drums, `speed` is usually more musical; for melodic material, `stretch` keeps yo
 
 ## Fitting a sample to the grid
 
-A two-bar break recorded at 174 bpm will not line up with your pattern. Three tools:
+A two-bar break recorded at 174 bpm will not line up with your pattern. Three tools — note that
+`fit` and `loopAt` work by setting `speed`, so the pitch moves with the tempo, exactly like a
+turntable. `stretch` is the one that does not.
 
 <Strudel
   code={`samples('github:yaxu/clean-breaks')
 s("amen/4").fit()`}
-  label="fit: stretch the sample to the length of its event"
+  label="fit: resample so the file fills its event"
 />
 
 <Strudel
@@ -180,8 +182,8 @@ to blend several different samples into one texture.
 | --- | --- |
 | `speed` | playback rate (pitch + time) |
 | `stretch` | pitch without time |
-| `fit` | stretch sample to event length |
-| `loopAt(n)` | stretch sample to n cycles |
+| `fit` | resample so the file fills its event (pitch moves) |
+| `loopAt(n)` | resample so the file spans n cycles (pitch moves) |
 | `begin` `end` | trim the file |
 | `chop(n)` | cut into n consecutive grains |
 | `slice(n, pat)` | play named pieces |

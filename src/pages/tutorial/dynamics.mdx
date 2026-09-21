@@ -95,11 +95,11 @@ Amplitude modulation with a continuous waveform — it varies *during* the note.
 | `tremolo` / `trem` | speed in Hz |
 | `tremolosync` | speed in cycles instead of Hz |
 | `tremolodepth` | amount |
-| `tremoloshape` | `sine`, `tri`, `square` |
+| `tremoloshape` | `tri`, `square`, `sine`, `saw`, `ramp` |
 | `tremoloskew` | asymmetry / pulse width |
 | `tremolophase` | starting phase |
 
-<Strudel code={`note("{f g c d}%16").tremsync(4).tremoloshape("<sine tri square>").s("sawtooth")`} />
+<Strudel code={`note("{f g c d}%16").tremsync(4).tremoloshape("<sine tri square saw ramp>").s("sawtooth")`} />
 
 ## Phaser
 
@@ -134,11 +134,17 @@ For a wider, more controllable version, stack a detuned copy of the note instead
 `jux` is a shortcut for the most common stereo trick — see
 <L to="/tutorial/pattern-functions">Pattern Functions</L>.
 
-## Squiz
+## Squiz (SuperDirt only)
 
 Hard to describe, easy to recognise: part filter, part ring modulator, part pitch shifter.
 
-<Strudel code={`s("bd*4").squiz("2 4/2 6 [8 16]")`} />
+<Strudel code={`s("bd*4").squiz("2 4/2 6 [8 16]")`} label="evaluates, but does nothing in a browser" />
+
+<Box kind="warn">
+`squiz` exists as a control name, but nothing in Strudel's web audio engine reads it. It only does
+something when you send the pattern to SuperDirt / SuperCollider with `.osc()`. The snippet above
+runs without error and sounds exactly like a plain kick.
+</Box>
 
 ## Putting the dirty end together
 

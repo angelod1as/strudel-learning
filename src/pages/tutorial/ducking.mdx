@@ -55,7 +55,7 @@ $: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0.01).postgain(0)`}
 | Control | Aliases | Range | Meaning |
 | --- | --- | --- | --- |
 | `duckorbit` | `duck` | orbit number(s) | which orbit(s) to duck |
-| `duckdepth` | — | 0…1 | how far down it goes |
+| `duckdepth` | — | 0…1 | how far down it goes (non-linear, see below) |
 | `duckonset` | `duckons` | seconds | time to **reach** the lowest volume |
 | `duckattack` | `duckatt`, `datt` | seconds | time to **return** to normal volume |
 
@@ -75,8 +75,21 @@ release). Read them as: onset = going down, attack = coming back.
   label="full duck, then less, then off"
 />
 
-Depth 1 is a complete gate. Depth 0.3–0.6 is what most records actually use — enough to feel the
-pump, not enough to notice the gap.
+Depth 0.3–0.6 is what most records actually use — enough to feel the pump, not enough to notice
+the gap.
+
+The scale is not linear. Internally the orbit's gain drops to `1 - √depth`, floored at `0.01`:
+
+| `duckdepth` | gain | roughly |
+| --- | --- | --- |
+| `0.1` | 0.68 | −3 dB |
+| `0.3` | 0.45 | −7 dB |
+| `0.5` | 0.29 | −11 dB |
+| `0.6` | 0.22 | −13 dB |
+| `1` | 0.01 | −40 dB |
+
+So the first half of the knob does most of the audible work, and depth 1 is a very deep duck
+rather than true silence. A duck can only ever lower the level, never raise it.
 
 ### duckattack — how fast it comes back
 
@@ -168,8 +181,8 @@ The per-orbit list syntax only works if you targeted multiple orbits in the firs
 
 ## Ducking is continuous
 
-Ducking is one of the few effects that genuinely varies **during** a sounding note (along with the
-ADSR envelopes, `tremolo`, `phaser` and `vib`). That is why it works on a long held pad, where a
+Ducking is one of the few effects that genuinely varies **during** a sounding note — along with the
+ADSR envelopes, `tremolo`, `phaser`, `vib`, and anything driven by `lfo()` or `env()`. That is why it works on a long held pad, where a
 pattern-level `gain` would not:
 
 <Strudel

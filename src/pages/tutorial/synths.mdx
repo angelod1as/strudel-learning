@@ -26,8 +26,8 @@ import QA from '../../components/QA.astro';
 
 If you set `note` but no `s`, the default is `triangle`.
 
-Short aliases exist: `saw`, `sqr`, `tri`. There are also `supersaw`, `pulse` and `zow`-style
-variants:
+Short aliases exist: `saw`, `sqr`, `tri`, `sin`. The engine also registers `supersaw`, `pulse`,
+`sbd` and `bytebeat`:
 
 <Strudel code={`note("d f a a# a d3").fast(2).s("supersaw").unison("<1 2 7>")`} label="supersaw: stacked detuned saws" />
 
@@ -193,7 +193,7 @@ are prefixed `z_`:
   .pitchJumpTime(0)
   .tremolo(0.5)
   ._scope()`}
-  label="all 20 ZZFX parameters"
+  label="the ZZFX parameters (minus zzfx's own lfo, which collides with the modulator lfo)"
 />
 
 <QA q="How do I make a kick drum from scratch?">
