@@ -5,7 +5,8 @@ title: Writing in Time
 lede: Mini-notation thinks by dividing time. Drum machines think by placing hits on a grid. Learn to write both ways, in any meter, with tuplets and groove.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
 import QA from '../../components/QA.astro';
 import L from '../../components/L.astro';
@@ -13,49 +14,93 @@ import L from '../../components/L.astro';
 <L to="/tutorial/mini-notation">Mini-Notation</L> taught the symbols and
 <L to="/tutorial/tempo">Tempo &amp; Cycles</L> taught the clock. This chapter is about using them to
 write rhythm the way you hear it: on 1, on the "and" of 3, in 7/8, swung, a bit behind the beat.
+You do it by typing: each step asks for one change, and you press ctrl+enter and listen.
 
 ## Two ways to think about a bar
 
-Mini-notation **subdivides**. You start with one cycle and split it: four slots, and then one of
-those slots split in two. A drum machine **places**. You start with a row of 16 (or 8) equal steps
-and turn some of them on.
+Mini-notation **subdivides**: you start with one cycle and split it. A drum machine **places**: you
+start with a row of equal steps and switch some on. Write one beat both ways.
 
-Here is one beat written both ways. Kick on 1, snare on 2 and 4, and an extra kick on the "and"
-of 2:
+<Exercise id="time/two-ways" title="One beat, two ways"
+  goal="Kick on 1 and on the “and” of 2, snare on 2 and 4, eighth-note hats. First as a tree, then as a grid."
+  start={`s("bd sd ~ sd")`}
+  target={`s("bd ~ sd bd ~ ~ sd ~, hh*8")`}>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'bd').map(e => +(e.t * 8).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '0 3' || 'Kick lands on eighth(s) ' + x + ' (counting from 0). It should be on 0 and 3.' }" }}
+        hints={['Beat 2 has to hold two things: the snare, then a kick.', 'Replace the `sd` in slot 2 with `[sd bd]`.']}
+        solution={`s("bd [sd bd] ~ sd")`}>
+    Beat 2 needs a kick on its second half. Replace the `sd` in slot 2 with `[sd bd]`. The brackets
+    split that one beat in two.
+  </Step>
+  <Step check={{ match: { keys: ['s'] } }}
+        hints={['A comma inside the quotes adds a parallel layer.', 'End the string with `, hh*8`.']}
+        solution={`s("bd [sd bd] ~ sd, hh*8")`}>
+    Add a hat layer: type `, hh*8` just before the closing quote.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, excludes: '[' }}
+        hints={['Eight equal steps, one per eighth note. Rests are `~`.', 'Kick on steps 1 and 4, snare on 3 and 7 (counting from 1): `bd ~ sd bd ~ ~ sd ~`.']}
+        solution={`s("bd ~ sd bd ~ ~ sd ~, hh*8")`}>
+    Now the grid way. Replace `bd [sd bd] ~ sd` with eight equal steps and no brackets:
+    `bd ~ sd bd ~ ~ sd ~`. It should sound identical.
+  </Step>
+</Exercise>
 
-<Strudel code={`s("bd [sd bd] ~ sd, hh*8")`} label="subdividing: beat 2 is split in two" />
-
-<Strudel code={`s("bd ~ sd bd ~ ~ sd ~, hh*8")`} label="placing: 8 equal steps, some switched on" />
-
-They sound the same because the hits start at the same moments: 0, 1/4, 3/8 and 3/4 of the cycle.
-The only difference is how long each event lasts on paper. In the first version the opening
-kick is a quarter of the cycle long. In the second it is an eighth. With drum samples you will not
-hear that, because a sample plays to its end unless you tell it otherwise (more on that under
-"Position vs duration" below).
+Both versions sound the same because the hits **start** at the same moments: 0, 1/4, 3/8 and 3/4 of
+the cycle. What differs is how long each event lasts on paper (the first kick is a quarter long in
+the tree and an eighth in the grid). Drum samples play to their end anyway, so you do not hear it.
 
 <Box>
-Both models are valid, and you will use both. **Subdivision** reads best for melodic phrases and for
-rhythms that are "mostly even with a twist". **The grid** reads best for drums, for anything you
-would program on a step sequencer, and whenever you are thinking "on step 11".
+**Subdivision** reads best for melodic phrases and for rhythms that are "mostly even with a twist".
+**The grid** reads best for drums, for anything you would program on a step sequencer, and
+whenever you are thinking "on step 11".
 </Box>
+
+<Exercise id="time/two-ways-challenge" title="Challenge: kick on the “and” of 3"
+  goal="Kick on 1 and on the “and” of 3, snare on 2 and 4, eighth-note hats. Any spelling."
+  start={``}
+  target={`s("bd ~ sd ~ ~ bd sd ~, hh*8")`}
+  check={{ match: { keys: ['s'] } }} />
 
 ## Make one cycle one bar
 
-A grid only means something once you know how long a cycle is. The convention that makes
-everything line up:
+A grid only means something once you know how long a cycle is.
 
 <Box>
 `setcpm(bpm / 4)` makes **one cycle = one bar of 4/4**. From then on, `n` equal steps per cycle
-means `n` notes per bar.
+means `n` notes per bar, and every time value (`late`, `early`, `off`) counts in bars.
 </Box>
 
-<Strudel
-  code={`setcpm(120/4)
-s("bd*4, hh*16")`}
-  label="120 bpm: kick on quarters, hats on sixteenths"
-/>
+<Exercise id="time/one-cycle-one-bar" title="Offbeat hats at 120"
+  goal="At 120 bpm, kick on every beat and a hat on every offbeat eighth."
+  start={`s("bd*4, hh*16")`}
+  target={`setcpm(120/4)
+$: s("bd*4")
+$: s("hh*4").late(1/8)`}>
+  <Step check={{ code: "setcpm\\(\\s*(120\\s*/\\s*4|30)\\s*\\)" }}
+        hints={['Tempo goes on its own line, before the pattern.', 'Type `setcpm(120/4)` on the first line.']}
+        solution={`setcpm(120/4)
+s("bd*4, hh*16")`}>
+    Add `setcpm(120/4)` on its own line above the pattern. Kicks on quarters, hats on sixteenths:
+    `*4` and `*16` now literally mean quarter notes and sixteenths.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 4).toFixed(3)).join(' '); return x === '0 1 2 3' || 'Expected 4 hats, one on each beat.' }" }}
+        hints={['Each `$:` line is its own layer.', 'Two lines: `$: s("bd*4")` and `$: s("hh*4")`.']}
+        solution={`setcpm(120/4)
+$: s("bd*4")
+$: s("hh*4")`}>
+    Split it into two lanes. Replace the pattern line with `$: s("bd*4")` and, below it,
+    `$: s("hh*4")`. Hats on the beat, for now.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, includes: '.late(' }}
+        hints={['An eighth note is 1/8 of a bar, and one bar is one cycle.', 'Add `.late(1/8)` to the end of the hat line.']}
+        solution={`setcpm(120/4)
+$: s("bd*4")
+$: s("hh*4").late(1/8)`}>
+    Add `.late(1/8)` to the hat line. One eighth of a cycle is one eighth note, so the hats jump
+    to the offbeats.
+  </Step>
+</Exercise>
 
-With that convention in place, every note value is a step count:
+With that convention, every note value is a step count:
 
 | Note value | Per bar | Mini-notation |
 | --- | --- | --- |
@@ -66,19 +111,7 @@ With that convention in place, every note value is a step count:
 | eighth notes | 8 | `"x*8"` |
 | eighth-note triplets | 12 | `"x*12"` |
 | sixteenth notes | 16 | `"x*16"` |
-| sixteenth-note triplets | 24 | `"x*24"` |
 | one note every 2 bars | 1/2 | `"x/2"` |
-
-Time offsets work the same way. Everything that takes a time, such as `late`, `early` or `off`,
-counts in **cycles**, so here it counts in **bars**. `1/4` is a beat, `1/8` an eighth and `1/16` a
-sixteenth.
-
-<Strudel
-  code={`setcpm(120/4)
-$: s("bd*4")
-$: s("hh*4").late(1/8)`}
-  label="hats moved one eighth later: offbeat hats"
-/>
 
 <QA q="Do I have to use setcpm(bpm/4)?">
 No. It is a convention, not a rule. If you prefer one cycle to be one beat, use `setcpm(bpm)` and
@@ -87,366 +120,713 @@ that you pick one and keep to it, because every step count and every `late(…)`
 it. This chapter uses one cycle = one bar throughout.
 </QA>
 
+<Exercise id="time/note-values-challenge" title="Challenge: note values"
+  goal="At 120 bpm: kick on quarter notes, hats in eighth-note triplets, and a crash (`cr`) once every two bars."
+  start={``}
+  target={`setcpm(120/4)
+$: s("bd*4")
+$: s("hh*12")
+$: s("cr/2")`}
+  check={{ match: { keys: ['s'] }, cycles: 2, code: "setcpm\\(\\s*(120\\s*/\\s*4|30)\\s*\\)" }} />
+
 ## Writing on a grid
 
 ### Step strings
 
-The simplest grid is a string of equal steps, with `-` or `~` for "off". Both mean rest. `-` is
-easier to scan.
+A grid is a string of equal steps with `-` (or `~`) for "off". Build a step sequencer, one lane per
+line.
 
-<Strudel
-  code={`setcpm(100/4)
-s("bd - - - sd - - bd - - bd - sd - - -")`}
-  label="16 steps, one bar"
-/>
-
-Sixteen tokens in a row is hard to count. Mini-notation has a separator for this: a lone `.`
-splits a sequence into equal groups, exactly as if each group were wrapped in `[ ]`. Put one
-between every beat and the grid reads like a score:
-
-<Strudel
-  code={`setcpm(100/4)
-s("bd - - - . sd - - bd . - - bd - . sd - - -")`}
-  label="the same bar, with a . between beats"
-/>
+<Exercise id="time/step-sequencer" title="A step sequencer"
+  goal="Three lanes of 16 steps: kick, snare and hats, with a `.` between beats so you can read them."
+  start={`setcpm(100/4)
+$: s("bd - - - - - - - - - - - - - - -")`}
+  target={`setcpm(100/4)
+$: s("bd -  -  -  . -  -  -  bd . -  -  bd -  . -  -  -  - ").bank("RolandTR909")
+$: s("-  -  -  -  . sd -  -  -  . -  -  -  -  . sd -  -  - ").bank("RolandTR909")
+$: s("hh hh hh hh . hh hh oh -  . hh hh hh hh . hh hh oh - ").bank("RolandTR909")`}>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'bd').map(e => +(e.t * 16).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '0 7 10' || 'Kick is on steps ' + x + ' (counting from 0). Expected 0 7 10.' }" }}
+        hints={['Step 0 is the first token. Step 7 is the 8th token, step 10 the 11th.', '`bd - - - - - - bd - - bd - - - - -`']}
+        solution={`setcpm(100/4)
+$: s("bd - - - - - - bd - - bd - - - - -")`}>
+    Counting from 0, turn on steps 7 and 10: replace those two `-` with `bd`.
+  </Step>
+  <Step check={{ includes: ' . ', fn: "(h) => { const x = h.filter(e => e.value.s === 'bd').map(e => +(e.t * 16).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '0 7 10' || 'The kick moved: it is on steps ' + x + ', expected 0 7 10. Is every group exactly 4 steps?' }" }}
+        hints={['A lone `.` between tokens splits the sequence into equal groups.', '`bd - - - . - - - bd . - - bd - . - - - -`']}
+        solution={`setcpm(100/4)
+$: s("bd - - - . - - - bd . - - bd - . - - - -")`}>
+    Sixteen tokens are hard to count. Put a lone `.` after every fourth step:
+    `bd - - - . - - - bd . - - bd - . - - - -`. Nothing should move.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'sd').map(e => +(e.t * 16).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '4 12' || 'Snare is on steps [' + x + '], expected 4 and 12 (beats 2 and 4).' }" }}
+        hints={['Beat 2 is the first step of the second group.', '`$: s("- - - - . sd - - - . - - - - . sd - - -")`']}
+        solution={`setcpm(100/4)
+$: s("bd - - - . - - - bd . - - bd - . - - - -")
+$: s("- - - - . sd - - - . - - - - . sd - - -")`}>
+    Add a snare lane below, snare on beats 2 and 4:
+    `$: s("- - - - . sd - - - . - - - - . sd - - -")`. Pad the tokens with spaces if you want the
+    columns to line up.
+  </Step>
+  <Step check={{ fn: "(h) => { const on = s => h.filter(e => e.value.s === s).map(e => +(e.t * 16).toFixed(3)).sort((a, b) => a - b).join(' '); return (on('hh') === '0 1 2 3 4 5 8 9 10 11 12 13' && on('oh') === '6 14') || 'Expected closed hats on every step except 6, 7, 14 and 15, and open hats on 6 and 14.' }" }}
+        hints={['16 steps again, grouped by `.`.', '`$: s("hh hh hh hh . hh hh oh - . hh hh hh hh . hh hh oh -")`']}
+        solution={`setcpm(100/4)
+$: s("bd - - - . - - - bd . - - bd - . - - - -")
+$: s("- - - - . sd - - - . - - - - . sd - - -")
+$: s("hh hh hh hh . hh hh oh - . hh hh hh hh . hh hh oh -")`}>
+    Add a hat lane: `$: s("hh hh hh hh . hh hh oh - . hh hh hh hh . hh hh oh -")`. The `oh` is an
+    open hat, and the `-` after it lets it ring.
+  </Step>
+  <Step check={{ fn: "(h) => h.length > 0 && h.every(e => e.value.bank) || 'Every lane needs a `.bank(...)`.'" }}
+        hints={['Chain it after the closing parenthesis of `s(...)`.', 'Each line ends with `.bank("RolandTR909")`.']}
+        solution={`setcpm(100/4)
+$: s("bd - - - . - - - bd . - - bd - . - - - -").bank("RolandTR909")
+$: s("- - - - . sd - - - . - - - - . sd - - -").bank("RolandTR909")
+$: s("hh hh hh hh . hh hh oh - . hh hh hh hh . hh hh oh -").bank("RolandTR909")`}>
+    Add `.bank("RolandTR909")` to the end of each of the three lanes.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
-`.` divides time **equally** between the groups, just like `[ ]`. It works as a bar-line only when
-every group has the same number of steps. `"bd hh . sd hh hh"` is not five equal steps. It is two
-halves, the first holding two steps and the second three. You also cannot mix `.` and `,` at
-the same level. Write `"[bd - . sd -], [hh hh . hh hh]"` with brackets, not `"bd - . sd -, hh hh . hh hh"`.
+`.` divides time **equally** between the groups, like `[ ]`. It works as a bar-line only when every
+group has the same number of steps: `"bd hh . sd hh hh"` is two halves, not five equal steps. You
+also cannot mix `.` and `,` at the same level. `"bd - . sd -, hh hh . hh hh"` is a parse error.
+Wrap each layer in brackets: `"[bd - . sd -], [hh hh . hh hh]"`.
 </Box>
 
-### One row per instrument
-
-That gives you a drum-machine workflow. Put each instrument on its own `$:` line, pad the tokens to
-the same width, and the columns line up:
-
-<Strudel
-  code={`setcpm(100/4)
-$: s("bd -  -  -  . -  -  bd -  . -  -  bd -  . -  -  -  - ").bank("RolandTR909")
-$: s("-  -  -  -  . sd -  -  -  . -  -  -  -  . sd -  -  sd").bank("RolandTR909")
-$: s("hh hh hh hh . hh hh oh -  . hh hh hh hh . hh hh oh - ").bank("RolandTR909")`}
-  label="a step sequencer, one lane per line"
-/>
-
-The <L to="/tutorial/mini-notation">Mini-Notation</L> chapter shows the other layout: one big
-backtick string, with lanes separated by `,`. Use whichever you find easier to edit. Separate `$:`
-lanes have one advantage: each lane can have its own effects and nudges.
+The <L to="/tutorial/mini-notation">Mini-Notation</L> chapter shows the other layout: one backtick
+string with `,` between lanes. Separate `$:` lanes have one advantage: each gets its own effects and
+nudges.
 
 ### struct: the rhythm from a grid, the values from elsewhere
 
-A step string mixes two things: *when* something happens and *what* happens. `struct` separates
-them. You write the grid with `x` for "on", and the sound or note comes from the pattern you chain
-it onto:
+A step string mixes *when* and *what*. `struct` separates them: the grid says when, and the pattern
+you chain it onto says what.
 
-<Strudel
-  code={`s("bd").struct("x - - x - - x - - - x - x - - -")`}
-  label="struct: a grid of x's"
-/>
+<Exercise id="time/struct" title="A bass line from a grid"
+  goal="One bass note per bar, played in a fixed 16-step rhythm."
+  start={`note("<c2 eb2 f2 g1>").s("sawtooth").lpf(800)`}
+  target={`note("<c2 eb2 f2 g1>").s("sawtooth").lpf(800)
+  .struct("1 0 0 1 0 0 1 0 0 0 1 0 1 0 0 0")`}>
+  <Step check={{ includes: 'struct(', fn: "(h) => { const x = h.map(e => +(e.t * 16).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '0 3 6 10 12' || 'Hits on steps ' + x + ', expected 0 3 6 10 12.' }" }}
+        hints={['Chain it on the end, after `.lpf(800)`.', '`.struct("x - - x - - x - - - x - x - - -")`']}
+        solution={`note("<c2 eb2 f2 g1>").s("sawtooth").lpf(800)
+  .struct("x - - x - - x - - - x - x - - -")`}>
+    Right now you hear one long note per bar. Add `.struct("x - - x - - x - - - x - x - - -")`.
+    The notes still change once a bar. The rhythm comes from the grid.
+  </Step>
+  <Step check={{ fn: "(h) => h.length === 4 || 'Expected 4 hits: in Strudel `f` is just a word, and words count as on.'" }}
+        hints={['Replace the whole grid string.', '`.struct("t f t t")`']}
+        solution={`note("<c2 eb2 f2 g1>").s("sawtooth").lpf(800)
+  .struct("t f t t")`}>
+    If you know Tidal, you will try `t` and `f`. Replace the grid with `"t f t t"` and count the hits.
+  </Step>
+  <Step check={{ includes: 'struct("1', fn: "(h) => { const x = h.map(e => +(e.t * 16).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '0 3 6 10 12' || 'Hits on steps ' + x + ', expected 0 3 6 10 12.' }" }}
+        hints={['`1` means on, `0` means off.', '`.struct("1 0 0 1 0 0 1 0 0 0 1 0 1 0 0 0")`']}
+        solution={`note("<c2 eb2 f2 g1>").s("sawtooth").lpf(800)
+  .struct("1 0 0 1 0 0 1 0 0 0 1 0 1 0 0 0")`}>
+    Four hits: `t` and `f` are **not** booleans in Strudel. Every word is "on". Put the first grid
+    back, written in `1` and `0`: `.struct("1 0 0 1 0 0 1 0 0 0 1 0 1 0 0 0")`.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`note("<c2 eb2 f2 g1>").s("sawtooth").lpf(800)
-  .struct("x - - x - - x - . - - x - x - - -")`}
-  label="a bass line: the notes change per bar, the rhythm stays"
-/>
-
-In a `struct` grid, `1` works the same as `x`, and `0`, `~` and `-` all mean "off".
+In a `struct` grid, `x` and `1` mean on. `0`, `~` and `-` mean off.
 
 ### mask: punch holes in something that already exists
 
-`mask` goes the other way. It keeps the rhythm of the pattern on the left and silences whatever
-falls where the mask is `0`:
+<Exercise id="time/struct-vs-mask" title="struct creates, mask filters"
+  goal="See the difference between `struct` and `mask` on the same grid, then carve a hat line."
+  start={`s("hh*8")`}
+  target={`s("hh*16").mask("1 1 1 0 1 1 1 0 1 1 1 0 1 0 1 1")`}>
+  <Step check={{ fn: "(h) => h.length === 3 || 'Expected 3 hats, got ' + h.length + '.'" }}
+        hints={['Chain it onto `s("hh*8")`.', '`s("hh*8").struct("x ~ x x")`']}
+        solution={`s("hh*8").struct("x ~ x x")`}>
+    Add `.struct("x ~ x x")`. Count the hats.
+  </Step>
+  <Step check={{ includes: 'mask(', fn: "(h) => h.length === 6 || 'Expected 6 hats, got ' + h.length + '.'" }}
+        hints={['Only the function name changes.', '`s("hh*8").mask("x ~ x x")`, or with `1 0 1 1`.']}
+        solution={`s("hh*8").mask("1 0 1 1")`}>
+    Change `struct` to `mask` (and the grid to `"1 0 1 1"` if you like, it is the same). Count again.
+    `struct` made 3 events from the grid. `mask` kept the 8 hats and removed the 2 in the second
+    quarter.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.map(e => +(e.t * 16).toFixed(3)).join(' '); return x === '0 1 2 4 5 6 8 9 10 12 14 15' || 'Hats on steps ' + x + '. Expected every sixteenth except 3, 7, 11 and 13.' }" }}
+        hints={['The base is now `hh*16`, and the mask has 16 values.', '`s("hh*16").mask("1 1 1 0 1 1 1 0 1 1 1 0 1 0 1 1")`']}
+        solution={`s("hh*16").mask("1 1 1 0 1 1 1 0 1 1 1 0 1 0 1 1")`}>
+    Carve a 16th hat line: `s("hh*16").mask("1 1 1 0 1 1 1 0 1 1 1 0 1 0 1 1")`.
+  </Step>
+</Exercise>
 
-<Strudel code={`s("hh*16").mask("1 1 1 0 1 1 1 0 1 1 1 0 1 0 1 1")`} label="a 16th hat line with gaps" />
-
-The difference shows up when the two grids have different sizes:
-
-<Strudel code={`s("hh*8").struct("x ~ x x")`} label="struct: 3 hits, rhythm from the grid" />
-
-<Strudel code={`s("hh*8").mask("1 0 1 1")`} label="mask: 6 hits, the second quarter removed" />
+<QA q="struct vs mask, one more time?">
+`struct` **creates** events: one for every `x` in the grid, each taking its value from the pattern
+on the left. `mask` **filters** events: it keeps the ones the left pattern already had, but only
+where the mask is on. Rhythm from the grid: `struct`. Switch parts of an existing rhythm off: `mask`.
+</QA>
 
 ### beat: "put a hit on step N of M"
 
-`beat(positions, steps)` is the most literal grid tool there is. It splits the cycle into `steps`
-equal steps and puts a hit on each listed position, **counting from 0**:
+`beat(positions, steps)` splits the cycle into `steps` equal steps and puts a hit on each listed
+position, **counting from 0**. On 16 steps, beat 1 is step 0, beat 2 is 4, beat 3 is 8, beat 4 is 12.
 
-<Strudel
-  code={`setcpm(100/4)
-$: s("bd").beat("0,7,10", 16).bank("RolandTR909")
-$: s("sd").beat("4,12", 16).bank("RolandTR909")
-$: s("hh").beat("0,2,4,6,8,10,11,12,14", 16).bank("RolandTR909")`}
-  label="beat: step numbers out of 16"
-/>
+<Exercise id="time/beat" title="Hits by step number"
+  goal="A kick, snare and hat pattern written as step numbers out of 16, with a kick that changes every bar."
+  start={`setcpm(100/4)
+$: s("bd*4")`}
+  target={`setcpm(100/4)
+$: s("bd").beat("<[0,7,10] [0,3,6,10]>", 16)
+$: s("sd").beat("4,12", 16)
+$: s("hh").beat("0,2,4,6,8,10,11,12,14", 16)`}>
+  <Step check={{ includes: 'beat(', fn: "(h) => { const x = h.filter(e => e.value.s === 'bd').map(e => +(e.t * 16).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '0 7 10' || 'Kick on steps ' + x + ', expected 0 7 10.' }" }}
+        hints={['The sound becomes a single `bd`, and `beat` places it.', '`$: s("bd").beat("0,7,10", 16)`']}
+        solution={`setcpm(100/4)
+$: s("bd").beat("0,7,10", 16)`}>
+    Remove `*4` and add `.beat("0,7,10", 16)`: `s("bd").beat("0,7,10", 16)`.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'sd').map(e => +(e.t * 16).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '4 12' || 'Snare on steps [' + x + '], expected 4 and 12.' }" }}
+        hints={['Beats 2 and 4 are steps 4 and 12.', '`$: s("sd").beat("4,12", 16)`']}
+        solution={`setcpm(100/4)
+$: s("bd").beat("0,7,10", 16)
+$: s("sd").beat("4,12", 16)`}>
+    Add a snare lane on beats 2 and 4: `$: s("sd").beat("4,12", 16)`.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 16).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '0 2 4 6 8 10 11 12 14' || 'Hats on steps [' + x + '], expected 0 2 4 6 8 10 11 12 14.' }" }}
+        hints={['Every even step, plus 11.', '`$: s("hh").beat("0,2,4,6,8,10,11,12,14", 16)`']}
+        solution={`setcpm(100/4)
+$: s("bd").beat("0,7,10", 16)
+$: s("sd").beat("4,12", 16)
+$: s("hh").beat("0,2,4,6,8,10,11,12,14", 16)`}>
+    Add hats on every eighth plus step 11: `$: s("hh").beat("0,2,4,6,8,10,11,12,14", 16)`.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, cycles: 2 }}
+        hints={['Each bar is one group in `< >`, and each group is in `[ ]`.', '`.beat("<[0,7,10] [0,3,6,10]>", 16)`']}
+        solution={`setcpm(100/4)
+$: s("bd").beat("<[0,7,10] [0,3,6,10]>", 16)
+$: s("sd").beat("4,12", 16)
+$: s("hh").beat("0,2,4,6,8,10,11,12,14", 16)`}>
+    The positions are a pattern too. Make the kick alternate per bar: change `"0,7,10"` to
+    `"<[0,7,10] [0,3,6,10]>"`.
+  </Step>
+</Exercise>
 
-Counting from 0 means that, on a 16-step grid, beat 1 is step 0, beat 2 is step 4, beat 3 is step
-8 and beat 4 is step 12. The "and" of each beat is 2 steps after it.
-
-<Box kind="try">
-The positions are a pattern, so they can change per bar. Try
-`s("bd").beat("<[0,7,10] [0,3,6,10]>", 16)`.
+<Box kind="warn">
+Inside `< >`, a comma stacks, just like anywhere else. `"<0,7,10 0,3,6,10>"` is not two groups of
+positions: it is several alternations layered on top of each other. Wrap each group in brackets.
 </Box>
 
 ### binaryN: a grid as a number
 
-If you think in bits, `binaryN(number, bits)` turns a number into a pattern of 1s and 0s, most
-significant bit first. JavaScript's `0b…` literals make it a literal grid:
+`binaryN(number, bits)` turns a number into 1s and 0s, most significant bit first. With a `0b…`
+literal, you are typing the grid in binary.
 
-<Strudel
-  code={`s("bd").struct(binaryN(0b1000001000100000, 16))`}
-  label="steps 0, 6 and 10 of 16"
-/>
+<Exercise id="time/binary" title="A grid as a number"
+  goal="Kick on steps 0, 6 and 10 from a binary literal, then a hat grid that changes per bar."
+  start={`$: s("bd")
+$: s("hh*16")`}
+  target={`$: s("bd").struct(binaryN(0b1000001000100000, 16))
+$: s("hh").struct(binaryN("<55532 43690>", 16))`}>
+  <Step check={{ includes: 'binary', fn: "(h) => { const x = h.filter(e => e.value.s === 'bd').map(e => +(e.t * 16).toFixed(3)).join(' '); return x === '0 6 10' || 'Kick on steps ' + x + ', expected 0 6 10.' }" }}
+        hints={['It goes inside `.struct(...)`.', '`.struct(binaryN(0b1000001000100000, 16))`']}
+        solution={`$: s("bd").struct(binaryN(0b1000001000100000, 16))
+$: s("hh*16")`}>
+    Add `.struct(binaryN(0b1000001000100000, 16))` to the kick. Read the 1s: steps 0, 6 and 10.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, cycles: 2 }}
+        hints={['The number can be a pattern: pass a string.', '`$: s("hh").struct(binaryN("<55532 43690>", 16))`']}
+        solution={`$: s("bd").struct(binaryN(0b1000001000100000, 16))
+$: s("hh").struct(binaryN("<55532 43690>", 16))`}>
+    Replace the hat line with `$: s("hh").struct(binaryN("<55532 43690>", 16))`. Two grids, one
+    per bar. (43690 is `0b1010101010101010`: plain eighth notes.)
+  </Step>
+</Exercise>
 
-<Strudel code={`s("hh").struct(binaryN("<55532 43690>", 16))`} label="two grids, one per bar" />
+`binary(n)` does the same without padding: `binary(5)` is `"1 0 1"`.
 
-`binary(n)` does the same without padding, so it uses as many bits as the number needs.
-`binary(5)` is `"1 0 1"`.
-
-<QA q="struct vs mask, one more time?">
-`struct` **creates** events. There is one event for every `x` in the grid, and each takes its value
-from the pattern on the left. `mask` **filters** events. It keeps the ones the left pattern already
-had, but only where the mask is truthy. If you want the rhythm to come from the grid, use `struct`.
-If you want to take an existing rhythm and switch parts of it off, use `mask`.
-</QA>
+<Exercise id="time/grid-challenge" title="Challenge: program it"
+  goal="16 steps: kick on steps 0, 3, 8 and 11 (counting from 0), snare on 4 and 12, a closed hat on every even step. Any grid tool."
+  start={``}
+  target={`$: s("bd").beat("0,3,8,11", 16)
+$: s("sd").beat("4,12", 16)
+$: s("hh*8")`}
+  check={{ match: { keys: ['s'] } }} />
 
 ## Position vs duration
 
-Four tools get confused all the time. Three of them decide **when** events start. One decides only
-how long they **last**. Take this as the baseline, four notes in four equal slots:
+Three tools decide **when** events start, one decides only how long they **last**. Do each to the
+same four notes and listen to what moves.
 
-<Strudel code={`note("c3 e3 g3 c4").s("sawtooth").lpf(1200)`} label="baseline: 4 slots" />
-
-<Strudel code={`note("c3@2 e3 g3").s("sawtooth").lpf(1200)`} label="@ widens a slot: c3 takes 2 of 4, everything after moves" />
-
-<Strudel code={`note("c3!2 e3 g3").s("sawtooth").lpf(1200)`} label="! adds slots: two c3's, each a full slot" />
-
-<Strudel code={`note("c3*2 e3 g3 c4").s("sawtooth").lpf(1200)`} label="* subdivides a slot: two c3's squeezed into slot 1" />
-
-<Strudel code={`note("c3 e3 g3 c4").s("sawtooth").lpf(1200).clip(.25)`} label="clip: same starts, each note a quarter as long" />
+<Exercise id="time/slots" title="@, _, !, * and clip"
+  goal="Hear which operators move later notes and which only change lengths."
+  start={`note("c3 e3 g3 c4").s("sawtooth").lpf(1200)`}
+  target={`note("c3 e3 g3 c4").s("sawtooth").lpf(1200).clip(.25)`}>
+  <Step check={{ fn: "(h) => { const x = h.map(e => +(e.t * 5).toFixed(3)).join(' '); return x === '0 2 3 4' || 'Expected c3 to take 2 of 5 slots: onsets at 0, 2/5, 3/5, 4/5.' }" }}
+        hints={['`@` goes right after the note, no space.', '`note("c3@2 e3 g3 c4")`']}
+        solution={`note("c3@2 e3 g3 c4").s("sawtooth").lpf(1200)`}>
+    Change `c3` to `c3@2`. It now weighs 2, so the bar has 5 slots and everything after it moves later.
+  </Step>
+  <Step check={{ includes: '_', fn: "(h) => { const x = h.map(e => +(e.t * 5).toFixed(3)).join(' '); return x === '0 2 3 4' || 'It should sound exactly like `c3@2`.' }" }}
+        hints={['`_` is a step that continues the previous note.', '`note("c3 _ e3 g3 c4")`']}
+        solution={`note("c3 _ e3 g3 c4").s("sawtooth").lpf(1200)`}>
+    Write the same thing as a grid: replace `c3@2` with `c3 _`. Nothing should change. On a grid,
+    `@n` and `_` both count as steps.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.map(e => +(e.t * 5).toFixed(3)).join(' '); return x === '0 1 2 3 4' || 'Expected 5 equal notes: two c3, then e3, g3, c4.' }" }}
+        hints={['`!` repeats the step as a new slot.', '`note("c3!2 e3 g3 c4")`']}
+        solution={`note("c3!2 e3 g3 c4").s("sawtooth").lpf(1200)`}>
+    Replace `c3 _` with `c3!2`. Two c3's, each a full slot: still 5 slots, but now two attacks.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.map(e => +(e.t * 8).toFixed(3)).join(' '); return x === '0 1 2 4 6' || 'Expected two c3 squeezed into the first quarter, and e3, g3, c4 back on beats 2, 3, 4.' }" }}
+        hints={['`*` subdivides the slot it is attached to.', '`note("c3*2 e3 g3 c4")`']}
+        solution={`note("c3*2 e3 g3 c4").s("sawtooth").lpf(1200)`}>
+    Replace `!2` with `*2`. Both c3's squeeze into slot 1, and nothing else moves.
+  </Step>
+  <Step check={{ code: "\\.(clip|legato)\\(", fn: "(h) => { const x = h.map(e => +(e.t * 4).toFixed(3)).join(' '); return x === '0 1 2 3' || 'Go back to four plain notes: `c3 e3 g3 c4`.' }" }}
+        hints={['Two edits: `c3*2` back to `c3`, then chain `.clip(.25)` at the end.', '`note("c3 e3 g3 c4").s("sawtooth").lpf(1200).clip(.25)`']}
+        solution={`note("c3 e3 g3 c4").s("sawtooth").lpf(1200).clip(.25)`}>
+    Remove the `*2`, and add `.clip(.25)` at the end. Same starts as the original, each note a quarter
+    as long. `clip` (also called `legato`) never moves a note.
+  </Step>
+</Exercise>
 
 | Tool | Changes the number of slots? | Moves later events? | Changes how long the note lasts? |
 | --- | --- | --- | --- |
-| `a@n` | the slot gets `n` times the weight | yes | yes, it is longer |
+| `a@n` / `a _ _` | the slot gets `n` times the weight | yes | yes, it is longer |
 | `a!n` | adds `n-1` more slots | yes | no, each copy is one slot |
 | `a*n` | no, it splits one slot | no | yes, each copy is shorter |
-| `a _ _` | like `a@3`, drawn as grid steps | yes | yes |
 | `.clip(x)` | no | no | multiplies the length by `x` |
 
-Two rules follow from this:
+So `"bd@3 sd"` is a 4-step grid, not a 2-step one. More on length in
+<L to="/tutorial/envelopes">Envelopes</L>.
 
-- **On a grid, `@n` and `_` count as `n` steps.** `"bd@3 sd"` is a 4-step grid, not a 2-step one.
-  Use `_` when you want the grid to stay readable: `"c3 _ _ e3"`.
-- **Duration is not the same as start time.** `clip` (also called `legato`) never moves a note. It
-  only changes when the note ends. This is covered in detail in <L to="/tutorial/envelopes">Envelopes</L>.
+<Exercise id="time/sample-length" title="Samples ignore length"
+  goal="Hear that a drum sample only respects its event length once you set `clip`."
+  start={`s("oh*4").bank("RolandTR909")`}
+  target={`s("oh*4").bank("RolandTR909").clip("<1 .1>")`}>
+  <Step check={{ fn: "(h) => h.length > 0 && h.every(e => e.value.clip === 0.1) || 'Every hat needs `clip` 0.1.'" }}
+        hints={['Chain it at the end.', '`.clip(.1)`']}
+        solution={`s("oh*4").bank("RolandTR909").clip(.1)`}>
+    Listen first: each open hat rings into the next, even though each event is a quarter long.
+    Now add `.clip(.1)`. They choke.
+  </Step>
+  <Step check={{ cycles: 2, fn: "(h) => (h.some(e => e.value.clip === 1) && h.some(e => e.value.clip === 0.1)) || 'Expected one bar at clip 1 and one at clip .1.'" }}
+        hints={['Put the two values in `< >`, as a string.', '`.clip("<1 .1>")`']}
+        solution={`s("oh*4").bank("RolandTR909").clip("<1 .1>")`}>
+    Change it to `.clip("<1 .1>")`: one bar at full event length, one choked. That is why `@` can
+    seem to do nothing to drums: samples ignore event length until you set `clip` (or `release`, or
+    `loop`). Synths always use it.
+  </Step>
+</Exercise>
 
-<Box kind="warn">
-Samples ignore event length by default. A drum sample plays until the end of the file, whether its
-slot is a sixteenth or a whole bar. Event length only cuts a sample off once you set `clip`
-(or `release`, or `loop`). Synths are different: they always use the event length. So if `@` seems
-to do nothing to your drums, that is why. Hear the difference with
-`s("oh*4").bank("RolandTR909").clip("<1 .1>")`.
-</Box>
+<Exercise id="time/duration-challenge" title="Challenge: hold the root"
+  goal="A bass bar: `c2` held through beats 1 and 2, then `eb2` on beat 3 and `g2` on beat 4. Use `@` or `_`."
+  start={`note("c2 eb2 g2").s("sawtooth")`}
+  target={`note("c2@2 eb2 g2").s("sawtooth")`}
+  check={{ match: { keys: ['note'] }, code: "@|_" }} />
 
 ## Tuplets
 
-A tuplet is just "n equal events where there would normally be m", and in Strudel that is simply
-a subdivision. Put three things in the space of one beat and you have eighth-note triplets:
+A tuplet is "n equal events where there would normally be m". In Strudel that is just a subdivision.
 
-<Strudel
-  code={`setcpm(90/4)
-s("bd [hh hh hh] sd [hh hh hh]")`}
-  label="eighth-note triplets on beats 2 and 4"
-/>
+<Exercise id="time/triplets" title="Triplets and quintuplets"
+  goal="Eighth-note triplets on beat 2, a quintuplet on beat 4."
+  start={`setcpm(90/4)
+s("bd hh sd hh")`}
+  target={`setcpm(90/4)
+s("bd hh*3 sd hh*5")`}>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 12).toFixed(3)).join(' '); return x === '3 4 5 9' || 'Expected three hats evenly inside beat 2, and the one on beat 4 unchanged.' }" }}
+        hints={['Brackets give one beat three equal parts.', '`s("bd [hh hh hh] sd hh")`']}
+        solution={`setcpm(90/4)
+s("bd [hh hh hh] sd hh")`}>
+    Replace the first `hh` with `[hh hh hh]`. Three in the space of one beat: eighth-note triplets.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 12).toFixed(3)).join(' '); return x === '3 4 5 9 10 11' || 'Expected a triplet on beat 2 and on beat 4.' }" }}
+        hints={['Same change on the last `hh`.', '`s("bd [hh hh hh] sd [hh hh hh]")`']}
+        solution={`setcpm(90/4)
+s("bd [hh hh hh] sd [hh hh hh]")`}>
+    Do the same on beat 4.
+  </Step>
+  <Step check={{ includes: 'hh*3', excludes: 'hh hh', fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 12).toFixed(3)).join(' '); return x === '3 4 5 9 10 11' || 'It should sound the same as before.' }" }}
+        hints={['`hh*3` is three hats in one slot.', '`s("bd hh*3 sd hh*3")`']}
+        solution={`setcpm(90/4)
+s("bd hh*3 sd hh*3")`}>
+    Shorter spelling: replace both `[hh hh hh]` with `hh*3`. Same sound.
+  </Step>
+  <Step check={{ match: { keys: ['s'] } }}
+        hints={['Mini-notation does not care about the number.', '`s("bd hh*3 sd hh*5")`']}
+        solution={`setcpm(90/4)
+s("bd hh*3 sd hh*5")`}>
+    Change the second `hh*3` to `hh*5`. A quintuplet.
+  </Step>
+</Exercise>
 
-To stretch a triplet over **two** beats (quarter-note triplets), give the group a weight of 2:
+To stretch a triplet across **two** beats (quarter-note triplets), give the group a weight: `[a b c]@2`.
 
-<Strudel
-  code={`setcpm(90/4)
-note("[c4 eb4 g4]@2 bb4 g4").s("triangle")`}
-  label="three notes across beats 1 and 2, then two quarters"
-/>
+<Exercise id="time/quarter-triplets" title="Challenge: three across two"
+  goal="`c4 eb4 g4` as quarter-note triplets across beats 1 and 2, then `bb4` on beat 3 and `g4` on beat 4."
+  start={`note("c4 eb4 g4 bb4 g4").s("triangle")`}
+  target={`note("[c4 eb4 g4]@2 bb4 g4").s("triangle")`}
+  check={{ match: { keys: ['note'] } }} />
 
-To fill a whole bar with triplets, use `*` with a multiple of 3. `*12` gives eighth-note
-triplets, which is the 12/8 feel under a lot of blues and gospel:
+Fill a whole bar with a multiple of 3 and you get the 12/8 feel under a lot of blues and gospel.
 
-<Strudel
-  code={`setcpm(70/4)
+<Exercise id="time/twelve-eight" title="A 12/8 feel"
+  goal="Four beats per bar, each split in three, accented so you hear the groups."
+  start={`setcpm(70/4)
+$: s("hh*8")`}
+  target={`setcpm(70/4)
 $: s("hh*12").gain("[.9 .4 .6]*4")
-$: s("bd ~ ~ sd ~ ~ bd ~ bd sd ~ ~")`}
-  label="12/8 feel: 4 beats, each split in 3"
-/>
+$: s("bd ~ ~ sd ~ ~ bd ~ bd sd ~ ~")`}>
+  <Step check={{ fn: "(h) => h.filter(e => e.value.s === 'hh').length === 12 || 'Expected 12 hats per bar.'" }}
+        hints={['Eighth-note triplets: 4 beats × 3.', '`s("hh*12")`']}
+        solution={`setcpm(70/4)
+$: s("hh*12")`}>
+    Change `*8` to `*12`.
+  </Step>
+  <Step check={{ includes: 'gain(', fn: "(h) => { const x = h.filter(e => e.value.gain === 0.9).map(e => +(e.t * 4).toFixed(3)).join(' '); return x === '0 1 2 3' || 'Expected the loud hat (.9) on each beat.' }" }}
+        hints={['Three gains, repeated four times.', '`.gain("[.9 .4 .6]*4")`']}
+        solution={`setcpm(70/4)
+$: s("hh*12").gain("[.9 .4 .6]*4")`}>
+    Add `.gain("[.9 .4 .6]*4")` to accent the first of every three.
+  </Step>
+  <Step check={{ match: { keys: ['s'] } }}
+        hints={['12 steps, one per triplet eighth. Kick on 1, 7, 9; snare on 4 and 10 (counting from 1).', '`$: s("bd ~ ~ sd ~ ~ bd ~ bd sd ~ ~")`']}
+        solution={`setcpm(70/4)
+$: s("hh*12").gain("[.9 .4 .6]*4")
+$: s("bd ~ ~ sd ~ ~ bd ~ bd sd ~ ~")`}>
+    Add a drum lane on the same 12-step grid: `$: s("bd ~ ~ sd ~ ~ bd ~ bd sd ~ ~")`.
+  </Step>
+</Exercise>
 
-Quintuplets, septuplets and so on work the same way. Mini-notation does not care about the number:
+### Swing by hand, and swingBy
 
-<Strudel code={`s("bd hh*3 sd hh*5")`} label="3 in beat 2, 5 in beat 4" />
+Swing is a triplet in disguise: split each beat in three and let the first note take two parts.
+`swingBy(amount, n)` does the same by cutting the cycle into `n` slices and delaying whatever lies in
+the second half of each slice by `amount` × half a slice.
 
-### Swing by hand
-
-Swing is a triplet in disguise. Split each beat into three and let the first note take two of the
-three parts:
-
-<Strudel code={`setcpm(96/4)
-s("[hh@2 hh]*4, bd ~ sd ~")`} label="[x@2 x]: long-short, triplet shuffle" />
-
-Change the weights to change the feel. `[hh@3 hh]` sits the offbeat on the last sixteenth, which
-is a harder dotted-eighth feel. `[hh@3 hh@2]` is a lighter swing.
-
-### swingBy and swing
-
-`swingBy(amount, n)` cuts each cycle into `n` slices and delays whatever lies in the **second half**
-of each slice. The amount is a fraction of that half-slice:
-
-- `0` means straight.
-- `1/3` puts the offbeat exactly on the triplet, just like `[hh@2 hh]`.
-- `1/2` delays it by a quarter of the slice.
-- `1` brings you back to straight.
-
-`swing(n)` is shorthand for `swingBy(1/3, n)`.
-
-<Strudel code={`setcpm(96/4)
-$: s("hh*8").swingBy(1/3, 4)
-$: s("bd ~ sd ~")`} label="swingBy(1/3, 4): swung eighths" />
+<Exercise id="time/swing" title="Swing it three ways"
+  goal="Swung eighths by weights, then with `swingBy`, then with `swing`."
+  start={`setcpm(96/4)
+$: s("bd ~ sd ~")
+$: s("hh*8")`}
+  target={`setcpm(96/4)
+$: s("bd ~ sd ~")
+$: s("hh*8").swing(4)`}>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 12).toFixed(3)).join(' '); return x === '0 2 3 5 6 8 9 11' || 'Expected each offbeat on the third triplet of its beat.' }" }}
+        hints={['One beat = `[hh@2 hh]`, and there are four beats.', '`$: s("[hh@2 hh]*4")`']}
+        solution={`setcpm(96/4)
+$: s("bd ~ sd ~")
+$: s("[hh@2 hh]*4")`}>
+    Replace `hh*8` with `[hh@2 hh]*4`: long-short, the offbeat on the last triplet.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 16).toFixed(3)).join(' '); return x === '0 3 4 7 8 11 12 15' || 'Expected each offbeat on the last sixteenth of its beat.' }" }}
+        hints={['Only the weight changes.', '`$: s("[hh@3 hh]*4")`']}
+        solution={`setcpm(96/4)
+$: s("bd ~ sd ~")
+$: s("[hh@3 hh]*4")`}>
+    Change `@2` to `@3`. The offbeat moves to the last sixteenth: a harder, dotted feel.
+  </Step>
+  <Step check={{ includes: 'swingBy(', fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 12).toFixed(3)).join(' '); return x === '0 2 3 5 6 8 9 11' || 'Expected triplet swing: each offbeat on the third triplet.' }" }}
+        hints={['Eight hats, four slices, one third.', '`$: s("hh*8").swingBy(1/3, 4)`']}
+        solution={`setcpm(96/4)
+$: s("bd ~ sd ~")
+$: s("hh*8").swingBy(1/3, 4)`}>
+    Now the function. Replace `s("[hh@3 hh]*4")` with `s("hh*8").swingBy(1/3, 4)`. It should sound
+    like the `@2` version.
+  </Step>
+  <Step check={{ includes: 'swingBy(', fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 8).toFixed(3)).join(' '); return x === '0 1 2 3 4 5 6 7' || 'Expected straight eighths again.' }" }}
+        hints={['Only the first argument changes.', '`.swingBy(1, 4)`']}
+        solution={`setcpm(96/4)
+$: s("bd ~ sd ~")
+$: s("hh*8").swingBy(1, 4)`}>
+    Change `1/3` to `1`. You might expect maximum swing. It is straight again: a full half-slice of
+    delay wraps round onto the grid. Useful values sit between `0` and `1/2`.
+  </Step>
+  <Step check={{ includes: '.swing(', fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 12).toFixed(3)).join(' '); return x === '0 2 3 5 6 8 9 11' || 'Expected triplet swing again.' }" }}
+        hints={['`swing(n)` takes only the slice count.', '`$: s("hh*8").swing(4)`']}
+        solution={`setcpm(96/4)
+$: s("bd ~ sd ~")
+$: s("hh*8").swing(4)`}>
+    Replace `.swingBy(1, 4)` with `.swing(4)`, the shorthand for `swingBy(1/3, 4)`.
+  </Step>
+</Exercise>
 
 <Box>
-**Choosing `n`:** set it to half the number of notes you want to swing per cycle. For swung eighths
-(8 per bar) use `n = 4`. For swung sixteenths (16 per bar) use `n = 8`. If `n` is too small, several
-notes fall in the same second half and they all move together.
+**Choosing `n`:** half the number of notes you want swung per cycle. Swung eighths (8 per bar):
+`n = 4`. Swung sixteenths (16 per bar): `n = 8`. If `n` is too small, several notes fall in the same
+second half and move together.
 </Box>
 
-If you know swing as a percentage from an MPC, the offbeat lands at `50% + amount × 50%` of the
-beat. So 50% is `0`, about 58% is `.16`, and 66% is `1/3`.
+MPC swing percentages map to `50% + amount × 50%`: 50% is `0`, about 58% is `.16`, 66% is `1/3`.
+To pattern the amount, write decimals, `"<0 .16 .33>"`. Inside mini-notation `"1/3"` means "1,
+slowed down by 3", not a third. `swingBy`, unlike `@`, moves notes without shortening them, which
+you only hear on synths.
 
-<Strudel code={`setcpm(92/4)
-$: s("hh*16").swingBy("<0 .16 .33>", 8).gain("[.8 .4]*8")
-$: s("bd ~ ~ bd ~ ~ sd ~ ~ bd ~ ~ ~ ~ sd ~")`} label="swung 16ths: straight, 58%, 66%, one per bar" />
-
-`swingBy` moves notes, but it does not shorten them. The `@` version changes the lengths too. With
-drum samples you will not hear any difference. With a synth you will.
+<Exercise id="time/swing-challenge" title="Challenge: swung sixteenths"
+  goal="Triplet-swing the sixteenth hats. Leave the kick and snare alone."
+  start={`setcpm(92/4)
+$: s("hh*16")
+$: s("bd ~ ~ bd ~ ~ sd ~ ~ bd ~ ~ ~ ~ sd ~")`}
+  target={`setcpm(92/4)
+$: s("hh*16").swingBy(1/3, 8)
+$: s("bd ~ ~ bd ~ ~ sd ~ ~ bd ~ ~ ~ ~ sd ~")`}
+  check={{ match: { keys: ['s'] } }} />
 
 ## Time signatures
 
-Strudel has no time signature setting. A time signature is two decisions:
-
-1. **What does one cycle hold?** That is the number of steps you write.
-2. **How fast is it?** Use `setcpm(beatsPerMinute / beatsPerCycle)`.
+Strudel has no time signature setting. A meter is two decisions: **what one cycle holds** (the steps
+you write) and **how fast it goes**, `setcpm(beatsPerMinute / beatsPerCycle)`.
 
 ### 3/4
 
-<Strudel
-  code={`setcpm(150/3)
-s("bd rim rim, hh*6").bank("RolandTR909")`}
-  label="a waltz: 3 beats per cycle"
-/>
+<Exercise id="time/waltz" title="4/4 into 3/4"
+  goal="Turn a 4/4 bar into a waltz at the same beat tempo."
+  start={`setcpm(150/4)
+s("bd rim rim rim, hh*8").bank("RolandTR909")`}
+  target={`setcpm(150/3)
+s("bd rim rim, hh*6").bank("RolandTR909")`}>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'rim').map(e => +(e.t * 3).toFixed(3)).join(' '); return x === '1 2' || 'Expected three beats per bar: bd rim rim.' }" }}
+        hints={['A waltz bar holds three beats.', '`bd rim rim`']}
+        solution={`setcpm(150/4)
+s("bd rim rim, hh*8").bank("RolandTR909")`}>
+    Delete one `rim`. Three beats per cycle.
+  </Step>
+  <Step check={{ fn: "(h) => h.filter(e => e.value.s === 'hh').length === 6 || 'Expected two hats per beat: 6 per bar.'" }}
+        hints={['Eighth notes in 3/4: 3 beats × 2.', '`hh*6`']}
+        solution={`setcpm(150/4)
+s("bd rim rim, hh*6").bank("RolandTR909")`}>
+    The hats still think in 4. Change `hh*8` to `hh*6`.
+  </Step>
+  <Step check={{ code: "setcpm\\(\\s*(150\\s*/\\s*3|50)\\s*\\)" }}
+        hints={['bpm divided by beats per cycle.', '`setcpm(150/3)`']}
+        solution={`setcpm(150/3)
+s("bd rim rim, hh*6").bank("RolandTR909")`}>
+    Three beats in the time of four: each beat got slower. Fix the tempo: `setcpm(150/3)`.
+  </Step>
+</Exercise>
 
 ### 5/4
 
-Five beats per cycle. "Take Five"-style tunes group them as 3 + 2, which here means weighting two
-groups:
-
-<Strudel
-  code={`setcpm(170/5)
-s("[bd hh hh]@3 [sd hh]@2, ~ rim ~ ~ rim").bank("RolandTR909")`}
-  label="5/4 grouped 3+2"
-/>
-
-`[bd hh hh]@3 [sd hh]@2` is exactly `bd hh hh sd hh`. The weights mean you can **see** the
-grouping without the pulse changing.
+<Exercise id="time/five-four" title="5/4, grouped 3+2"
+  goal="Five beats per bar at 170 bpm, grouped 3+2 like “Take Five”."
+  start={`setcpm(170/4)
+s("bd hh sd hh")`}
+  target={`setcpm(170/5)
+s("[bd hh hh]@3 [sd hh]@2, ~ rim ~ ~ rim")`}>
+  <Step check={{ fn: "(h) => { const x = h.map(e => e.value.s + '@' + +(e.t * 5).toFixed(3)).join(' '); return x === 'bd@0 hh@1 hh@2 sd@3 hh@4' || 'Expected five equal beats: bd hh hh sd hh.' }" }}
+        hints={['Add one `hh` after the first one.', '`s("bd hh hh sd hh")`']}
+        solution={`setcpm(170/4)
+s("bd hh hh sd hh")`}>
+    Make it five beats: `bd hh hh sd hh`.
+  </Step>
+  <Step check={{ code: "setcpm\\(\\s*170\\s*/\\s*5\\s*\\)|setcpm\\(\\s*34\\s*\\)" }}
+        hints={['bpm divided by beats per cycle.', '`setcpm(170/5)`']}
+        solution={`setcpm(170/5)
+s("bd hh hh sd hh")`}>
+    Set the tempo to five beats per cycle: `setcpm(170/5)`.
+  </Step>
+  <Step check={{ includes: '@3', fn: "(h) => { const x = h.map(e => e.value.s + '@' + +(e.t * 5).toFixed(3)).join(' '); return x === 'bd@0 hh@1 hh@2 sd@3 hh@4' || 'Nothing should move. Each group needs a weight equal to its number of beats.' }" }}
+        hints={['Bracket each group and weight it by its length.', '`s("[bd hh hh]@3 [sd hh]@2")`']}
+        solution={`setcpm(170/5)
+s("[bd hh hh]@3 [sd hh]@2")`}>
+    Show the grouping without changing the pulse: rewrite it as `[bd hh hh]@3 [sd hh]@2`.
+  </Step>
+  <Step check={{ match: { keys: ['s'] } }}
+        hints={['A comma adds a layer with its own five steps.', '`, ~ rim ~ ~ rim`']}
+        solution={`setcpm(170/5)
+s("[bd hh hh]@3 [sd hh]@2, ~ rim ~ ~ rim")`}>
+    Add a rim layer on beats 2 and 5: `, ~ rim ~ ~ rim` before the closing quote.
+  </Step>
+</Exercise>
 
 ### 7/8 and friends
 
-Odd meters are always grouped in 2s and 3s. With seven eighths, the common groupings are
-2+2+3, 3+2+2 and 2+3+2. Weight each group by its length and the eighth-note pulse stays constant:
+Odd meters are grouped in 2s and 3s. Seven eighths are usually 2+2+3, 3+2+2 or 2+3+2.
 
-<Strudel
-  code={`setcpm(240/7)
-s("[bd hh]@2 [sd hh]@2 [bd hh hh]@3").bank("RolandTR909")`}
-  label="7/8 as 2+2+3, a steady eighth-note pulse"
-/>
+<Exercise id="time/seven-eight" title="7/8 as 2+2+3"
+  goal="Seven equal eighths per bar at 240 eighths per minute, grouped 2+2+3."
+  start={`setcpm(240/8)
+s("bd hh sd hh bd hh sd hh")`}
+  target={`setcpm(240/7)
+s("[bd hh]@2 [sd hh]@2 [bd hh hh]@3")`}>
+  <Step check={{ fn: "(h) => { const x = h.map(e => e.value.s + '@' + +(e.t * 7).toFixed(3)).join(' '); return x === 'bd@0 hh@1 sd@2 hh@3 bd@4 hh@5 hh@6' || 'Expected seven equal steps: bd hh sd hh bd hh hh.' }" }}
+        hints={['Remove the second `sd`.', '`s("bd hh sd hh bd hh hh")`']}
+        solution={`setcpm(240/8)
+s("bd hh sd hh bd hh hh")`}>
+    Delete the second `sd`. Seven eighths: 2+2+3.
+  </Step>
+  <Step check={{ code: "setcpm\\(\\s*240\\s*/\\s*7\\s*\\)" }}
+        hints={['The pulse is an eighth, and there are 7 per cycle.', '`setcpm(240/7)`']}
+        solution={`setcpm(240/7)
+s("bd hh sd hh bd hh hh")`}>
+    Keep the eighth at 240 per minute: `setcpm(240/7)`.
+  </Step>
+  <Step check={{ includes: ' . ', fn: "(h) => { const x = h.filter(e => e.value.s !== 'hh').map(e => e.value.s + '@' + +(e.t * 3).toFixed(3)).join(' '); return x === 'bd@0 sd@1 bd@2' || 'Expected three equal groups: `bd hh . sd hh . bd hh hh`.' }" }}
+        hints={['A lone `.` between groups.', '`s("bd hh . sd hh . bd hh hh")`']}
+        solution={`setcpm(240/7)
+s("bd hh . sd hh . bd hh hh")`}>
+    Try marking the groups with dots: `bd hh . sd hh . bd hh hh`. Listen: a lopsided three-beat bar.
+    `.` gives each group an **equal** share, so the last group is rushed.
+  </Step>
+  <Step check={{ includes: '@', fn: "(h) => { const x = h.map(e => e.value.s + '@' + +(e.t * 7).toFixed(3)).join(' '); return x === 'bd@0 hh@1 sd@2 hh@3 bd@4 hh@5 hh@6' || 'Expected seven equal eighths again.' }" }}
+        hints={['Weight each group by its number of eighths.', '`s("[bd hh]@2 [sd hh]@2 [bd hh hh]@3")`']}
+        solution={`setcpm(240/7)
+s("[bd hh]@2 [sd hh]@2 [bd hh hh]@3")`}>
+    Fix it with weights, which place instead of divide: `[bd hh]@2 [sd hh]@2 [bd hh hh]@3`.
+  </Step>
+</Exercise>
 
-<Box kind="try">
-Replace the weighted version with `s("bd hh . sd hh . bd hh hh")`. The `.` gives each group an
-equal share of the bar, so the last group gets rushed. You hear a lopsided three-beat bar, not 7/8.
-This is exactly the difference between subdividing and placing.
-</Box>
-
-Euclidean rhythms are a shortcut here. `(3,7)` gives a kick at the start of each group of 2+2+3,
-and the third number moves the pattern **later** by that many steps, wrapping around. That gives
-you the other two groupings:
-
-<Strudel
-  code={`setcpm(240/7)
-s("bd(3,7,<0 3 5>), hh*7").bank("RolandTR909")`}
-  label="(3,7) = 2+2+3, (3,7,3) = 3+2+2, (3,7,5) = 2+3+2"
-/>
+<Exercise id="time/euclid-groupings" title="Euclid does the grouping"
+  goal="Let `(3,7)` find the 2+2+3 grouping, then rotate it into 3+2+2 and 2+3+2."
+  start={`setcpm(240/7)
+s("hh*7")`}
+  target={`setcpm(240/7)
+s("hh*7, bd(3,7,<0 3 5>)")`}>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'bd').map(e => +(e.t * 7).toFixed(3)).join(' '); return x === '0 2 4' || 'Kick on steps [' + x + '], expected 0 2 4 (2+2+3).' }" }}
+        hints={['Three hits spread over seven steps.', '`s("hh*7, bd(3,7)")`']}
+        solution={`setcpm(240/7)
+s("hh*7, bd(3,7)")`}>
+    Add a kick layer: `, bd(3,7)`. Three hits over seven steps land at the start of each group of
+    2+2+3.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'bd').map(e => +(e.t * 7).toFixed(3)).join(' '); return x === '0 3 5' || 'Kick on steps [' + x + '], expected 0 3 5 (3+2+2).' }" }}
+        hints={['The third number rotates.', '`bd(3,7,3)`']}
+        solution={`setcpm(240/7)
+s("hh*7, bd(3,7,3)")`}>
+    Add a third number: `bd(3,7,3)`. The pattern moves 3 steps **later**, wrapping round: 3+2+2.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, cycles: 3 }}
+        hints={['The rotation can be a `< >` pattern.', '`bd(3,7,<0 3 5>)`']}
+        solution={`setcpm(240/7)
+s("hh*7, bd(3,7,<0 3 5>)")`}>
+    Pattern the rotation: `bd(3,7,<0 3 5>)`. Three bars, three groupings (5 gives 2+3+2).
+  </Step>
+</Exercise>
 
 For 5/8 use `(2,5)`, which is 2+3. For 9/8 as 2+2+2+3 use `(4,9)`.
 
 ### Changing meter, keeping the pulse
 
-Say you want a bar of 7/8 followed by a bar of 4/4 (eight eighths), with the eighth note the same
-length in both. Weight each bar by its number of eighths. **One cycle is now the two-bar phrase**:
+Weight each bar by its number of eighths and **one cycle becomes the whole phrase**.
 
-<Strudel
-  code={`setcpm(240/15)
-s("[bd hh sd hh bd hh hh]@7 [bd hh sd hh bd hh sd hh]@8").bank("RolandTR909")`}
-  label="7/8 then 4/4: 15 equal eighths per cycle"
-/>
+<Exercise id="time/mixed-meter" title="7/8 then 4/4"
+  goal="A bar of 7/8 followed by a bar of 4/4, with the eighth note the same length in both."
+  start={`setcpm(240/7)
+s("bd hh sd hh bd hh hh")`}
+  target={`setcpm(240/15)
+s("[bd hh sd hh bd hh hh]@7 [bd hh sd hh bd hh sd hh]@8")`}>
+  <Step check={{ fn: "(h) => { const x = h.map(e => +(e.t * 15).toFixed(3)).join(' '); return x === '0 1 2 3 4 5 6 7 8 9 10 11 12 13 14' || 'Expected 15 equal eighths in the cycle: 7, then 8.' }" }}
+        hints={['Bracket the first bar, weight it `@7`, and add a second bracketed bar weighted `@8`.', '`s("[bd hh sd hh bd hh hh]@7 [bd hh sd hh bd hh sd hh]@8")`']}
+        solution={`setcpm(240/7)
+s("[bd hh sd hh bd hh hh]@7 [bd hh sd hh bd hh sd hh]@8")`}>
+    Wrap the bar as `[bd hh sd hh bd hh hh]@7` and add a 4/4 bar after it: `[bd hh sd hh bd hh sd hh]@8`.
+  </Step>
+  <Step check={{ code: "setcpm\\(\\s*240\\s*/\\s*15\\s*\\)|setcpm\\(\\s*16\\s*\\)" }}
+        hints={['15 eighths per cycle now.', '`setcpm(240/15)`']}
+        solution={`setcpm(240/15)
+s("[bd hh sd hh bd hh hh]@7 [bd hh sd hh bd hh sd hh]@8")`}>
+    Everything is faster, because 15 eighths now share one cycle. Fix it: `setcpm(240/15)`.
+  </Step>
+</Exercise>
 
-The alternative, which the <L to="/tutorial/tempo">Tempo</L> chapter uses, makes **one cycle one
-pulse** and puts weighted groups inside `< >`. There, `@7` makes a group last 7 cycles:
+The <L to="/tutorial/tempo">Tempo</L> chapter does the same with **one cycle = one pulse**:
+`setcpm(240)` and `"<[…]@7 […]@8>"`, where `@7` inside `< >` makes a group last 7 cycles.
 
-<Strudel
-  code={`setcpm(240)
-s("<[bd hh sd hh bd hh hh]@7 [bd hh sd hh bd hh sd hh]@8>").bank("RolandTR909")`}
-  label="same music, 1 cycle = 1 eighth"
-/>
+<Exercise id="time/meter-challenge" title="Challenge: waltz into four"
+  goal="One cycle = a 3/4 bar followed by a 4/4 bar, constant quarter-note pulse. `bd` on each downbeat, `hh` on every other beat."
+  start={``}
+  target={`s("[bd hh hh]@3 [bd hh hh hh]@4")`}
+  check={{ match: { keys: ['s'] } }} />
 
 ### Changing meter, letting the pulse change
 
-Drop the weights and both bars take one cycle each. The bar length stays the same, so the pulse
-has to change. This is **metric modulation**:
-
-<Strudel
-  code={`setcpm(120/4)
-s("<[bd hh sd hh bd hh hh] [bd hh sd hh bd hh sd hh]>").bank("RolandTR909")`}
-  label="7 then 8 in the same bar length: the eighth note itself changes"
-/>
+<Exercise id="time/metric-modulation" title="Metric modulation"
+  goal="Seven, then eight, in the same bar length: the eighth note itself changes."
+  start={`setcpm(120/4)
+s("[bd hh sd hh bd hh hh]@7 [bd hh sd hh bd hh sd hh]@8")`}
+  target={`setcpm(120/4)
+s("<[bd hh sd hh bd hh hh] [bd hh sd hh bd hh sd hh]>")`}>
+  <Step check={{ fn: "(h) => (h.filter(e => e.t < 0.5).length === 7 && h.filter(e => e.t >= 0.5).length === 8) || 'Expected 7 hits in the first half of the cycle and 8 in the second.'" }}
+        hints={['Just delete the two weights.', '`s("[bd hh sd hh bd hh hh] [bd hh sd hh bd hh sd hh]")`']}
+        solution={`setcpm(120/4)
+s("[bd hh sd hh bd hh hh] [bd hh sd hh bd hh sd hh]")`}>
+    Delete `@7` and `@8`. Each bar gets half the cycle, so the pulse changes in the middle.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, cycles: 2 }}
+        hints={['`< >` plays one child per cycle.', '`s("<[bd hh sd hh bd hh hh] [bd hh sd hh bd hh sd hh]>")`']}
+        solution={`setcpm(120/4)
+s("<[bd hh sd hh bd hh hh] [bd hh sd hh bd hh sd hh]>")`}>
+    Wrap both bars in `< >`: one bar per cycle. Seven eighths, then eight, in the same bar length.
+  </Step>
+</Exercise>
 
 ## Polyrhythm and polymeter
 
-These two words get swapped all the time. Strudel gives them two different symbols.
+**Polyrhythm** (`,`): same length, different step rates. **Polymeter** (`{ }%n`): same step rate,
+different lengths.
 
-**Polyrhythm** (`,`): the layers have the **same length** (one cycle) and **different step
-rates**. Three against four:
+<Exercise id="time/polyrhythm" title="Three against four"
+  goal="Three kicks against four hats in the same bar."
+  start={`setcpm(90/4)
+s("bd*4, hh*4")`}
+  target={`setcpm(90/4)
+s("bd*3, hh*4, ~ rim")`}>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'bd').map(e => +(e.t * 3).toFixed(3)).join(' '); return x === '0 1 2' || 'Expected 3 evenly spaced kicks.' }" }}
+        hints={['Change the number after `bd`.', '`bd*3`']}
+        solution={`setcpm(90/4)
+s("bd*3, hh*4")`}>
+    Change `bd*4` to `bd*3`. Both layers still last one cycle and realign every bar.
+  </Step>
+  <Step check={{ match: { keys: ['s'] } }}
+        hints={['A third layer, two halves.', '`, ~ rim`']}
+        solution={`setcpm(90/4)
+s("bd*3, hh*4, ~ rim")`}>
+    Add `, ~ rim` so you can hear where beat 3 is.
+  </Step>
+</Exercise>
 
-<Strudel code={`setcpm(90/4)
-s("bd*3, hh*4, ~ rim")`} label="3 kicks and 4 hats per bar, realigned every bar" />
+<Exercise id="time/polymeter" title="A five-note riff over 4/4"
+  goal="A 5-note riff played as eighths over a 4/4 beat, realigning every 5 bars."
+  start={`setcpm(110/4)
+$: s("bd*4, [~ hh]*4")
+$: note("c3 eb3 g3 bb3 d4").s("triangle")`}
+  target={`setcpm(110/4)
+$: s("bd*4, [~ hh]*4")
+$: note("{c3 eb3 g3 bb3 d4}%8").s("triangle")`}>
+  <Step check={{ match: { keys: ['s', 'note'] }, cycles: 5 }}
+        hints={['Curly braces, then `%` and the step rate.', '`note("{c3 eb3 g3 bb3 d4}%8")`']}
+        solution={`setcpm(110/4)
+$: s("bd*4, [~ hh]*4")
+$: note("{c3 eb3 g3 bb3 d4}%8").s("triangle")`}>
+    Wrap the notes in `{ }%8`: `note("{c3 eb3 g3 bb3 d4}%8")`. Eight steps per bar, a five-step loop.
+    It realigns after `lcm(5, 8) = 40` steps: 5 bars.
+  </Step>
+</Exercise>
 
-**Polymeter** (`{ }%n`): the layers have the **same step rate** (`n` per cycle) and **different
-lengths**. A five-note riff played as eighths over a 4/4 bar:
-
-<Strudel
-  code={`setcpm(110/4)
-$: s("bd*4, [~ hh]*4").bank("RolandTR909")
-$: note("{c3 eb3 g3 bb3 d4}%8").s("triangle")`}
-  label="5-note loop, 8 steps per bar: realigns every 5 bars"
-/>
+<Exercise id="time/polymeter-rate" title="Where the step rate comes from"
+  goal="Hear which layer sets the step rate when you leave out `%n`."
+  start={`s("{bd sd hh, cp cp cp cp}%4")`}
+  target={`s("{cp cp cp cp, bd sd hh}")`}>
+  <Step check={{ fn: "(h) => h.filter(e => e.value.s === 'cp').length === 3 || 'Expected 3 claps per cycle.'" }}
+        hints={['Just the `%4` goes.', '`s("{bd sd hh, cp cp cp cp}")`']}
+        solution={`s("{bd sd hh, cp cp cp cp}")`}>
+    Delete `%4`. Count the claps per bar: three. Without `%n`, the step rate comes from the **first** layer.
+  </Step>
+  <Step check={{ fn: "(h) => h.filter(e => e.value.s === 'cp').length === 4 || 'Expected 4 claps per cycle.'" }}
+        hints={['Put the four-step layer first.', '`s("{cp cp cp cp, bd sd hh}")`']}
+        solution={`s("{cp cp cp cp, bd sd hh}")`}>
+    Swap the two layers: `{cp cp cp cp, bd sd hh}`. Now it runs at 4 steps per cycle.
+  </Step>
+</Exercise>
 
 | | Polyrhythm `,` | Polymeter `{ }%n` |
 | --- | --- | --- |
 | Same for all layers | length (one cycle) | step rate (`n` per cycle) |
 | Different per layer | step rate | loop length |
 | Realigns | every cycle | after `lcm(lengths)` steps |
-| Example | `"bd*3, hh*4"` | `"{bd sd hh, cp cp cp cp}%4"` |
 
-To count when a polymeter realigns, take the least common multiple of the layer lengths and
-divide by the step rate. Five against the 8-step bar realigns after `lcm(5, 8) = 40` steps, which
-is 5 bars. Three against four at `%4` realigns after 12 steps, which is 3 bars.
-
-<Box>
-Leave out `%n` and the step rate comes from the **first** layer. `"{bd sd hh, cp cp cp cp}"` runs at
-3 steps per cycle, so the 4-step layer takes 1⅓ cycles to go round.
-</Box>
+<Exercise id="time/poly-challenge" title="Challenge: three over sixteen"
+  goal="A kick on every beat, and a 3-note bass loop `c2 eb2 g2` running in sixteenths (`sawtooth`) that ignores the bar line."
+  start={``}
+  target={`$: s("bd*4")
+$: note("{c2 eb2 g2}%16").s("sawtooth")`}
+  check={{ match: { keys: ['s', 'note'] }, cycles: 3 }} />
 
 ## Groove and micro-timing
 
@@ -454,149 +834,325 @@ A grid is perfectly even. Groove is the small ways real players are not.
 
 ### Nudging whole layers
 
-`late` and `early` shift a pattern by a fraction of a cycle. With one cycle = one bar, `0.01` is a
-hundredth of a bar. At 120 bpm that is 20 ms, which is roughly the size of a real "feel". Nudge
-each lane on its own:
+With one cycle = one bar, `.01` is a hundredth of a bar: 20 ms at 120 bpm, roughly the size of a
+real "feel". In milliseconds: `ms = cycles × 60000 / cpm`.
 
-<Strudel
-  code={`setcpm(92/4)
+<Exercise id="time/nudge" title="Laid back, pushing ahead"
+  goal="Drag the snare a little behind the beat and push the hats a little ahead."
+  start={`setcpm(92/4)
+$: s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909")
+$: s("~ sd ~ sd").bank("RolandTR909")
+$: s("hh*8").bank("RolandTR909").gain(.6)`}
+  target={`setcpm(92/4)
 $: s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909")
 $: s("~ sd ~ sd").bank("RolandTR909").late(.012)
-$: s("hh*8").bank("RolandTR909").early(.004).gain(.6)`}
-  label="laid-back snare, hats pushing ahead"
-/>
-
-The formula, if you want milliseconds: `delay in ms = cycles × 60000 / cpm`.
+$: s("hh*8").bank("RolandTR909").gain(.6).early(.004)`}>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.s === 'sd').map(e => +(e.t * 1000).toFixed(1)).join(' '); return x === '262 762' || 'Snare at ' + x + ' thousandths of a bar, expected 262 and 762 (12 after the beat).' }" }}
+        hints={['Chain it on the snare lane.', '`.late(.012)`']}
+        solution={`setcpm(92/4)
+$: s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909")
+$: s("~ sd ~ sd").bank("RolandTR909").late(.012)
+$: s("hh*8").bank("RolandTR909").gain(.6)`}>
+    Add `.late(.012)` to the snare lane. About 20 ms at this tempo: the backbeat sits back.
+  </Step>
+  <Step check={{ match: { keys: ['s'] } }}
+        hints={['Chain it on the hat lane.', '`.early(.004)`']}
+        solution={`setcpm(92/4)
+$: s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909")
+$: s("~ sd ~ sd").bank("RolandTR909").late(.012)
+$: s("hh*8").bank("RolandTR909").gain(.6).early(.004)`}>
+    Add `.early(.004)` to the hat lane. The hats lean forward.
+  </Step>
+</Exercise>
 
 ### Humanising
 
-To add a little random timing, give `late` a random signal. **Segment it first**:
-
-<Strudel
-  code={`setcpm(96/4)
+<Exercise id="time/humanise" title="Humanise the hats"
+  goal="Give every hat a small random delay, the safe way."
+  start={`setcpm(96/4)
+$: s("hh*16").bank("RolandTR909").gain("[.8 .4 .6 .4]*4")
+$: s("bd ~ ~ ~ sd ~ ~ bd ~ ~ bd ~ sd ~ ~ ~").bank("RolandTR909")`}
+  target={`setcpm(96/4)
+$: s("hh*16").bank("RolandTR909").gain("[.8 .4 .6 .4]*4")
+  .late(perlin.range(0, .015).segment(16))
+$: s("bd ~ ~ ~ sd ~ ~ bd ~ ~ bd ~ sd ~ ~ ~").bank("RolandTR909")`}>
+  <Step check={{ includes: ['.late(', 'rand.range('] }}
+        hints={['Chain it on the hat lane.', '`.late(rand.range(0, .01))`']}
+        solution={`setcpm(96/4)
+$: s("hh*16").bank("RolandTR909").gain("[.8 .4 .6 .4]*4")
+  .late(rand.range(0, .01))
+$: s("bd ~ ~ ~ sd ~ ~ bd ~ ~ bd ~ sd ~ ~ ~").bank("RolandTR909")`}>
+    Add `.late(rand.range(0, .01))` to the hats: up to a hundredth of a bar late. Listen for a while.
+    Every so often a hat goes missing or flams.
+  </Step>
+  <Step check={{ includes: '.segment(', fn: "(h) => { const x = h.filter(e => e.value.s === 'hh'); return (x.length === 16 && x.every(e => { const d = e.t - Math.floor(e.t * 16 + 1e-9) / 16; return d >= -1e-9 && d <= 0.0101; })) || 'Expected 16 hats per bar, each 0 to 1/100 of a bar late.' }" }}
+        hints={['It goes on the random signal, inside `late(...)`.', '`.late(rand.range(0, .01).segment(16))`']}
+        solution={`setcpm(96/4)
 $: s("hh*16").bank("RolandTR909").gain("[.8 .4 .6 .4]*4")
   .late(rand.range(0, .01).segment(16))
-$: s("bd ~ ~ ~ sd ~ ~ bd ~ ~ bd ~ sd ~ ~ ~").bank("RolandTR909")`}
-  label="each hat up to 1/100 of a bar late"
-/>
+$: s("bd ~ ~ ~ sd ~ ~ bd ~ ~ bd ~ sd ~ ~ ~").bank("RolandTR909")`}>
+    Fix it: add `.segment(16)` to the signal, `rand.range(0, .01).segment(16)`. No more drops.
+  </Step>
+  <Step check={{ includes: ['perlin', '.segment('], fn: "(h) => h.filter(e => e.value.s === 'hh').length === 16 || 'Expected 16 hats per bar.'" }}
+        hints={['Only the signal name and the upper bound change.', '`.late(perlin.range(0, .015).segment(16))`']}
+        solution={`setcpm(96/4)
+$: s("hh*16").bank("RolandTR909").gain("[.8 .4 .6 .4]*4")
+  .late(perlin.range(0, .015).segment(16))
+$: s("bd ~ ~ ~ sd ~ ~ bd ~ ~ bd ~ sd ~ ~ ~").bank("RolandTR909")`}>
+    Replace `rand` with `perlin` and `.01` with `.015`. The timing now wanders slowly, like a drummer
+    rushing and dragging, instead of jittering.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
-`.late(rand.range(0, .01))` without `.segment(…)` looks fine but drops or doubles hits. Strudel asks
-for events in short time windows, and a continuous signal gives a different delay in each window,
-so a hit near the edge of a window can move into the next one and be missed or played twice. With
-`.segment(16)` the delay is fixed for the length of each step. Use a segment count at least as fine
-as the rhythm, and keep the nudge shorter than one step. The same applies to `perlin`. See
-<L to="/tutorial/signals">Signals</L>.
+Why step 1 dropped hits: Strudel asks for events in short time windows, and an unsegmented signal
+gives a different delay in each window, so a hit near a window edge can land in the next one and
+be missed or played twice. `.segment(n)` holds the delay for the length of each step. Use a segment
+count at least as fine as the rhythm, and keep the nudge shorter than one step. The same applies to
+`perlin`. See <L to="/tutorial/signals">Signals</L>.
 </Box>
-
-`perlin` in place of `rand` gives a drift that wanders slowly instead of jittering. It feels more
-like a drummer rushing and dragging:
-
-<Strudel
-  code={`s("hh*16").late(perlin.range(0, .015).segment(16))`}
-  label="smooth, wandering timing"
-/>
 
 ### Accents are rhythm too
 
-Your ear hears a louder hit as a stronger beat. So a gain pattern changes the meter you hear, even
-when the notes stay put:
+<Exercise id="time/accents" title="Same notes, different meter"
+  goal="Make 12 even hats sound like 4 × 3, then 3 × 4, then drop a few at random."
+  start={`s("hh*12")`}
+  target={`s("hh*12?0.1").gain("[1 .4 .4 .4]*3")`}>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.gain === 1).map(e => +(e.t * 4).toFixed(3)).join(' '); return x === '0 1 2 3' || 'Expected the loud hat on each of 4 beats.' }" }}
+        hints={['Three gains per beat, four beats.', '`.gain("[1 .4 .4]*4")`']}
+        solution={`s("hh*12").gain("[1 .4 .4]*4")`}>
+    Add `.gain("[1 .4 .4]*4")`. You hear four beats of three.
+  </Step>
+  <Step check={{ fn: "(h) => { const x = h.filter(e => e.value.gain === 1).map(e => +(e.t * 3).toFixed(3)).join(' '); return x === '0 1 2' || 'Expected the loud hat on each of 3 beats.' }" }}
+        hints={['Four gains per group, three groups.', '`.gain("[1 .4 .4 .4]*3")`']}
+        solution={`s("hh*12").gain("[1 .4 .4 .4]*3")`}>
+    Change it to `.gain("[1 .4 .4 .4]*3")`. The same 12 hats, now three beats of four. Nothing moved.
+  </Step>
+  <Step check={{ includes: '?', cycles: 4, events: [30, 47] }}
+        hints={['`?` goes right after the step it applies to.', '`s("hh*12?0.1")`']}
+        solution={`s("hh*12?0.1").gain("[1 .4 .4 .4]*3")`}>
+    Change `hh*12` to `hh*12?0.1`: each hat has a 10% chance of dropping out. Slightly more human.
+  </Step>
+</Exercise>
 
-<Strudel code={`s("hh*12").gain("[1 .4 .4]*4")`} label="12 hats heard as 4 × 3" />
-
-<Strudel code={`s("hh*12").gain("[1 .4 .4 .4]*3")`} label="the same 12 hats heard as 3 × 4" />
-
-That is the cheapest polyrhythm there is. Nothing moves, only the emphasis changes. `?` and
-`degradeBy` belong here too: dropping a few hats at random (`"hh*16?0.1"`) sounds more human than
-dropping none.
+<Exercise id="time/groove-challenge" title="Challenge: drag the backbeat"
+  goal="Kick on every beat, exactly on the grid. Snare on 2 and 4, a fiftieth of a bar late."
+  start={``}
+  target={`$: s("bd*4")
+$: s("~ sd ~ sd").late(.02)`}
+  check={{ match: { keys: ['s'] } }} />
 
 ## Long-form time
 
-A cycle is a bar. So how do you write minutes of music without writing out hundreds of bars?
-**Put slow alternations in the parameters.**
+A cycle is a bar, so minutes of music means hundreds of bars. Don't write them out: **put slow
+alternations in the parameters**.
 
 ### Different rates for different things
 
-`< >` advances once per cycle. `< >/4` advances every 4 cycles, and `< >/16` every 16. Give each
-musical layer its own rate and you get a long form almost for free:
-
-<Strudel
-  code={`setcpm(124/4)
+<Exercise id="time/rates" title="Every layer at its own rate"
+  goal="Bass notes every 2 bars, filter every 4, hat level every 8."
+  start={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909")
+$: s("[~ hh]*4").bank("RolandTR909").gain(.4)
+$: n("0 2 3 -1").struct("x*8").scale("C2:minor").s("sawtooth").lpf(800)`}
+  target={`setcpm(124/4)
 $: s("bd*4").bank("RolandTR909")
 $: s("[~ hh]*4").bank("RolandTR909").gain("<.3 .5>/8")
-$: n("<0 2 3 -1>/2").struct("x*8").scale("C2:minor")
-  .s("sawtooth").lpf("<300 600 1200 2400>/4")`}
-  label="chords every 2 bars, filter every 4, hat level every 8"
-/>
+$: n("<0 2 3 -1>/2").struct("x*8").scale("C2:minor").s("sawtooth").lpf("<300 600 1200 2400>/4")`}>
+  <Step check={{ cycles: 4, fn: "(h) => { const b = h.filter(e => e.value.s === 'sawtooth'); const per = [0, 1, 2, 3].map(c => [...new Set(b.filter(e => Math.floor(e.t) === c).map(e => e.value.note))]); return (per.every(p => p.length === 1) && new Set(per.map(p => p[0])).size === 4) || 'Expected one bass note per bar, a different one each bar.' }" }}
+        hints={['Angle brackets play one value per cycle.', '`n("<0 2 3 -1>")`']}
+        solution={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909")
+$: s("[~ hh]*4").bank("RolandTR909").gain(.4)
+$: n("<0 2 3 -1>").struct("x*8").scale("C2:minor").s("sawtooth").lpf(800)`}>
+    Right now the bass changes every quarter. Wrap the numbers in `< >`: `n("<0 2 3 -1>")`. One per bar.
+  </Step>
+  <Step check={{ cycles: 8, fn: "(h) => { const b = h.filter(e => e.value.s === 'sawtooth'); const per = [0, 1, 2, 3, 4, 5, 6, 7].map(c => [...new Set(b.filter(e => Math.floor(e.t) === c).map(e => e.value.note))].join()); return (per[0] === per[1] && per[2] === per[3] && per[1] !== per[2] && per[4] === per[5]) || 'Expected each bass note to last 2 bars.' }" }}
+        hints={['`/2` after the closing `>`.', '`n("<0 2 3 -1>/2")`']}
+        solution={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909")
+$: s("[~ hh]*4").bank("RolandTR909").gain(.4)
+$: n("<0 2 3 -1>/2").struct("x*8").scale("C2:minor").s("sawtooth").lpf(800)`}>
+    Add `/2` after the `>`: `n("<0 2 3 -1>/2")`. Now every 2 bars.
+  </Step>
+  <Step check={{ cycles: 8, fn: "(h) => { const b = h.filter(e => e.value.s === 'sawtooth'); const at = c => b.filter(e => Math.floor(e.t) === c).map(e => e.value.cutoff); return (at(0).every(v => v === 300) && at(3).every(v => v === 300) && at(4).every(v => v === 600)) || 'Expected the cutoff at 300 for bars 1 to 4, then 600.' }" }}
+        hints={['The same trick, in a parameter.', '`.lpf("<300 600 1200 2400>/4")`']}
+        solution={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909")
+$: s("[~ hh]*4").bank("RolandTR909").gain(.4)
+$: n("<0 2 3 -1>/2").struct("x*8").scale("C2:minor").s("sawtooth").lpf("<300 600 1200 2400>/4")`}>
+    Change `.lpf(800)` to `.lpf("<300 600 1200 2400>/4")`: the filter opens every 4 bars.
+  </Step>
+  <Step check={{ cycles: 16, fn: "(h) => { const x = h.filter(e => e.value.s === 'hh'); return (x.filter(e => e.t < 8).every(e => e.value.gain === 0.3) && x.filter(e => e.t >= 8).every(e => e.value.gain === 0.5)) || 'Expected hat gain .3 for 8 bars, then .5 for 8.' }" }}
+        hints={['On the hat lane.', '`.gain("<.3 .5>/8")`']}
+        solution={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909")
+$: s("[~ hh]*4").bank("RolandTR909").gain("<.3 .5>/8")
+$: n("<0 2 3 -1>/2").struct("x*8").scale("C2:minor").s("sawtooth").lpf("<300 600 1200 2400>/4")`}>
+    Change the hats' `.gain(.4)` to `.gain("<.3 .5>/8")`. A 16-bar form from four rates.
+  </Step>
+</Exercise>
+
+<Exercise id="time/hold-a-rhythm" title="Hold a rhythm for four bars"
+  goal="Play `bd sd` for four bars, then `bd bd sd` for four."
+  start={`s("<[bd sd] [bd bd sd]>")`}
+  target={`s("<[bd sd]!4 [bd bd sd]!4>")`}>
+  <Step check={{ includes: '/4', cycles: 8, events: [1, 8] }}
+        hints={['Put it after the closing `>`.', '`s("<[bd sd] [bd bd sd]>/4")`']}
+        solution={`s("<[bd sd] [bd bd sd]>/4")`}>
+    Try the obvious thing: add `/4` after the `>`. Listen: one kick that lasts two bars, then one snare.
+    `/4` stretched the rhythm itself.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, cycles: 8 }}
+        hints={['`!4` repeats a step four times, each a full cycle inside `< >`.', '`s("<[bd sd]!4 [bd bd sd]!4>")`']}
+        solution={`s("<[bd sd]!4 [bd bd sd]!4>")`}>
+    Remove `/4` and repeat each rhythm with `!` instead: `"<[bd sd]!4 [bd bd sd]!4>"`.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
-`/4` stretches **everything** inside it, including the rhythm. As a parameter, for example
-`.lpf("<300 2400>/4")`, that is what you want: a value that holds for 4 bars. As the pattern that
-sets the rhythm, `s("<bd sd>/4")` gives you **one** kick lasting four bars, not four bars of kicks.
-To hold a whole *rhythm* for n bars, repeat it with `!` inside the brackets: `"<[bd sd]!4 [bd bd sd]!4>"`.
+`/n` is right for a **parameter** (`.lpf("<300 2400>/4")` holds each value for 4 bars) and wrong for
+the pattern that **sets the rhythm**: `s("<bd sd>/4")` is one kick lasting four bars. To hold a
+rhythm, use `!n` inside `< >`.
 </Box>
 
 ### Nested alternation
 
-A `< >` inside a `< >` only moves forward when the outer one reaches it. So it runs at a fraction
-of the outer rate. Three tokens give you a four-bar phrase:
+A `< >` inside a `< >` only moves forward when the outer one reaches it.
 
-<Strudel
-  code={`s("bd*2, ~ <sd <cp [sd sd]>>, hh*8").bank("RolandTR909")`}
-  label="bar 1 sd, bar 2 cp, bar 3 sd, bar 4 sd sd"
-/>
+<Exercise id="time/nested" title="A four-bar phrase from three tokens"
+  goal="Snare in bars 1 and 3, a clap in bar 2, a double snare in bar 4."
+  start={`s("bd*2, ~ sd, hh*8")`}
+  target={`s("bd*2, ~ <sd <cp [sd sd]>>, hh*8")`}>
+  <Step check={{ cycles: 2, fn: "(h) => { const x = h.filter(e => e.value.s === 'sd' || e.value.s === 'cp').map(e => e.value.s).join(' '); return x === 'sd cp' || 'Expected a snare in bar 1 and a clap in bar 2.' }" }}
+        hints={['`< >` alternates per cycle.', '`~ <sd cp>`']}
+        solution={`s("bd*2, ~ <sd cp>, hh*8")`}>
+    Replace `sd` with `<sd cp>`.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, cycles: 4 }}
+        hints={['The inner `< >` advances only every other bar.', '`~ <sd <cp [sd sd]>>`']}
+        solution={`s("bd*2, ~ <sd <cp [sd sd]>>, hh*8")`}>
+    Replace `cp` with `<cp [sd sd]>`. Bar 1 sd, bar 2 cp, bar 3 sd, bar 4 sd sd.
+  </Step>
+</Exercise>
 
 ### Arranging with masks
 
-A `mask` with slow alternation switches a whole layer on or off for a number of bars. `!` counts
-bars:
+A `mask` with slow alternation switches a whole layer on or off for a number of bars. `!` counts bars.
 
-<Strudel
-  code={`setcpm(124/4)
+<Exercise id="time/mask-form" title="A 16-bar form in three masks"
+  goal="Kick for bars 1–12, hats from bar 5, claps for the second half."
+  start={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909")
+$: s("[~ hh]*4").bank("RolandTR909")
+$: s("~ cp ~ cp").bank("RolandTR909")`}
+  target={`setcpm(124/4)
 $: s("bd*4").bank("RolandTR909").mask("<1!12 0!4>")
 $: s("[~ hh]*4").bank("RolandTR909").mask("<0!4 1!12>")
-$: s("~ cp").fast(2).bank("RolandTR909").mask("<0!8 1!8>")`}
-  label="a 16-bar form in three masks"
-/>
+$: s("~ cp ~ cp").bank("RolandTR909").mask("<0!8 1!8>")`}>
+  <Step check={{ cycles: 16, fn: "(h) => { const x = h.filter(e => e.value.s === 'bd'); return (x.length === 48 && x.every(e => e.t < 12)) || 'Expected the kick in bars 1 to 12 only.' }" }}
+        hints={['Chain it on the kick lane.', '`.mask("<1!12 0!4>")`']}
+        solution={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909").mask("<1!12 0!4>")
+$: s("[~ hh]*4").bank("RolandTR909")
+$: s("~ cp ~ cp").bank("RolandTR909")`}>
+    Add `.mask("<1!12 0!4>")` to the kick: 12 bars on, 4 off.
+  </Step>
+  <Step check={{ cycles: 16, fn: "(h) => { const x = h.filter(e => e.value.s === 'hh'); return (x.length === 48 && x.every(e => e.t >= 4)) || 'Expected the hats from bar 5 on.' }" }}
+        hints={['4 bars off, then 12 on.', '`.mask("<0!4 1!12>")`']}
+        solution={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909").mask("<1!12 0!4>")
+$: s("[~ hh]*4").bank("RolandTR909").mask("<0!4 1!12>")
+$: s("~ cp ~ cp").bank("RolandTR909")`}>
+    Hats come in at bar 5: add `.mask("<0!4 1!12>")`.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, cycles: 16 }}
+        hints={['8 off, 8 on.', '`.mask("<0!8 1!8>")`']}
+        solution={`setcpm(124/4)
+$: s("bd*4").bank("RolandTR909").mask("<1!12 0!4>")
+$: s("[~ hh]*4").bank("RolandTR909").mask("<0!4 1!12>")
+$: s("~ cp ~ cp").bank("RolandTR909").mask("<0!8 1!8>")`}>
+    Claps for the second half: `.mask("<0!8 1!8>")`.
+  </Step>
+</Exercise>
 
 ### Fills in the last bar
 
-`lastOf(n, f)` applies `f` to the **last** of every `n` cycles, which is where fills go. Note that
-`every(n, f)` does the opposite: it applies `f` to the **first** of every `n` cycles.
-
-<Strudel
-  code={`setcpm(100/4)
+<Exercise id="time/fills" title="A fill every fourth bar"
+  goal="Double up the second half of every fourth bar."
+  start={`setcpm(100/4)
+s("bd sd bd sd, hh*8").bank("RolandTR909")`}
+  target={`setcpm(100/4)
 s("bd sd bd sd, hh*8").bank("RolandTR909")
-  .lastOf(4, x => x.ply("1 2"))`}
-  label="bar 4 doubles up in its second half"
-/>
+  .lastOf(4, x => x.ply("1 2"))`}>
+  <Step check={{ includes: 'every(', cycles: 4, fn: "(h) => { const n = c => h.filter(e => Math.floor(e.t) === c).length; return (n(0) > n(1) && n(1) === n(3)) || 'Expected the fill in bar 1.' }" }}
+        hints={['`ply("1 2")` doubles every event in the second half.', '`.every(4, x => x.ply("1 2"))`']}
+        solution={`setcpm(100/4)
+s("bd sd bd sd, hh*8").bank("RolandTR909")
+  .every(4, x => x.ply("1 2"))`}>
+    Add `.every(4, x => x.ply("1 2"))`. Listen for where the fill lands: bar **1** of every 4.
+  </Step>
+  <Step check={{ includes: 'lastOf(', match: { keys: ['s'] }, cycles: 4 }}
+        hints={['Swap the function name.', '`.lastOf(4, x => x.ply("1 2"))`']}
+        solution={`setcpm(100/4)
+s("bd sd bd sd, hh*8").bank("RolandTR909")
+  .lastOf(4, x => x.ply("1 2"))`}>
+    Fills go at the end of a phrase. Change `every` to `lastOf`: bar 4 of every 4.
+  </Step>
+</Exercise>
 
 ### Sections
 
-`arrange([cycles, pattern], …)` plays each section for the given number of cycles and then loops.
-It is the most direct way to write "4 bars of A, then 2 of B":
+`arrange([cycles, pattern], …)` plays each section for its number of cycles, then loops.
 
-<Strudel
-  code={`setcpm(124/4)
+<Exercise id="time/arrange" title="Four bars of A, then B, then C"
+  goal="An 8-bar loop: 4 bars of groove, 2 with claps, 2 of a busier break."
+  start={`setcpm(124/4)
+arrange(
+  [4, s("bd*4, [~ hh]*4")]
+).bank("RolandTR909")`}
+  target={`setcpm(124/4)
 arrange(
   [4, s("bd*4, [~ hh]*4")],
   [2, s("bd*4, [~ hh]*4, ~ cp ~ cp")],
   [2, s("bd [~ bd] sd ~, hh*16")]
-).bank("RolandTR909")`}
-  label="an 8-bar loop in three sections"
-/>
+).bank("RolandTR909")`}>
+  <Step check={{ cycles: 6, fn: "(h) => { const x = h.filter(e => e.value.s === 'cp'); return (x.length === 4 && x.every(e => e.t >= 4)) || 'Expected claps in bars 5 and 6 only.' }" }}
+        hints={['A comma after the first section, then another `[cycles, pattern]`.', '`[2, s("bd*4, [~ hh]*4, ~ cp ~ cp")]`']}
+        solution={`setcpm(124/4)
+arrange(
+  [4, s("bd*4, [~ hh]*4")],
+  [2, s("bd*4, [~ hh]*4, ~ cp ~ cp")]
+).bank("RolandTR909")`}>
+    Add a second section: `[2, s("bd*4, [~ hh]*4, ~ cp ~ cp")]`.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, cycles: 8 }}
+        hints={['One more `[cycles, pattern]`.', '`[2, s("bd [~ bd] sd ~, hh*16")]`']}
+        solution={`setcpm(124/4)
+arrange(
+  [4, s("bd*4, [~ hh]*4")],
+  [2, s("bd*4, [~ hh]*4, ~ cp ~ cp")],
+  [2, s("bd [~ bd] sd ~, hh*16")]
+).bank("RolandTR909")`}>
+    Add a third: `[2, s("bd [~ bd] sd ~, hh*16")]`.
+  </Step>
+</Exercise>
 
-For looping a fixed window of an evolving pattern, see `ribbon` in <L to="/tutorial/tempo">Tempo &amp; Cycles</L>.
+For looping a window of an evolving pattern, see `ribbon` in <L to="/tutorial/tempo">Tempo &amp; Cycles</L>.
 For more conditional tools (`when`, `within`, `someCyclesBy`), see
 <L to="/tutorial/pattern-functions">Pattern Functions</L>.
 
-## Worked exercise: one beat, three ways
+<Exercise id="time/form-challenge" title="Challenge: an 8-bar form"
+  goal="Kick on every beat for 8 bars. A `~ cp ~ cp` layer joins in bar 5. Every 8th bar, `ply(2)` the whole thing as a fill."
+  start={``}
+  target={`s("bd*4, <~!4 [~ cp ~ cp]!4>").lastOf(8, x => x.ply(2))`}
+  check={{ match: { keys: ['s'] }, cycles: 8 }} />
+
+## One beat, three ways
 
 > In 4/4 at 96 bpm: kick on 1 and on the "and" of 3. Snare on 2 and 4. A quiet ghost snare on the
-> last sixteenth of beat 2. Closed hats on every eighth, with the final eighth of the bar split into
-> two sixteenths.
-
-First, turn the words into grid positions, counting sixteenths from 0:
+> last sixteenth of beat 2. Closed hats on every eighth, with the final eighth split into two
+> sixteenths.
 
 | Voice | Musical position | 16-step positions |
 | --- | --- | --- |
@@ -605,47 +1161,62 @@ First, turn the words into grid positions, counting sixteenths from 0:
 | ghost | "a" of 2 | 7 |
 | hats | every eighth + the last sixteenth | 0 2 4 6 8 10 12 14 15 |
 
-**1. Subdividing.** Think in beats, and split only the beats that need it:
+<Exercise id="time/three-ways" title="One beat, three ways"
+  goal="The beat above, written as a tree, then a grid, then step numbers. Then swing it."
+  start={`setcpm(96/4)
+`}
+  target={`setcpm(96/4)
+$: s("bd").beat("0,10", 16)
+$: s("sd").beat("4,12", 16)
+$: s("sd").beat(7, 16).gain(.3)
+$: s("hh").beat("0,2,4,6,8,10,12,14,15", 16)`}
+  answer={`setcpm(96/4)
+$: s("bd").beat("0,10", 16)
+$: s("sd").beat("4,12", 16)
+$: s("sd").beat(7, 16).gain(.3)
+$: s("hh").beat("0,2,4,6,8,10,12,14,15", 16).swingBy(1/3, 4)`}>
+  <Step check={{ match: { keys: ['s'] }, includes: '[', excludes: ['beat(', ' . '] }}
+        hints={['Think in four beats; split only the ones that need it. The ghost can go on its own `$:` line with `.gain(.3)`.', '`$: s("bd ~ [~ bd] ~, ~ sd ~ sd, hh*2 hh*2 hh*2 [hh hh*2]")` and `$: s("~ [~ ~ ~ sd] ~ ~").gain(.3)`']}
+        solution={`setcpm(96/4)
+$: s("bd ~ [~ bd] ~, ~ sd ~ sd, hh*2 hh*2 hh*2 [hh hh*2]")
+$: s("~ [~ ~ ~ sd] ~ ~").gain(.3)`}>
+    **As a tree.** Four beats per bar, and brackets only where a beat needs splitting. Put the ghost
+    on its own `$:` line so it can have `.gain(.3)`.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, includes: ' . ', excludes: ['beat(', '['] }}
+        hints={['One `$:` lane per voice, 16 steps each, `.` between beats.', 'Kick: `$: s("bd - - - . - - - - . - - bd - . - - - -")`, and the same shape for the other voices.']}
+        solution={`setcpm(96/4)
+$: s("bd -  -  -  . -  -  -  -  . -  -  bd -  . -  -  -  - ")
+$: s("-  -  -  -  . sd -  -  -  . -  -  -  -  . sd -  -  - ")
+$: s("-  -  -  -  . -  -  -  sd . -  -  -  -  . -  -  -  - ").gain(.3)
+$: s("hh -  hh -  . hh -  hh -  . hh -  hh -  . hh -  hh hh")`}>
+    **As a grid.** Clear the editor below `setcpm`. One lane per voice, 16 steps each, with a `.`
+    between beats and no brackets.
+  </Step>
+  <Step check={{ match: { keys: ['s'] }, includes: '.beat(', excludes: ' . ' }}
+        hints={['Copy the right-hand column of the table into `beat`.', '`$: s("bd").beat("0,10", 16)`, `$: s("sd").beat("4,12", 16)`, `$: s("sd").beat(7, 16).gain(.3)`, `$: s("hh").beat("0,2,4,6,8,10,12,14,15", 16)`']}
+        solution={`setcpm(96/4)
+$: s("bd").beat("0,10", 16)
+$: s("sd").beat("4,12", 16)
+$: s("sd").beat(7, 16).gain(.3)
+$: s("hh").beat("0,2,4,6,8,10,12,14,15", 16)`}>
+    **As step numbers.** Replace each lane with `s("…").beat("…", 16)`, copying the positions from
+    the table.
+  </Step>
+  <Step check={{ includes: 'swing', fn: "(h) => { const x = h.filter(e => e.value.s === 'hh').map(e => +(e.t * 48).toFixed(3)).sort((a, b) => a - b).join(' '); return x === '0 8 12 20 24 32 36 44 47' || 'Expected the offbeat eighths moved to the triplet.' }" }}
+        hints={['Chain it on the hat lane only.', '`.swingBy(1/3, 4)`']}
+        solution={`setcpm(96/4)
+$: s("bd").beat("0,10", 16)
+$: s("sd").beat("4,12", 16)
+$: s("sd").beat(7, 16).gain(.3)
+$: s("hh").beat("0,2,4,6,8,10,12,14,15", 16).swingBy(1/3, 4)`}>
+    Swing it: add `.swingBy(1/3, 4)` to the hat lane.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`setcpm(96/4)
-$: s("bd ~ [~ bd] ~, ~ sd ~ sd, hh*2 hh*2 hh*2 [hh hh*2]").bank("RolandTR909")
-$: s("~ [~ ~ ~ sd] ~ ~").bank("RolandTR909").gain(.3)`}
-  label="the tree"
-/>
-
-**2. The grid.** Sixteen steps, with a `.` on every beat and one lane per voice:
-
-<Strudel
-  code={`setcpm(96/4)
-$: s("bd -  -  -  . -  -  -  -  . -  -  bd -  . -  -  -  - ").bank("RolandTR909")
-$: s("-  -  -  -  . sd -  -  -  . -  -  -  -  . sd -  -  - ").bank("RolandTR909")
-$: s("-  -  -  -  . -  -  -  sd . -  -  -  -  . -  -  -  - ").bank("RolandTR909").gain(.3)
-$: s("hh -  hh -  . hh -  hh -  . hh -  hh -  . hh -  hh hh").bank("RolandTR909")`}
-  label="the step sequencer"
-/>
-
-**3. Positions.** Copy the right-hand column of the table straight into `beat`:
-
-<Strudel
-  code={`setcpm(96/4)
-$: s("bd").beat("0,10", 16).bank("RolandTR909")
-$: s("sd").beat("4,12", 16).bank("RolandTR909")
-$: s("sd").beat(7, 16).bank("RolandTR909").gain(.3)
-$: s("hh").beat("0,2,4,6,8,10,12,14,15", 16).bank("RolandTR909")`}
-  label="the step numbers"
-/>
-
-All three produce exactly the same hits. Which one is "right" depends on what you will change
-next. If you are going to vary the hats, the tree is shortest. If you are going to program the
-kick hit by hit, use the grid. If you are going to generate positions or pattern them per bar,
-use `beat`.
-
-<Box kind="try">
-Now swing it. Add `.swingBy(1/3, 4)` to the hat lane in any of the three versions. Then move the
-ghost snare to the "e" of 4 (step 13) in all three. The version that felt easiest to change is the
-one to reach for.
-</Box>
+All three versions produce exactly the same hits. Which one is "right" depends on what you will
+change next: vary the hats, the tree is shortest; program the kick hit by hit, use the grid;
+generate or pattern positions per bar, use `beat`.
 
 ## Recap
 
