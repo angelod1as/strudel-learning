@@ -5,150 +5,300 @@ title: Mini-Notation
 lede: The little language inside the double quotes. Learn this and you can write any rhythm.
 ---
 
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Strudel from '../../components/Strudel.astro';
 import Box from '../../components/Box.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
 
-Anything inside `"double quotes"` or `` `backticks` `` is not a string — it is a program in a tiny
-rhythm language borrowed from TidalCycles. It is the densest part of Strudel and the part worth
-learning by heart.
+Anything inside `"double quotes"` or `` `backticks` `` is not a string. It is a program in a tiny
+rhythm language borrowed from TidalCycles. You will learn it by typing it: each step below changes
+one thing, you press ctrl+enter, and you hear the difference.
 
 ## The one rule
 
 **A sequence is squeezed into exactly one cycle.** Add elements and they get shorter; the loop
-length never changes.
+length never changes. Spaces separate events, and `~` or `-` is a rest.
 
-<Strudel code={`note("c e g b")`} label="4 events, quarter cycle each" />
+<Exercise id="mini/sequence" title="Four slots, then five"
+  goal="Hear a cycle absorb an extra sound, then replace one with a rest."
+  start={`s("bd hh sd hh")`} target={`s("bd hh sd - oh")`}>
+  <Step check={{ includes: 'oh', events: 5 }}
+        hints={['Type a space and `oh` just before the closing quote.']}
+        solution={`s("bd hh sd hh oh")`}>
+    Add `oh` to the end, inside the quotes. Play it: five sounds now, same loop length. Everything
+    got shorter to make room.
+  </Step>
+  <Step check={{ includes: '~', events: 4 }}
+        hints={['A rest still takes a slot. The loop keeps five slots, but only four make a sound.']}
+        solution={`s("bd hh sd ~ oh")`}>
+    Replace the second `hh` with `~`. The slot stays; it just plays nothing.
+  </Step>
+  <Step check={{ excludes: '~', includes: '-', events: 4 }}
+        hints={['`-` and `~` mean exactly the same thing.']}
+        solution={`s("bd hh sd - oh")`}>
+    Swap your `~` for `-`. Same rest, easier to see in a grid.
+  </Step>
+</Exercise>
 
-<Strudel code={`note("c d e f g a b")`} label="7 events, same total time" />
-
-## Space — sequence
-
-Separate events with spaces. That is the whole of it.
-
-<Strudel code={`s("bd hh sd hh")`} />
-
-## `~` or `-` — rest
-
-<Strudel code={`s("bd ~ sd ~ bd ~ [~ sd] ~")`} />
-
-Both characters mean the same thing. `-` is easier to eyeball in a grid.
+<Exercise id="mini/sequence-challenge" title="Challenge: eight slots"
+  goal="Eight equal slots: kick on 1 and 4, snare on 5, clap on 8, rests everywhere else."
+  start="" target={`s("bd - - bd sd - - cp")`}
+  check={{ match: { keys: ['s'] } }} />
 
 ## `[ ]` — subdivide
 
-A bracketed group takes up **one slot** of its parent sequence and divides it further.
+A bracketed group takes up **one slot** of its parent and divides that slot again.
 
-<Strudel code={`s("bd [hh hh] sd [hh bd]")`} />
-
-Nest as deep as you like:
-
-<Strudel code={`s("bd [[rim rim] hh] bd cp")`} />
+<Exercise id="mini/subdivide" title="Split a slot"
+  goal="Turn a plain four-beat loop into a tree of subdivisions."
+  start={`s("bd hh sd hh")`} target={`s("bd [hh hh] [sd [rim rim]] [hh hh hh]")`}>
+  <Step check={{ includes: '[hh hh]', events: 5 }}
+        hints={['Square brackets squeeze a group into one slot.']}
+        solution={`s("bd [hh hh] sd hh")`}>
+    Replace the first `hh` with `[hh hh]`. Two hats now share the slot one used to fill.
+  </Step>
+  <Step check={{ includes: '[hh hh hh]', events: 7 }}
+        hints={['Three events in one quarter-cycle slot: a triplet.']}
+        solution={`s("bd [hh hh] sd [hh hh hh]")`}>
+    Replace the last `hh` with `[hh hh hh]`. That is a triplet on beat 4.
+  </Step>
+  <Step check={{ includes: '[rim rim]', match: { keys: ['s'] } }}
+        hints={['Brackets nest: `[sd [rim rim]]` splits beat 3 in half, then splits the second half again.']}
+        solution={`s("bd [hh hh] [sd [rim rim]] [hh hh hh]")`}>
+    Brackets nest. Replace `sd` with `[sd [rim rim]]`: the snare gets the first half of beat 3,
+    and two rims split the second half.
+  </Step>
+</Exercise>
 
 <Box>
 This is the heart of the language: you do not lay notes on a grid, you *subdivide time*. Any
-rhythm is a tree of divisions.
+rhythm is a tree of divisions. (The grid way of thinking has its own chapter:
+<L to="/tutorial/time">Writing in Time</L>.)
 </Box>
+
+<Exercise id="mini/subdivide-challenge" title="Challenge: a beat from a description"
+  goal="Four beats. 1: kick. 2: snare. 3: two kicks. 4: a snare, then a rim on the last sixteenth."
+  start="" target={`s("bd sd [bd bd] [sd - - rim]")`}
+  check={{ match: { keys: ['s'] } }} />
 
 ## `*` — speed up, `/` — slow down
 
-<Strudel code={`s("bd hh*2 rim hh*3 bd [- hh*2] rim hh*2")`} />
+`x*n` plays `x` n times inside its slot. `x/n` stretches it over n cycles.
 
-`*` works on groups too, and takes decimals:
-
-<Strudel code={`s("bd [hh rim]*2 bd [hh rim]*1.5")`} />
-
-`/` stretches a group over several cycles:
-
-<Strudel code={`note("[36 34 41 39]/4").s("gm_acoustic_bass")`} label="one note per cycle, 4 cycles to loop" />
+<Exercise id="mini/speed" title="Multiply and divide"
+  goal="Rewrite the brackets with `*`, then slow the kick down with `/`."
+  start={`s("bd hh sd hh")`} target={`s("bd/2 hh*2 [sd rim]*2 hh*3")`}>
+  <Step check={{ includes: 'hh*2', events: 5 }}
+        hints={['`hh*2` is the same as `[hh hh]`.']}
+        solution={`s("bd hh*2 sd hh")`}>
+    Replace the first `hh` with `hh*2`. Same as `[hh hh]`, less typing.
+  </Step>
+  <Step check={{ includes: 'hh*3', events: 7 }}
+        solution={`s("bd hh*2 sd hh*3")`}>
+    Make the last hat `hh*3`.
+  </Step>
+  <Step check={{ includes: ']*2', events: 10 }}
+        hints={['Put `*2` right after the closing bracket: `[sd rim]*2`.']}
+        solution={`s("bd hh*2 [sd rim]*2 hh*3")`}>
+    `*` works on groups too. Replace `sd` with `[sd rim]*2`.
+  </Step>
+  <Step check={{ includes: '/2', cycles: 2, match: { keys: ['s'] } }}
+        hints={['`bd/2` stretches the kick over two cycles, so it only starts in every other one.']}
+        solution={`s("bd/2 hh*2 [sd rim]*2 hh*3")`}>
+    Now the other way: change `bd` to `bd/2`. Listen: the kick only lands every other cycle.
+  </Step>
+</Exercise>
 
 <Box kind="try">
-Push `*` far enough and rhythm becomes pitch. Try `s("bd hh*32 rim hh*16")`. At around 20 events
-per second your ear stops hearing repetitions and starts hearing a tone.
+Push `*` far enough and rhythm becomes pitch. Type `s("bd hh*32 rim hh*16")` into any editor. At
+around 20 events per second your ear stops hearing repetitions and starts hearing a tone. `*` also
+takes decimals: `[hh rim]*1.5`.
 </Box>
+
+<Exercise id="mini/speed-challenge" title="Challenge: trap hat roll"
+  goal="One bar of hats only: two on beat 1, two on beat 2, a triplet on beat 3, eight on beat 4."
+  start="" target={`s("hh*2 hh*2 hh*3 hh*8")`}
+  check={{ match: { keys: ['s'] } }} />
 
 ## `< >` — one per cycle
 
-Angle brackets play **one element per cycle**. They are shorthand: `<a b c>` is exactly
-`[a b c]/3`.
+Angle brackets play **one element per cycle**. `<a b c>` is exactly `[a b c]/3`, except you never
+have to update the number when you add an element.
 
-<Strudel code={`s("<bd hh sd oh>")` } label="one sound per cycle" />
+<Exercise id="mini/alternate" title="One per cycle"
+  goal="Get variation across bars without writing each bar out."
+  start={`s("bd hh sd hh")`} target={`s("<bd [bd bd]> <hh oh rim>*2 <sd cp rim> hh")`}>
+  <Step check={{ includes: ['<', 'cp'], cycles: 2, events: 8 }}
+        hints={['`<sd cp>` takes one slot and plays a different element each cycle.']}
+        solution={`s("bd hh <sd cp> hh")`}>
+    Replace `sd` with `<sd cp>`. That slot plays `sd` in the first cycle and `cp` in the second.
+  </Step>
+  <Step check={{ includes: 'rim', cycles: 3, events: 12 }}
+        solution={`s("bd hh <sd cp rim> hh")`}>
+    Add a third option: `<sd cp rim>`. Now it takes three cycles to come round.
+  </Step>
+  <Step check={{ includes: '<bd', cycles: 2, events: 9 }}
+        hints={['Anything can go inside `< >`, including a bracketed group: `<bd [bd bd]>`.']}
+        solution={`s("<bd [bd bd]> hh <sd cp rim> hh")`}>
+    Give the kick a two-bar phrase: replace `bd` with `<bd [bd bd]>`.
+  </Step>
+  <Step check={{ includes: '>*2', cycles: 3, match: { keys: ['s'] } }}
+        hints={['`<hh oh rim>*2` steps through the list twice per cycle, carrying on where it left off.']}
+        solution={`s("<bd [bd bd]> <hh oh rim>*2 <sd cp rim> hh")`}>
+    `< >` takes `*` too. Replace the first `hh` with `<hh oh rim>*2` and listen to that slot rotate:
+    hh oh, rim hh, oh rim.
+  </Step>
+</Exercise>
 
-The advantage over `/n` is that adding elements does not require changing a number:
-
-<Strudel code={`note("60 <63 62 65 63>").s("gm_xylophone")`} label="steady note + rotating answer" />
-
-This is how you get variation without writing out every bar. Combine with `*` for "n per cycle,
-rotating":
-
-<Strudel code={`s("<bd bd hh bd rim bd hh bd>*8")` } />
+<Exercise id="mini/alternate-challenge" title="Challenge: call and answer"
+  goal="A bass line: `c2` on beats 1 to 3, and beat 4 answers with a different note each bar: `eb2`, `f2`, `g2`, `bb1`."
+  start={`note("c2 c2 c2 c2").s("gm_acoustic_bass")`}
+  target={`note("c2 c2 c2 <eb2 f2 g2 bb1>").s("gm_acoustic_bass")`}
+  check={{ match: { keys: ['note'] }, cycles: 4 }} />
 
 ## `,` — parallel
 
-A comma stacks layers inside one pattern. This is polyphony and polyrhythm in one character.
+A comma stacks layers inside one pattern. Each layer is its own sequence, squeezed into the same
+cycle.
 
-<Strudel code={`s("hh hh hh, bd casio")`} />
+<Exercise id="mini/layers" title="Stack with a comma"
+  goal="Build a house beat as three layers in one string."
+  start={`s("bd*4")`} target={`s("bd*4, - cp - cp, [- oh]*4")`}>
+  <Step check={{ includes: ',', events: 12 }}
+        solution={`s("bd*4, hh*8")`}>
+    Inside the quotes, after `bd*4`, add `, hh*8`.
+  </Step>
+  <Step check={{ includes: 'cp', events: 14 }}
+        solution={`s("bd*4, hh*8, - cp - cp")`}>
+    Add a third layer: `, - cp - cp`. Clap on 2 and 4.
+  </Step>
+  <Step check={{ excludes: 'hh', events: 6 }}
+        hints={['Delete `, hh*8` (or `hh*8, `) so only the kick and clap layers are left.']}
+        solution={`s("bd*4, - cp - cp")`}>
+    Delete the `hh*8` layer and its comma. Listen to how empty it gets.
+  </Step>
+  <Step check={{ includes: 'oh', match: { keys: ['s'] } }}
+        hints={['`[- oh]` is a rest then an open hat in one beat. `*4` repeats that for every beat.']}
+        solution={`s("bd*4, - cp - cp, [- oh]*4")`}>
+    Write the hats back as offbeats: add `, [- oh]*4`.
+  </Step>
+</Exercise>
 
-Inside a subdivision too:
+<Exercise id="mini/layers-challenge" title="Challenge: a chord on 1 and 3"
+  goal="A C minor triad (`c3`, `eb3`, `g3`) as one chord on beats 1 and 3, silence on 2 and 4. Commas work inside brackets too."
+  start={`note("c3").s("piano")`}
+  target={`note("[c3,eb3,g3] - [c3,eb3,g3] -").s("piano")`}
+  check={{ match: { keys: ['note'] } }} />
 
-<Strudel code={`s("bd*2, [~ cp]*2, [~ hh]*4")`} label="classic house" />
+## `@` `_` `!` — longer, and again
 
-## `@` — elongate
+`@n` makes a slot n units wide (the default is 1). `_` does the same, drawn as a grid. `!n`
+repeats an element as n full slots.
 
-`@n` makes an element `n` slots long. Default weight is 1.
-
-<Strudel code={`note("c@3 eb").s("gm_acoustic_bass")`} label="c is 3 units, eb is 1" />
-
-This is how you write swing by hand:
-
-<Strudel
-  code={`setcpm(60)
-n("<[4@2 4] [5@2 5] [6@2 6] [5@2 5]>*2")
-  .scale("<C2:mixolydian F2:mixolydian>/4")
-  .s("gm_acoustic_bass")`}
-  label="shuffle / triplet swing"
-/>
-
-## `!` — replicate
-
-`!n` repeats an element without speeding anything up — unlike `*n`, which divides the slot.
-
-<Strudel code={`note("c!3 e").s("piano")`} label="c c c e" />
-
-<Strudel code={`note("c*3 e").s("piano")`} label="[c c c] e — the three c's share one slot" />
+<Exercise id="mini/length" title="Longer, repeated, squeezed"
+  goal="Feel the difference between `@`, `!` and `*` on the same note."
+  start={`note("c2 eb2 g2 bb2").s("piano")`} target={`note("c2*3 eb2 g2 bb2").s("piano")`}>
+  <Step check={{ includes: '@3', events: 4 }}
+        hints={['`c2@3` is three units long. Total is now 3 + 1 + 1 + 1 = 6 units.']}
+        solution={`note("c2@3 eb2 g2 bb2").s("piano")`}>
+    Add `@3` right after `c2`. It now takes three units out of six, so the other notes get pushed
+    late.
+  </Step>
+  <Step check={{ excludes: '@', includes: '_', events: 4 }}
+        hints={['Each `_` extends the previous note by one slot: `c2 _ _` is `c2@3`.']}
+        solution={`note("c2 _ _ eb2 g2 bb2").s("piano")`}>
+    Remove `@3` and write `_ _` after `c2` instead: `c2 _ _ eb2`. It sounds identical.
+  </Step>
+  <Step check={{ excludes: '_', includes: '!3', events: 6 }}
+        hints={['`c2!3` is the same as writing `c2 c2 c2`.']}
+        solution={`note("c2!3 eb2 g2 bb2").s("piano")`}>
+    Remove `_ _` and write `!3` after `c2`. Three separate notes, each a full slot.
+  </Step>
+  <Step check={{ excludes: '!', includes: '*3', match: { keys: ['note'] } }}
+        solution={`note("c2*3 eb2 g2 bb2").s("piano")`}>
+    Change `!3` to `*3`. Same three notes, now squeezed into one slot.
+  </Step>
+</Exercise>
 
 <Box kind="try">
-Play the two above back to back. `!` adds slots, `*` subdivides a slot, `@` widens a slot. Getting
-these three straight is 80% of mini-notation fluency.
+`!` adds slots, `*` subdivides a slot, `@` widens a slot. Getting these three straight is 80% of
+mini-notation fluency.
 </Box>
 
-## `?` — randomly drop
+<Exercise id="mini/length-challenge" title="Challenge: shuffle"
+  goal="A shuffle on `c2`: two notes per beat, the first twice as long as the second, on all four beats."
+  start={`note("c2*4").s("gm_acoustic_bass")`}
+  target={`note("[c2@2 c2]*4").s("gm_acoustic_bass")`}
+  check={{ match: { keys: ['note'] } }} />
 
-A trailing `?` gives each event a 50% chance of vanishing. Add a number for other odds.
+That long-short split is swing written by hand. <L to="/tutorial/time">Writing in Time</L> covers
+swing, tuplets and groove properly.
 
-<Strudel code={`s("hh*8?")` } label="50% of hats survive" />
+## `?` and `|` — chance
 
-<Strudel code={`s("hh*16?0.15")` } label="15% chance of removal — subtle humanising" />
+A trailing `?` gives each event a 50% chance of vanishing; `?0.2` makes it 20%. `a | b` picks one
+alternative, freshly each cycle.
 
-## `|` — random choice
+<Exercise id="mini/random" title="Let it vary"
+  goal="A beat that never plays quite the same bar twice."
+  start={`s("bd*4, hh*8")`} target={`s("bd*4, hh*8?0.2, - [sd | cp] - [sd | cp]")`}>
+  <Step check={{ includes: '?', cycles: 4, events: [20, 44] }}
+        hints={['Put `?` directly after the `8`: `hh*8?`.']}
+        solution={`s("bd*4, hh*8?")`}>
+    Add `?` right after `hh*8`. Each hat now has a 50% chance of being dropped.
+  </Step>
+  <Step check={{ includes: '?0.', cycles: 4, events: [36, 47] }}
+        hints={['`hh*8?0.2`. Write the leading zero: `?.2` is read as something else.']}
+        solution={`s("bd*4, hh*8?0.2")`}>
+    Make it subtler: change `?` to `?0.2`, so only 20% drop out.
+  </Step>
+  <Step check={{ includes: '|', cycles: 4, events: [44, 55] }}
+        hints={['Each `[sd | cp]` takes one slot and picks one of the two every cycle.']}
+        solution={`s("bd*4, hh*8?0.2, - [sd | cp] - [sd | cp]")`}>
+    Add a backbeat that picks its own sound: `, - [sd | cp] - [sd | cp]`.
+  </Step>
+</Exercise>
 
-Pick one of the alternatives, freshly each cycle.
+<Box kind="warn">
+Always write the leading zero: `hh*8?0.2`. `hh*8?.2` does not fail; it quietly parses as something
+else and adds a stray event. And put `|` inside brackets when a pattern also has commas.
+</Box>
 
-<Strudel code={`note("[g3,b3,e4] | [a3,c3,e4] | [b3,d3,f#4]")`} />
+<Exercise id="mini/random-challenge" title="Challenge: chord roulette"
+  goal="Twice per cycle, play one of three chords at random: `[g3,b3,e4]`, `[a3,c4,e4]` or `[b3,d4,f#4]`."
+  start={`note("[g3,b3,e4]*2").s("piano")`}
+  target={`note("[[g3,b3,e4] | [a3,c4,e4] | [b3,d4,f#4]]*2").s("piano")`}
+  check={{ includes: '|', cycles: 4, events: 24 }} />
 
 ## `( )` — euclidean rhythms
 
-`x(pulses, steps)` spreads `pulses` hits as evenly as possible over `steps` slots. It is
-astonishingly good at producing rhythms that sound like real music from two numbers.
+`x(pulses, steps)` spreads `pulses` hits as evenly as possible over `steps` slots. Two numbers,
+and it usually sounds like real music.
 
-<Strudel code={`s("bd(3,8)")` } label="the tresillo / pop clave" />
-
-Written out by hand that would be `s("bd ~ ~ bd ~ ~ bd ~")`.
-
-<Strudel code={`s("bd(<3 5 7>,8), hh*8")` } label="pattern the pulse count" />
-
-A third number rotates the pattern:
-
-<Strudel code={`s("bd(3,8,<0 2 5>), hh cp")`} label="same hits, different starting point" />
+<Exercise id="mini/euclid" title="Rhythms from two numbers"
+  goal="Build a kick and hat groove without placing a single hit by hand."
+  start={`s("bd")`} target={`s("bd(<3 5>,8,2), hh(7,16)")`}>
+  <Step check={{ includes: '(3,8', events: 3 }}
+        hints={['No space between `bd` and the parenthesis: `bd(3,8)`.']}
+        solution={`s("bd(3,8)")`}>
+    Add `(3,8)` right after `bd`. That is the tresillo, the same as `bd - - bd - - bd -`.
+  </Step>
+  <Step check={{ includes: '(3,8,', events: 3 }}
+        hints={['The third number rotates the pattern: `bd(3,8,2)`.']}
+        solution={`s("bd(3,8,2)")`}>
+    Add a third number to rotate it: `(3,8,2)`. Same hits, different starting point.
+  </Step>
+  <Step check={{ includes: '<3 5>', cycles: 2, events: 8 }}
+        solution={`s("bd(<3 5>,8,2)")`}>
+    The numbers are patterns too. Replace the `3` with `<3 5>`: three kicks, then five.
+  </Step>
+  <Step check={{ includes: 'hh(', cycles: 2, match: { keys: ['s'] } }}
+        solution={`s("bd(<3 5>,8,2), hh(7,16)")`}>
+    Add a hat layer with its own euclid: `, hh(7,16)`.
+  </Step>
+</Exercise>
 
 | Euclid | Rhythm |
 | --- | --- |
@@ -158,76 +308,190 @@ A third number rotates the pattern:
 | `(7,16,14)` | Brazilian samba-ish |
 | `(3,4)` | three against four |
 
+<Exercise id="mini/euclid-challenge" title="Challenge: compress it"
+  goal="Keep the exact rhythm, but write the kick as one euclid. Count the kicks and the steps."
+  start={`s("bd - bd bd - bd bd -, hh*8")`} target={`s("bd(5,8), hh*8")`}
+  check={{ includes: 'bd(', match: { keys: ['s'] } }} />
+
 ## `{ }%` — polymeter
 
-Curly braces play sequences of **different lengths at the same step rate**. The `%n` says how many
-steps fit in a cycle.
+A comma stretches every layer to fill one cycle. Curly braces keep **the step size** equal instead,
+so layers of different lengths drift against each other. `%n` sets how many steps fit in a cycle.
 
-<Strudel code={`s("{bd rim, hh hh oh}%4")` } label="a 2-step and a 3-step loop, same tempo" />
-
-The two layers drift against each other and realign after 6 steps. Compare with a comma, where
-both layers are stretched to one cycle:
-
-<Strudel code={`s("[bd rim, hh hh oh]")`} label="polyrhythm: same length, different tempo" />
+<Exercise id="mini/polymeter" title="Different loop lengths"
+  goal="Hear two against three become a 2-step loop drifting against a 3-step loop."
+  start={`s("bd rim")`} target={`s("{bd rim, hh hh oh}%4")`}>
+  <Step check={{ includes: 'oh', events: 5 }}
+        solution={`s("bd rim, hh hh oh")`}>
+    Add a layer: `, hh hh oh`. Two against three, both stretched to one cycle. That is polyrhythm.
+  </Step>
+  <Step check={{ includes: '{', cycles: 2, events: 8 }}
+        hints={['The braces go inside the quotes, around both layers: `"{bd rim, hh hh oh}"`.']}
+        solution={`s("{bd rim, hh hh oh}")`}>
+    Wrap everything inside the quotes in `{ }`. Now every layer steps at the first layer's rate, two
+    per cycle, and the three-step loop drifts.
+  </Step>
+  <Step check={{ includes: '}%4', cycles: 3, match: { keys: ['s'] } }}
+        solution={`s("{bd rim, hh hh oh}%4")`}>
+    Add `%4` right after `}`: four steps per cycle. The layers realign every six steps.
+  </Step>
+</Exercise>
 
 <Box>
 **Polyrhythm** = different tempos, same bar length (`,`).
-**Polymeter** = same tempo, different bar lengths (`{}%`).
+**Polymeter** = same tempo, different bar lengths (`{}%`). More in
+<L to="/tutorial/time">Writing in Time</L>.
 </Box>
 
-## `_` — continue
+<Exercise id="mini/polymeter-challenge" title="Challenge: a phrase that won't sit still"
+  goal="Five notes, `c3 eb3 g3 bb3 d4`, played four per cycle, so the phrase starts on a different beat each bar."
+  start={`note("c3 eb3 g3 bb3 d4").s("piano")`}
+  target={`note("{c3 eb3 g3 bb3 d4}%4").s("piano")`}
+  check={{ match: { keys: ['note'] }, cycles: 5 }} />
 
-An underscore extends the previous event, exactly like `@`, but drawn as a grid.
+## `:` and `..` — numbers in the string
 
-<Strudel code={`note("<[g3,b3,e4] _ [a3,c3,e4] [b3,d3,f#4]>*2")`} />
+`hh:2` picks sample 2 from the `hh` folder, as in <L to="/tutorial/sounds">Picking Sounds</L>.
+`0 .. 3` expands to `0 1 2 3`.
 
-## `^` — mark the step level (stepwise)
+<Exercise id="mini/numbers" title="Numbers in the string"
+  goal="Step through the hi-hat samples, first by hand, then with a range."
+  start={`s("hh*4")`} target={`n("0 .. 7").s("hh")`}>
+  <Step check={{ has: { s: 'hh', n: [0, 3] }, events: 4 }}
+        hints={['`hh:1` means "the `hh` sound, sample number 1".']}
+        solution={`s("hh:0 hh:1 hh:2 hh:3")`}>
+    Replace `hh*4` with `hh:0 hh:1 hh:2 hh:3`. Four different hats.
+  </Step>
+  <Step check={{ includes: '..', has: { s: 'hh', n: [0, 3] }, events: 4 }}
+        hints={['Keep the spaces: `0..3` without them is read as one word.']}
+        solution={`n("0 .. 3").s("hh")`}>
+    Too much typing. Replace the whole line with `n("0 .. 3").s("hh")`. The spaces around `..`
+    matter.
+  </Step>
+  <Step check={{ includes: '..', match: { keys: ['s', 'n'] } }}
+        solution={`n("0 .. 7").s("hh")`}>
+    Widen the range to `0 .. 7`.
+  </Step>
+</Exercise>
 
-By default, steps are counted at the top level: `"a [b c] d e"` is four steps, because `[b c]`
-counts as one. Put a `^` **inside** a bracket, at the start of the sub-sequence, to count at that
-level instead: `"a [^b c] d e"` is eight steps.
-
-This only matters for the stepwise functions (`stepcat`, `expand`, `contract`, `pace`), which
-distribute *steps* evenly rather than squashing each pattern into half a cycle:
-
-<Strudel code={`stepcat("bd hh hh", "bd hh hh cp hh").s()`} label="stepcat: steps distributed evenly" />
-
-<Strudel code={`fastcat("bd hh hh", "bd hh hh cp hh").s()`} label="fastcat: half a cycle each — compare" />
+<Exercise id="mini/numbers-challenge" title="Challenge: up and back"
+  goal="Two cycles of `hh`: samples 0 to 3 in the first, 3 down to 0 in the second. Use `..` and `< >`."
+  start={`n("0").s("hh")`} target={`n("<[0 .. 3] [3 .. 0]>").s("hh")`}
+  check={{ includes: '..', match: { keys: ['s', 'n'] }, cycles: 2 }} />
 
 ## Multi-line patterns
 
-Backticks let a pattern span lines, which is how you draw a step sequencer:
+Backticks let a pattern span lines, which is how you draw a step sequencer: one row per
+instrument, joined by commas.
 
-<Strudel
-  code={`setcpm(90/4)
-s(\`
-[-  -  oh - ] [-  -  -  - ] [-  -  -  - ] [-  -  -  - ],
-[hh hh -  - ] [hh -  hh - ] [hh -  hh - ] [hh -  hh - ],
-[-  -  -  - ] [cp -  -  - ] [-  -  -  - ] [cp -  -  - ],
-[bd -  -  - ] [-  -  -  bd] [-  -  bd - ] [-  -  -  bd]
+<Exercise id="mini/multiline" title="Draw a step sequencer"
+  goal="A 16-step beat, one row per instrument."
+  start={`s(\`
+[bd - - -] [- - - -] [bd - - -] [- - - -]
 \`)`}
-  label="16-step sequencer, by hand"
-/>
+  target={`s(\`
+[bd - - -] [- - - -] [bd - - -] [- - - bd],
+[-  - - -] [sd - - -] [-  - - -] [sd - - -],
+[hh - hh -] [hh - hh -] [hh - hh -] [hh - hh -]
+\`)`}>
+  <Step check={{ includes: 'sd', events: 4 }}
+        hints={['End the kick row with a comma, press enter, then type the snare row.']}
+        solution={`s(\`
+[bd - - -] [- - - -] [bd - - -] [- - - -],
+[-  - - -] [sd - - -] [-  - - -] [sd - - -]
+\`)`}>
+    Put a comma at the end of the kick row, then add a snare row below it:
+    `[- - - -] [sd - - -] [- - - -] [sd - - -]`.
+  </Step>
+  <Step check={{ includes: 'hh', events: 12 }}
+        solution={`s(\`
+[bd - - -] [- - - -] [bd - - -] [- - - -],
+[-  - - -] [sd - - -] [-  - - -] [sd - - -],
+[hh - hh -] [hh - hh -] [hh - hh -] [hh - hh -]
+\`)`}>
+    Add a hats row: `[hh - hh -]` four times. Don't forget the comma on the row above.
+  </Step>
+  <Step check={{ match: { keys: ['s'] } }}
+        hints={['The last group of the kick row becomes `[- - - bd]`.']}
+        solution={`s(\`
+[bd - - -] [- - - -] [bd - - -] [- - - bd],
+[-  - - -] [sd - - -] [-  - - -] [sd - - -],
+[hh - hh -] [hh - hh -] [hh - hh -] [hh - hh -]
+\`)`}>
+    Add a kick on the very last step, step 16.
+  </Step>
+</Exercise>
+
+<Exercise id="mini/multiline-challenge" title="Challenge: your own grid"
+  goal="Sixteen steps in rows: kick on steps 1, 7 and 11, snare on 5 and 13, hats on every odd step."
+  start="" target={`s(\`
+[bd - - -] [-  - bd -] [- - bd -] [-  - - -],
+[-  - - -] [sd - -  -] [- - -  -] [sd - - -],
+[hh - hh -] [hh - hh -] [hh - hh -] [hh - hh -]
+\`)`}
+  check={{ match: { keys: ['s'] } }} />
+
+Grids go much further (`struct`, `mask`, one cycle per bar, odd meters): see
+<L to="/tutorial/time">Writing in Time</L>.
 
 ## Patterns inside arguments
 
-Mini-notation is not only for `s` and `note`. **Almost every** function argument accepts it, which
-is what makes Strudel feel alive:
+Mini-notation is not only for `s` and `note`. **Almost every** function argument accepts it.
 
-<Strudel
-  code={`s("sawtooth")
-  .note("c2 eb2")
-  .lpf("<400 800 1600 3200>")
-  .room("0 0.4")
-  .gain("[.6 1]*2")`}
-  label="four independently patterned parameters"
-/>
+<Exercise id="mini/arguments" title="Patterns everywhere"
+  goal="Pattern the loudness and the sound of a bass line, not just its notes."
+  start={`note("c2 eb2 g2 bb2").s("sawtooth")`}
+  target={`note("c2 eb2 g2 bb2").s("<sawtooth square>").gain("[1 .5]*2")`}>
+  <Step check={{ has: { gain: [0.5, 1] }, events: 4 }}
+        hints={['`.gain("1 .5")`: the first half of the cycle at full volume, the second half at half.']}
+        solution={`note("c2 eb2 g2 bb2").s("sawtooth").gain("1 .5")`}>
+    Add `.gain("1 .5")` to the end. The first two notes are loud, the last two quiet.
+  </Step>
+  <Step check={{ events: 4, fn: "(haps) => haps.slice().sort((a, b) => a.t - b.t).map((h) => h.value.gain).join(' ') === '1 0.5 1 0.5' || 'Aim for loud, soft, loud, soft.'" }}
+        hints={['`[1 .5]*2` is `1 .5 1 .5`.']}
+        solution={`note("c2 eb2 g2 bb2").s("sawtooth").gain("[1 .5]*2")`}>
+    Change the gain to `"[1 .5]*2"`: accent on the beat, soft on the offbeat.
+  </Step>
+  <Step check={{ includes: '<', cycles: 2, match: { keys: ['note', 's', 'gain'] } }}
+        solution={`note("c2 eb2 g2 bb2").s("<sawtooth square>").gain("[1 .5]*2")`}>
+    Change the sound every cycle: replace `.s("sawtooth")` with `.s("<sawtooth square>")`.
+  </Step>
+</Exercise>
 
 <QA q="How do parameters of different lengths combine?">
 By default the **structure comes from the left**: the pattern you are chaining onto decides when
 events happen, and the argument pattern is sampled at those moments. So `s("bd*4").lpf("100 900")`
-plays four kicks — the first two dark, the last two bright. The `lpf` pattern never adds events.
+plays four kicks, the first two dark and the last two bright. The `lpf` pattern never adds events.
 </QA>
+
+<Exercise id="mini/arguments-challenge" title="Challenge: build-up"
+  goal="A four-on-the-floor kick whose volume climbs over four bars: gain `.4`, `.6`, `.8`, then `1`, one value per cycle."
+  start={`s("bd*4")`} target={`s("bd*4").gain("<.4 .6 .8 1>")`}
+  check={{ match: { keys: ['s', 'gain'] }, cycles: 4 }} />
+
+## `^` — mark the step level
+
+Most functions squash each pattern into its share of a cycle. The stepwise ones (`stepcat`,
+`expand`, `contract`, `pace`) count **steps** instead, and `^` at the start of a bracket says
+"count steps at this level".
+
+<Exercise id="mini/stepwise" title="Count steps, not cycles"
+  goal="Hear `fastcat` and `stepcat` divide the same cycle differently."
+  start={`fastcat("bd hh hh", "bd hh hh cp hh").s()`}
+  target={`stepcat("bd [^hh hh]", "bd hh hh cp hh").s()`}>
+  <Step check={{ includes: 'stepcat', excludes: 'fastcat' }}
+        hints={['Only the function name changes.']}
+        solution={`stepcat("bd hh hh", "bd hh hh cp hh").s()`}>
+    Change `fastcat` to `stepcat`. The patterns now get 3 and 5 of 8 steps, instead of half a cycle
+    each.
+  </Step>
+  <Step check={{ includes: '^', match: { keys: ['s'] } }}
+        hints={['`"bd [^hh hh]"` is two slots, each counted as two steps: four steps in total.']}
+        solution={`stepcat("bd [^hh hh]", "bd hh hh cp hh").s()`}>
+    In the first pattern, replace `hh hh` with `[^hh hh]`. It now counts as four steps, not two, so
+    it takes a bigger share of the cycle.
+  </Step>
+</Exercise>
 
 ## Function equivalents
 
@@ -263,3 +527,5 @@ Everything in mini-notation has a JavaScript twin. Use whichever reads better.
 | `(p,s,r)` | euclidean rhythm |
 | `{ }%n` | polymeter, n steps per cycle |
 | `:` | sample index |
+| `..` | range of numbers |
+| `^` | count steps at this level |
