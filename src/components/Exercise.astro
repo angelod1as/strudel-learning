@@ -1,0 +1,109 @@
+---
+/**
+ * A hands-on exercise: one editor the learner types into, plus <Step>
+ * children revealed one at a time. See src/exercise/types.ts for the check
+ * format. The behaviour lives in src/scripts/exercise.ts.
+ *
+ * Usage:
+ *   <Exercise id="mini/four-on-the-floor" title="Four on the floor"
+ *     goal="A kick on every beat." start={`s("bd")`} target={`s("bd*4")`}>
+ *     <Step check={{ includes: '*4' }} solution={`s("bd*4")`}>
+ *       Add `*4` right after `bd`, then press ctrl+enter.
+ *     </Step>
+ *   </Exercise>
+ */
+import type { Check } from '../exercise/types';
+
+interface Props {
+  /** Stable and unique across the site: '<chapter-slug>/<name>'. Used for saved progress. */
+  id: string;
+  title: string;
+  /** One-line goal. Backtick-quoted spans render as code. */
+  goal?: string;
+  /** Initial editor contents. Empty string = blank editor. */
+  start?: string;
+  /**
+   * Hidden reference code: enables [▶ target] and `match` checks. A <Step> can
+   * override it with its own `target`.
+   */
+  target?: string;
+  /** Revealed by "show answer". Defaults to `target`. */
+  answer?: string;
+  /** Used only when the exercise has no <Step> children. */
+  check?: Check;
+}
+
+const { id, title, goal, start = '', target, answer, check } = Astro.props;
+const shownAnswer = answer ?? target;
+
+// Render `code` spans in the one-line goal without pulling in a markdown parser.
+const goalParts = (goal ?? '').split('`').map((text, i) => ({ text, code: i % 2 === 1 }));
+---
+
+<section
+  class="exercise"
+  data-exercise={id}
+  data-start={start}
+  data-target={target}
+  data-check={check ? JSON.stringify(check) : undefined}
+>
+  <header class="exercise-head">
+    <span class="exercise-kicker">Exercise</span>
+    <h3 class="exercise-title">{title}</h3>
+    <span class="exercise-status" data-exercise-status></span>
+  </header>
+
+  {
+    goal && (
+      <p class="exercise-goal">
+        <span class="exercise-goal-label">Goal</span>
+        {goalParts.map((part) => (part.code ? <code>{part.text}</code> : part.text))}
+      </p>
+    )
+  }
+
+  <div class="exercise-steps" data-exercise-steps>
+    <slot />
+  </div>
+
+  <div class="exercise-editor">
+    <div class="exercise-toolbar">
+      <button type="button" class="ex-btn ex-play" data-ex-play aria-pressed="false">▶ play</button>
+      <button type="button" class="ex-btn ex-check" data-ex-check>check</button>
+      <button
+        type="button"
+        class="ex-btn ex-target"
+        data-ex-target
+        aria-pressed="false"
+        hidden={!target}
+      >
+        ▶ target
+      </button>
+      <span class="exercise-spacer"></span>
+      <button type="button" class="ex-btn ex-hint" data-ex-hint>hint</button>
+      <button type="button" class="ex-btn ex-reset" data-ex-reset>reset</button>
+    </div>
+    <strudel-editor code={start}></strudel-editor>
+    <p class="exercise-keys">ctrl+enter runs &amp; checks · ctrl+. stops</p>
+  </div>
+
+  <div class="exercise-feedback" data-exercise-feedback aria-live="polite"></div>
+
+  <p class="exercise-done" data-exercise-done hidden>
+    <span class="exercise-done-tick" aria-hidden="true">✓</span>
+    <span><strong>Exercise complete.</strong> Keep playing with it, or reset to try it again.</span>
+  </p>
+
+  {
+    shownAnswer && (
+      <details class="exercise-answer">
+        <summary>Show answer</summary>
+        <pre><code>{shownAnswer}</code></pre>
+      </details>
+    )
+  }
+</section>
+
+<script>
+  import '../scripts/exercise';
+</script>

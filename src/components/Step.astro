@@ -1,0 +1,67 @@
+---
+/**
+ * One step of an <Exercise>. Its children are the instruction (markdown).
+ * Name functions and operators literally (`.lpf()`, `*4`): the learner types
+ * them, so the vocabulary is the lesson.
+ */
+import type { Check } from '../exercise/types';
+
+interface Props {
+  /** When the step is done. Omit for a "listen" step that advances with a button. */
+  check?: Check;
+  /** Revealed one at a time via [hint], in order. */
+  hints?: string[];
+  /**
+   * The full editor contents once this step is done. Required: it is the
+   * last-resort reveal for the step, and the QA harness uses it to prove the
+   * check passes on it (and fails on the previous step's solution).
+   */
+  solution: string;
+  /**
+   * Optional reference code for this step only. When set, a `match` in this
+   * step's check compares against it instead of the Exercise's `target`, and
+   * [▶ target] plays it while this step is current.
+   */
+  target?: string;
+}
+
+const { check, hints = [], solution, target } = Astro.props;
+---
+
+<div
+  class="exercise-step"
+  data-step
+  data-check={check ? JSON.stringify(check) : undefined}
+  data-hints={JSON.stringify(hints)}
+  data-solution={solution}
+  data-target={target}
+>
+  <div class="exercise-step-marker" aria-hidden="true">
+    <span class="exercise-step-num" data-step-num></span>
+    <span class="exercise-step-tick">✓</span>
+  </div>
+  <div class="exercise-step-main">
+    <p class="exercise-step-label">
+      <span data-step-label>Step</span>
+      <span class="exercise-step-state" data-step-state></span>
+    </p>
+    <div class="exercise-step-body">
+      <slot />
+    </div>
+    <ol class="exercise-hints" data-step-hints hidden></ol>
+    <details class="exercise-step-solution" data-step-solution hidden>
+      <summary>Show this step's answer</summary>
+      <pre><code>{solution}</code></pre>
+      <button type="button" class="ex-btn" data-step-load>load into editor</button>
+    </details>
+    {
+      !check && (
+        <div class="exercise-step-actions">
+          <button type="button" class="ex-btn ex-continue" data-step-continue>
+            continue →
+          </button>
+        </div>
+      )
+    }
+  </div>
+</div>

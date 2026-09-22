@@ -43,6 +43,60 @@ src/
 To add a chapter: create `src/pages/tutorial/<slug>.mdx` with `layout` and `slug` in its
 frontmatter, then add an entry to `CHAPTERS` in `src/consts.ts`.
 
+## Writing exercises
+
+Chapters are built from exercises the learner types into, not finished examples to read. The
+format was piloted on **Mini-Notation** and **Writing in Time**.
+
+```mdx
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
+
+<Exercise id="mini/subdivide" title="Split a slot"
+  goal="Two hats in the space of one." start={`s("bd hh sd hh")`}
+  target={`s("bd [hh hh] sd hh")`}>
+  <Step check={{ includes: '[hh hh]', match: { keys: ['s'] } }}
+        hints={['Square brackets squeeze a group into one slot.']}
+        solution={`s("bd [hh hh] sd hh")`}>
+    Replace the first `hh` with `[hh hh]`. Press ctrl+enter and listen.
+  </Step>
+</Exercise>
+```
+
+- An `<Exercise>` with no `<Step>` children is a **challenge**: it uses its own `check`, usually
+  `{ match: ... }` against its `target`, with an empty `start`.
+- The current step is checked automatically after every ctrl+enter. `src/exercise/types.ts` is the
+  full `Check` reference (`includes`, `excludes`, `code`, `match`, `events`, `has`, `cycles`, `fn`).
+- A `<Step>` may have its own `target`. `match` then compares against it, which beats writing an
+  `fn` for intermediate steps.
+- Every step needs a `solution`: the full editor contents once that step is done.
+- Name functions and operators literally in the step text (`` `.lpf()` ``, `` `*4` ``). The learner
+  types them; the vocabulary is the lesson.
+
+### Rules the checks must follow
+
+1. A step's check **passes** on its own `solution` and **fails** on the previous state (the prior
+   step's `solution`, or `start`). Otherwise it completes itself on arrival.
+2. It accepts every reasonable answer: check the musical result (`match`, `events`, `has`) and use
+   `includes` only when the step is about typing that operator.
+3. Strudel stores some controls under canonical names (`.lpf()` becomes `cutoff`). `has` and
+   `match.keys` translate for you; `fn` sees the raw values.
+4. `note(...).s(...)` takes its rhythm from the notes; `s(...).note(...)` takes it from `s`.
+
+### QA
+
+With `pnpm dev` running, open a chapter and run this in the browser console:
+
+```js
+await window.__exerciseQA()
+```
+
+It proves rule 1 for every step and challenge on the page, and reports any code that fails to
+evaluate. It only exists in dev builds.
+
+Learner progress is saved in `localStorage`: `strudel-tutorial:exercises` (code, step, done per
+exercise) and `strudel-tutorial:progress` (completed chapters).
+
 ## Keyboard shortcuts inside a code box
 
 | Key | Action |
