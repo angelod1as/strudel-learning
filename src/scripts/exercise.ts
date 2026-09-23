@@ -139,6 +139,8 @@ class ExerciseUI {
   readonly start: string;
   readonly targetCode?: string;
   readonly check?: Check;
+  /** Exercise-level hints, used by [hint] when there are no steps. */
+  readonly hints: string[];
   readonly steps: StepInfo[];
   readonly editorEl: EditorEl;
   step = 0;
@@ -159,6 +161,7 @@ class ExerciseUI {
     this.start = root.dataset.start ?? '';
     this.targetCode = root.dataset.target || undefined;
     this.check = parseJSON<Check | undefined>(root.dataset.check, undefined);
+    this.hints = parseJSON<string[]>(root.dataset.hints, []);
     this.editorEl = root.querySelector('.exercise-editor strudel-editor') as EditorEl;
     this.feedback = this.q<HTMLElement>('[data-exercise-feedback]')!;
     this.status = this.q<HTMLElement>('[data-exercise-status]');
@@ -405,9 +408,17 @@ class ExerciseUI {
       if (st) st.textContent = state === 'done' ? ' · done' : s.check ? ' · your turn' : ' · listen';
       const cont = s.el.querySelector<HTMLButtonElement>('[data-step-continue]');
       if (cont) cont.hidden = state !== 'current';
-      if (state !== 'current') {
+      // The step's answer is its own always-available control while the step is
+      // current, so that [hint] never has to reveal it.
+      const sol = s.el.querySelector<HTMLDetailsElement>('[data-step-solution]');
+      if (state === 'current') {
+        if (sol) sol.hidden = false;
+      } else {
         s.el.querySelector<HTMLElement>('[data-step-hints]')?.setAttribute('hidden', '');
-        s.el.querySelector<HTMLElement>('[data-step-solution]')?.setAttribute('hidden', '');
+        if (sol) {
+          sol.hidden = true;
+          sol.open = false;
+        }
       }
     });
     const doneEl = this.q<HTMLElement>('[data-exercise-done]');
@@ -426,30 +437,33 @@ class ExerciseUI {
 
   // -------------------------------------------------------------- hints
 
+  /**
+   * [hint] reveals one hint per click and NEVER the answer. Hints come from the
+   * current step, or from the exercise itself when it has no steps. Once they
+   * run out it says so and points at the answer's own explicit reveal.
+   */
   private hint() {
     const s = this.current;
-    if (!s) {
-      const answer = this.q<HTMLDetailsElement>('details.exercise-answer');
-      if (answer) {
-        answer.open = true;
-        answer.querySelector('summary')?.focus();
-      }
-      return;
-    }
-    const list = s.el.querySelector<HTMLOListElement>('[data-step-hints]')!;
-    const sol = s.el.querySelector<HTMLDetailsElement>('[data-step-solution]')!;
-    if (this.hintsShown < s.hints.length) {
+    const hints = s ? s.hints : this.hints;
+    const list = s
+      ? s.el.querySelector<HTMLOListElement>('[data-step-hints]')
+      : this.q<HTMLOListElement>('[data-exercise-hints]');
+    const reveal = s ? '“Show this step’s answer”' : '“Show answer”';
+    const where = s ? 'this step’s answer' : 'the answer';
+    const tail =
+      s || this.q('details.exercise-answer')
+        ? `To see ${where}, open ${reveal} below — [hint] never gives it away.`
+        : '[hint] never gives the answer away.';
+    if (list && this.hintsShown < hints.length) {
       const li = document.createElement('li');
-      renderInline(li, s.hints[this.hintsShown]);
+      renderInline(li, hints[this.hintsShown]);
       list.append(li);
       list.hidden = false;
       this.hintsShown++;
-      if (this.hintsShown === s.hints.length) this.feedbackNote('That was the last hint. Next click reveals this step’s answer.');
+      if (this.hintsShown === hints.length) this.feedbackNote(`That was the last hint. ${tail}`);
       return;
     }
-    sol.hidden = false;
-    sol.open = true;
-    sol.querySelector('summary')?.focus();
+    this.feedbackNote(hints.length ? `No more hints for this one. ${tail}` : `No hints for this one. ${tail}`);
   }
 
   private feedbackNote(text: string) {
@@ -462,6 +476,11 @@ class ExerciseUI {
 
   private resetHints() {
     this.hintsShown = 0;
+    const own = this.q<HTMLElement>('[data-exercise-hints]');
+    if (own) {
+      own.textContent = '';
+      own.hidden = true;
+    }
     for (const s of this.steps) {
       const list = s.el.querySelector<HTMLElement>('[data-step-hints]');
       if (list) {
@@ -474,6 +493,17 @@ class ExerciseUI {
         sol.open = false;
       }
     }
+  }
+
+  /** Back to the start: code, step counter, done state, revealed hints. */
+  reset() {
+    this.editor.setCode(this.start);
+    this.step = 0;
+    this.done = false;
+    this.resetHints();
+    this.clearFeedback();
+    writeOne(this.id, null);
+    this.render();
   }
 
   // -------------------------------------------------------------- persistence
@@ -498,13 +528,7 @@ class ExerciseUI {
     this.q('[data-ex-hint]')?.addEventListener('click', () => this.hint());
     this.q('[data-ex-reset]')?.addEventListener('click', () => {
       if (!window.confirm('Reset this exercise? Your code and step progress will be lost.')) return;
-      this.editor.setCode(this.start);
-      this.step = 0;
-      this.done = false;
-      this.resetHints();
-      this.clearFeedback();
-      writeOne(this.id, null);
-      this.render();
+      this.reset();
     });
 
     for (const s of this.steps) {
@@ -560,7 +584,39 @@ function boot() {
     if (!el?.editor) return;
     uis.set(root, new ExerciseUI(root));
   });
+  wirePageReset();
 }
+
+/** Put every exercise on this page back to its start, in place. */
+function resetAllOnPage() {
+  for (const ui of uis.values()) ui.reset();
+}
+
+/**
+ * "Reset this page" (in the chapter layout). It stays hidden until there is at
+ * least one live exercise to reset, so pages without exercises never show it.
+ */
+function wirePageReset() {
+  const btn = document.querySelector<HTMLButtonElement>('[data-reset-page]');
+  if (!btn || !uis.size) return;
+  btn.hidden = false;
+  if (btn.dataset.wired) return;
+  btn.dataset.wired = '1';
+  btn.addEventListener('click', () => {
+    const n = uis.size;
+    const what = n === 1 ? 'the 1 exercise' : `all ${n} exercises`;
+    const msg =
+      `Reset ${what} on this page?\n\n` +
+      `The code you have written ${n === 1 ? 'in it' : 'in them'} goes back to the starting code, ` +
+      'and step progress is cleared. This cannot be undone.';
+    if (!window.confirm(msg)) return;
+    resetAllOnPage();
+  });
+}
+
+// "Reset everything" (home page) wipes the storage key, then asks any exercise
+// on screen to redraw itself from its start code.
+window.addEventListener('strudel-tutorial:reset-exercises', resetAllOnPage);
 
 customElements.whenDefined('strudel-editor').then(boot);
 

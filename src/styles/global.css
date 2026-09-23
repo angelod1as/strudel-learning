@@ -475,6 +475,9 @@ details.qa[open] summary {
 
 .chapter-done {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
   justify-content: flex-end;
   margin-top: 3rem;
 }
@@ -615,6 +618,20 @@ details.qa[open] summary {
 .progress-reset:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+.progress-resets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.progress-reset-all {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+}
+.progress-resets-note {
+  margin: -1.1rem 0 1.5rem;
+  font-size: 0.78rem;
+  color: var(--fg-dim);
 }
 
 /* ---------- exercises ---------- */
@@ -768,6 +785,10 @@ main .exercise-step-label {
   background: color-mix(in srgb, var(--warn) 6%, transparent);
   border-radius: 0 6px 6px 0;
   font-size: 0.9rem;
+}
+/* an exercise's own hints (a challenge, with no steps) sit above the editor */
+.exercise-hints-own {
+  margin-bottom: 0.8rem;
 }
 .exercise-hints::before {
   content: 'Hints';

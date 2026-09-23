@@ -6,7 +6,8 @@
  *
  * Usage:
  *   <Exercise id="mini/four-on-the-floor" title="Four on the floor"
- *     goal="A kick on every beat." start={`s("bd")`} target={`s("bd*4")`}>
+ *     goal="A kick on every beat." start={`s("bd")`} target={`s("bd*4")`}
+ *     hints={['`bd` is the bass drum.', '`*n` repeats inside one slot.']}>
  *     <Step check={{ includes: '*4' }} solution={`s("bd*4")`}>
  *       Add `*4` right after `bd`, then press ctrl+enter.
  *     </Step>
@@ -31,9 +32,15 @@ interface Props {
   answer?: string;
   /** Used only when the exercise has no <Step> children. */
   check?: Check;
+  /**
+   * Revealed one at a time by [hint], for an exercise with no steps (a
+   * challenge). Write real hints that narrow the search — vocabulary, then the
+   * idea, then the shape — never the answer, which has its own reveal.
+   */
+  hints?: string[];
 }
 
-const { id, title, goal, start = '', target, answer, check } = Astro.props;
+const { id, title, goal, start = '', target, answer, check, hints = [] } = Astro.props;
 const shownAnswer = answer ?? target;
 
 // Render `code` spans in the one-line goal without pulling in a markdown parser.
@@ -46,6 +53,7 @@ const goalParts = (goal ?? '').split('`').map((text, i) => ({ text, code: i % 2 
   data-start={start}
   data-target={target}
   data-check={check ? JSON.stringify(check) : undefined}
+  data-hints={JSON.stringify(hints)}
 >
   <header class="exercise-head">
     <span class="exercise-kicker">Exercise</span>
@@ -65,6 +73,8 @@ const goalParts = (goal ?? '').split('`').map((text, i) => ({ text, code: i % 2 
   <div class="exercise-steps" data-exercise-steps>
     <slot />
   </div>
+
+  <ol class="exercise-hints exercise-hints-own" data-exercise-hints hidden></ol>
 
   <div class="exercise-editor">
     <div class="exercise-toolbar">

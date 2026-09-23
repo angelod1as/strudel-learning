@@ -70,8 +70,20 @@ $: s("hh*8").gain("[.3 .7]*4").pan(sine.fast(2)).orbit(3)`;
       <span data-progress-continue-title>{CHAPTERS[0].title}</span> →
     </a>
     <div class="progress-alldone" data-progress-alldone hidden>✓ every chapter done</div>
-    <button type="button" class="progress-reset" data-progress-reset>Reset progress</button>
+    <div class="progress-resets">
+      <button type="button" class="progress-reset" data-progress-reset>
+        Reset chapter ticks
+      </button>
+      <button type="button" class="progress-reset progress-reset-all" data-progress-reset-all>
+        Reset everything
+      </button>
+    </div>
   </div>
+  <p class="progress-resets-note" data-progress-ui hidden>
+    <strong>Reset chapter ticks</strong> only clears the ✓ marks above — your exercise code is kept.{' '}
+    <strong>Reset everything</strong> also deletes every line of code you have written in every
+    exercise on this site, and cannot be undone.
+  </p>
   <div class="card-grid">
     {
       CHAPTERS.map((chapter, i) => (

@@ -205,10 +205,43 @@ const numberOf = (slug: string) => CHAPTERS.findIndex((c) => c.slug === slug) + 
         if (reset) {
           reset.addEventListener('click', function () {
             if (!done.length) return;
-            if (!window.confirm('Clear your progress? This cannot be undone.')) return;
+            if (
+              !window.confirm(
+                'Clear the ✓ on every chapter?\n\n' +
+                  'Only the chapter ticks go. The code you have written in exercises is kept. ' +
+                  'This cannot be undone.'
+              )
+            )
+              return;
             done = [];
             write();
             apply();
+          });
+        }
+
+        // "Reset everything": both keys. This throws away the learner's own
+        // code, so the wording has to be blunt.
+        var resetAll = document.querySelector('[data-progress-reset-all]');
+        if (resetAll) {
+          resetAll.addEventListener('click', function () {
+            if (
+              !window.confirm(
+                'Erase EVERYTHING and start over?\n\n' +
+                  'This deletes the ✓ on every chapter AND every line of code you have ' +
+                  'written in every exercise on this site, on this browser. It cannot be undone.'
+              )
+            )
+              return;
+            done = [];
+            try {
+              if (store) {
+                store.removeItem(KEY);
+                store.removeItem('strudel-tutorial:exercises');
+              }
+            } catch (e) {}
+            apply();
+            // Any exercise on screen redraws itself from its start code.
+            window.dispatchEvent(new CustomEvent('strudel-tutorial:reset-exercises'));
           });
         }
 

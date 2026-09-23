@@ -33,6 +33,10 @@ const title: string = frontmatter.title ?? chapter?.title ?? 'Strudel';
   {
     chapter && (
       <div class="chapter-done">
+        {/* Shown by src/scripts/exercise.ts once it finds exercises on the page. */}
+        <button type="button" class="progress-reset" data-reset-page hidden>
+          Reset this page
+        </button>
         <button
           type="button"
           class="progress-toggle"
