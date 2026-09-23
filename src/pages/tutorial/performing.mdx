@@ -5,43 +5,152 @@ title: Putting It Together
 lede: Structuring a patch, seeing what you are doing, and building a track from nothing while it plays.
 ---
 
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Strudel from '../../components/Strudel.astro';
 import Box from '../../components/Box.astro';
-import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
+
+Everything from here on is assembly. This chapter is about the shape of a patch you can change
+while it plays, and it ends by building a whole track one line at a time — which is also the last
+exercise of the tutorial.
 
 ## Structure a patch so you can perform it
 
 A patch you cannot change in four seconds is not a live patch. Three habits do most of the work:
+one idea per line and **named**, constants at the top, and orbits assigned deliberately so that
+reverb and ducking have something to aim at.
 
-1. **One idea per line, named.** `drums:`, `bass:`, `lead:` — not `$:` everywhere.
-2. **Constants at the top.** `setcpm` first, `samples()` next.
-3. **Orbits assigned deliberately**, so reverb and ducking behave.
+<Exercise id="performing/patch-skeleton" title="Turn a sketch into a patch"
+  goal="Take two anonymous lanes and give them a tempo, names, orbits and a header."
+  start={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0)`}
+  target={`// @title Midnight Drive
+// @by Your Name
 
-<Strudel
-  code={`setcpm(128/4)
+setcpm(128/4)
 
-drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").orbit(1)
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`}>
+  <Step check={{ code: "setcpm\\(\\s*(128\\s*/\\s*4|32)\\s*\\)" }}
+        hints={['One cycle should be one bar of 4/4, the convention from the Writing in Time chapter.', 'It goes on its own line, above everything else.']}
+        solution={`setcpm(128/4)
 
-bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
-  .lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)
+$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0)`}>
+    **Constants at the top.** Add `setcpm(128/4)` as the first line, then a blank line. Anything
+    global — tempo, `samples()` — lives up there, so you never hunt for it mid-set.
+  </Step>
+  <Step check={{ includes: ['drums:', 'bass:'], excludes: '$:', match: { keys: ['s'] } }}
+        hints={['A lane label is any identifier followed by a colon, in place of `$:`.', 'The names are for you, not for Strudel: pick what you would shout at yourself.']}
+        target={`setcpm(128/4)
 
-lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw")
-  .room(.6).gain(.4).orbit(3)
+$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0)`}
+        solution={`setcpm(128/4)
 
-duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
-  .duckattack(".2:.3").duckonset(.01).postgain(0)`}
-  label="the skeleton of a live patch"
-/>
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0)`}>
+    **Name the lanes.** Replace the first `$:` with `drums:` and the second with `bass:`. Nothing
+    sounds different; you have just made the patch readable at a glance and given yourself a handle
+    for muting.
+  </Step>
+  <Step check={{ includes: '.orbit(2)', fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.orbit === 2)) || 'The bass lane needs .orbit(2).' }" }}
+        hints={['An orbit is an output bus with its own effects, as in the Orbits chapter.', 'It chains onto the end of the bass lane like any other control.']}
+        solution={`setcpm(128/4)
 
-<Box kind="try">
-With that playing, try each of these one at a time — each is a single character or word:
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`}>
+    **Assign orbits deliberately.** Add `.orbit(2)` to the bass. It sounds identical right now, and
+    it is the thing that will let you duck it later without touching the drums.
+  </Step>
+  <Step check={{ includes: 'lead:', fn: "(h) => { const l = h.filter((e) => e.value.s === 'supersaw'); return (l.length > 0 && l.every((e) => e.value.orbit === 3)) || 'Expected a lead lane on orbit 3.' }" }}
+        hints={['A third line, same shape as the other two.', 'Keep the level low — a supersaw will bury a drum kit.']}
+        solution={`setcpm(128/4)
 
-- `_lead:` to drop the lead
-- change `128/4` to `132/4`
-- change the bass `lpf(600)` to `lpf(sine.range(300,2000).slow(8))`
-- add `.jux(rev)` to the lead
-</Box>
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`}>
+    Add a third lane on a third orbit:
+    `lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`.
+  </Step>
+  <Step check={{ includes: ['// @title', '// @by'], match: { keys: ['s'] } }}
+        hints={['They are ordinary `//` comments; the `@` is the convention.', 'Two lines at the very top, above `setcpm`.']}
+        solution={`// @title Midnight Drive
+// @by Your Name
+
+setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`}>
+    Finally, a header. Add `// @title Midnight Drive` and `// @by Your Name` above everything.
+    Comments starting with `@` are the metadata convention the official REPL reads when you share a
+    pattern; `// @license CC BY-NC-SA` is the third one you will see.
+  </Step>
+</Exercise>
+
+Which orbit a lane sits on decides what reverb and what ducking can reach it — see
+<L to="/tutorial/orbits">Orbits</L>.
+
+## Muting
+
+Two ways to take something out, and they are not interchangeable.
+
+<Exercise id="performing/muting" title="Drop a lane and bring it back"
+  goal="Mute a lane with `_`, with `//`, and with a trailing `_` — then put everything back."
+  start={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).decay(.2).sustain(0).orbit(2)
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`}
+  target={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).decay(.2).sustain(0).orbit(2)
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`}>
+  <Step check={{ includes: '_lead:', fn: "(h) => h.every((e) => e.value.s !== 'supersaw') || 'The lead is still playing.'" }}
+        hints={['One character, at the start of the lane label.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).decay(.2).sustain(0).orbit(2)
+_lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`}>
+    Type an underscore in front of the lead's name: `_lead:`. The lane still evaluates, it just
+    produces silence. One keystroke to drop a part, one to bring it back.
+  </Step>
+  <Step check={{ excludes: '_lead:', includes: '//', fn: "(h) => h.every((e) => e.value.s !== 'sawtooth') || 'The bass is still playing.'" }}
+        hints={['Remove the underscore you just added first.', 'A `//` comment only reaches the end of its line.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+// bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).decay(.2).sustain(0).orbit(2)
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`}>
+    Bring the lead back, and comment the bass out instead by putting `//` at the start of its line.
+    Same result — but this is why the lanes here are one line each. Comment the first line of a
+    lane whose chain wraps over three lines and the rest of it becomes a syntax error.
+  </Step>
+  <Step check={{ excludes: '//', includes: 'drums_:', fn: "(h) => h.every((e) => !e.value.bank) || 'The drums are still playing.'" }}
+        hints={['The underscore works at either end of the name.', 'Uncomment the bass before you mute the drums, or you will be listening to one lane.']}
+        solution={`setcpm(128/4)
+
+drums_: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).decay(.2).sustain(0).orbit(2)
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`}>
+    Uncomment the bass, then mute the drums the other way round: `drums_:`. A trailing underscore
+    mutes too, which is handy when you want the name to stay readable in a long list of lanes.
+  </Step>
+  <Step check={{ excludes: ['_', '//'], match: { keys: ['s'] } }}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).decay(.2).sustain(0).orbit(2)
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`}>
+    Everything back on. This — mute, listen, unmute — is most of what performing actually is.
+  </Step>
+</Exercise>
 
 ## Visual feedback
 
@@ -55,6 +164,12 @@ exception — it has no inline variant.
 
 <Strudel code={`s("saw").lpf(800).lfo({r: 2, da: 400})._spectrum({height: 200, width: 800})`} label="spectrum: frequency content" />
 
+<Box kind="try">
+These three are editors like any other. In the first one, swap `_punchcard()` for `_pianoroll()`,
+then `_spiral()`, then `_pitchwheel()`, then `wordfall()` — that last one without the underscore,
+because it has no inline form.
+</Box>
+
 | Function | Shows |
 | --- | --- |
 | `punchcard` / `_punchcard` | events in time, cheap (reuses the highlighting data) |
@@ -65,67 +180,164 @@ exception — it has no inline variant.
 | `pitchwheel` | pitch classes on a circle |
 | `wordfall` | the event values as falling text (no `_` variant) |
 
-`color()` sets the highlight colour, and it is patternable — useful for telling layers apart:
+Two more things draw without drawing: `color()` tints the highlighting so you can tell layers
+apart, and `log()` prints every event to the browser console.
 
-<Strudel
-  code={`$: n("0 1 [4 3] 2").s("jazz").pan(0).color("cyan")
-$: n("0 1 [4 3] 2").s("jazz").pan(1).color("magenta").rev()`}
-  label="what jux(rev) actually does"
-/>
+<Exercise id="performing/color" title="Colour your layers"
+  goal="Build what `jux(rev)` does by hand, and tell the two halves apart on screen."
+  start={`$: n("0 1 [4 3] 2").s("jazz").pan(0)`}
+  target={`$: n("0 1 [4 3] 2").s("jazz").pan(0).color("cyan").log()
+$: n("0 1 [4 3] 2").s("jazz").pan(1).color("magenta").rev()`}>
+  <Step check={{ includes: '.rev()', events: 10 }}
+        hints={['A second `$:` line, the same pattern, panned the other way.', '`.rev()` plays a cycle backwards.']}
+        solution={`$: n("0 1 [4 3] 2").s("jazz").pan(0)
+$: n("0 1 [4 3] 2").s("jazz").pan(1).rev()`}>
+    Add a second lane: the same pattern with `.pan(1)` and `.rev()`. Left ear forwards, right ear
+    backwards — that is exactly what `jux(rev)` does, written out.
+  </Step>
+  <Step check={{ includes: ['.color(', 'magenta'], fn: "(h) => new Set(h.map((e) => e.value.color)).size === 2 || 'Expected the two lanes to have different colours.'" }}
+        hints={['`color` takes any CSS colour name.', 'One on each lane, with different values.']}
+        solution={`$: n("0 1 [4 3] 2").s("jazz").pan(0).color("cyan")
+$: n("0 1 [4 3] 2").s("jazz").pan(1).color("magenta").rev()`}>
+    Add `.color("cyan")` to the first lane and `.color("magenta")` to the second. Now the
+    highlighting in the editor tells you which lane each event came from.
+  </Step>
+  <Step check={{ includes: '.log()', events: 10 }}
+        hints={['Open the browser console before you evaluate, or you will miss it.']}
+        solution={`$: n("0 1 [4 3] 2").s("jazz").pan(0).color("cyan").log()
+$: n("0 1 [4 3] 2").s("jazz").pan(1).color("magenta").rev()`}>
+    Add `.log()` to the first lane and open the console. Every event prints with its whole value
+    object — the fastest way to find out why a control is not doing what you expected.
+  </Step>
+</Exercise>
 
-## Documenting a patch
+## Building a track
 
-Comments starting with `@` are a convention for metadata, used by the official REPL when you share
-a pattern:
+Four exercises, each starting where the last one finished. By the end you will have a small
+arranged track, built the way you would build it live: one line at a time, never stopping the
+sound.
 
-```
-// @title Midnight Drive
-// @by Your Name
-// @license CC BY-NC-SA
-```
+<Exercise id="performing/track-groove" title="1. Groove"
+  goal="A pulse, a backbeat, offbeat hats, and a bass on its own orbit."
+  start={`setcpm(128/4)
 
-## Building a track, step by step
+drums: s("bd*4")`}
+  target={`setcpm(128/4)
 
-Follow along — evaluate each block and notice that only one thing changes each time.
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
-**1. A pulse.**
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`}>
+  <Step check={{ has: { bank: 'RolandTR909' } }}
+        hints={['The 909 is the house and techno kit; the Picking Sounds chapter lists the others.']}
+        solution={`setcpm(128/4)
 
-<Strudel code={`setcpm(128/4)
-drums: s("bd*4").bank("RolandTR909")`} />
+drums: s("bd*4").bank("RolandTR909")`}>
+    Pick a kit: add `.bank("RolandTR909")`. Four on the floor at 128, and already it has a genre.
+  </Step>
+  <Step check={{ events: 5 }}
+        hints={['A comma inside the quotes adds a parallel layer.', 'One clap in the second half of the bar: `~ cp`.']}
+        solution={`setcpm(128/4)
 
-**2. Give it a top and a backbeat.**
+drums: s("bd*4, ~ cp").bank("RolandTR909")`}>
+    Add a backbeat inside the same string: `, ~ cp`. Two slots, so the clap lands on beat 3 —
+    a half-bar backbeat, which is the house one.
+  </Step>
+  <Step check={{ events: 9 }}
+        hints={['`[~ hh]` is a rest then a hat, filling one beat.', 'Four of those, one per beat.']}
+        solution={`setcpm(128/4)
 
-<Strudel
-  code={`setcpm(128/4)
-drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")`}
-/>
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")`}>
+    Add offbeat hats: `, [~ hh]*4`. Every beat gets a rest and then a hat, so the hats fall exactly
+    between the kicks.
+  </Step>
+  <Step check={{ includes: ['bass:', '.orbit(2)'], fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length === 2 && b.every((e) => e.value.orbit === 2)) || 'Expected two bass notes per bar on orbit 2.' }" }}
+        hints={['A new named lane, with a blank line above it so the patch stays readable.', 'It goes on orbit 2 because in the next exercise something will duck it.']}
+        solution={`setcpm(128/4)
 
-**3. A bass, on its own orbit because it will be ducked.**
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
-<Strudel
-  code={`setcpm(128/4)
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`}>
+    Add the bass lane:
+    `bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`.
+    One note per half bar, a new root every bar, short because `sustain` is 0.
+  </Step>
+</Exercise>
+
+The kick and the bass want the same 80 Hz. <L to="/tutorial/ducking">Ducking</L> solves that by
+turning one down whenever the other hits, and <L to="/tutorial/filters">Filters</L> is where the
+rest of this exercise comes from.
+
+<Exercise id="performing/track-duck" title="2. Space and movement"
+  goal="Duck the bass out of the kick's way, then make it move."
+  start={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`}
+  target={`setcpm(128/4)
+
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
 bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
-  .lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`}
-/>
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
 
-**4. Duck the bass with the kick.** Same kick, extra chain.
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
+  <Step check={{ includes: 'duckorbit(', fn: "(h) => h.some((e) => e.value.duckorbit) || 'Expected a ducking lane naming orbit 2.'" }}
+        hints={['The ducker is a pattern of its own: the same kick, silenced, whose only job is to push an orbit down.', '`postgain(0)` is what makes it silent, as in the Ducking chapter.']}
+        solution={`setcpm(128/4)
 
-<Strudel
-  code={`setcpm(128/4)
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
+    Add a fourth lane:
+    `duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`. Nothing
+    new is heard, but the bass now breathes around the kick instead of fighting it.
+  </Step>
+  <Step check={{ includes: '.lpenv(', fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.lpenv === 3)) || 'The bass lane needs .lpa(.01).lpd(.12).lpenv(3).' }" }}
+        hints={['Three controls: attack, decay, and how far the envelope moves the cutoff.', 'Wrap the chain onto indented lines once it gets long.']}
+        solution={`setcpm(128/4)
+
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
 bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
-  .lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)
+  .lpf(600).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
 
-duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}
-/>
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
+    Give the bass a filter envelope: `.lpa(.01).lpd(.12).lpenv(3)`, and raise `.lpq(4)` to
+    `.lpq(6)`. Each note now opens and closes — that is the pluck.
+  </Step>
+  <Step check={{ includes: 'sine.range(', fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.cutoff >= 400 && e.value.cutoff <= 1400 && e.value.cutoff !== 600)) || 'Expected the cutoff to come from a slow sine between 400 and 1400.' }" }}
+        hints={['A signal instead of a number, stretched over several bars so you notice it slowly.', '`sine.range(lo, hi).slow(n)` is the shape.']}
+        solution={`setcpm(128/4)
 
-**5. Make the bass move** with a filter envelope and a slow signal on the cutoff.
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
-<Strudel
-  code={`setcpm(128/4)
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
+    Replace `.lpf(600)` with `.lpf(sine.range(400,1400).slow(8))`. The envelope still fires on every
+    note; now the note it fires *from* drifts over eight bars. Two layers of movement at different
+    rates is the whole trick.
+  </Step>
+</Exercise>
+
+Reverb is per orbit (<L to="/tutorial/space">Space</L>) and the echo is one call to `off`
+(<L to="/tutorial/pattern-functions">Pattern Functions</L>) — the lead lane is almost entirely made
+of things you already have.
+
+<Exercise id="performing/track-lead" title="3. A lead, and a bigger room"
+  goal="Add a third voice on a third orbit, give it space and an echo, and duck it too."
+  start={`setcpm(128/4)
+
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
 bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
@@ -134,12 +346,123 @@ bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
   .decay(.2).sustain(0).orbit(2)
 
 duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}
-/>
+  target={`setcpm(128/4)
 
-**6. A lead, in a bigger room, on a third orbit — and duck that too, gently.**
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
-<Strudel
-  code={`setcpm(128/4)
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4)
+  .off(1/8, x => x.add(note(12)).gain(.2)).orbit(3)
+
+duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}>
+  <Step check={{ includes: 'lead:', fn: "(h) => { const l = h.filter((e) => e.value.s === 'supersaw'); return (l.length === 2 && l.every((e) => e.value.orbit === 3)) || 'Expected two lead notes per bar on orbit 3.' }" }}
+        hints={['Between the bass and the duck lane, so the ducker stays at the bottom where you can find it.', 'Keep it quiet: `.gain(.4)`.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
+    Add `lead: n("<0 3 5 3>*2").scale("C4:minor").s("supersaw").gain(.4).orbit(3)`. Two notes a
+    bar, a four-bar phrase, in the same minor scale as the bass.
+  </Step>
+  <Step check={{ fn: "(h) => { const l = h.filter((e) => e.value.s === 'supersaw'); return (l.length > 0 && l.every((e) => e.value.room === 0.7 && e.value.roomsize === 4)) || 'The lead lane needs .room(.7).rsize(4).' }" }}
+        hints={['`room` is how much, `rsize` is how big, as in the Space chapter.', 'A big room on one orbit is exactly why the lead has its own.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+lead: n("<0 3 5 3>*2").scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4).orbit(3)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
+    Put it in a big room: add `.room(.7).rsize(4)` to the lead. The drums and bass stay dry,
+    because reverb is per orbit.
+  </Step>
+  <Step check={{ cycles: 4, fn: "(h) => new Set(h.filter((e) => e.value.s === 'supersaw').map((e) => e.value.note)).size >= 5 || 'Expected the phrase to move up in some bars.'" }}
+        hints={['The argument of `n()` is a pattern, and patterns can be added together.', 'A four-value alternation added to the phrase moves it only in the bars you choose.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4).orbit(3)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
+    Make the phrase four bars long instead of one: change `n("<0 3 5 3>*2")` to
+    `n("<0 3 5 3>*2".add("<0 0 7 0>"))`. In the third bar the whole phrase jumps up a fifth in
+    scale degrees.
+  </Step>
+  <Step check={{ includes: '.off(', fn: "(h) => h.filter((e) => e.value.s === 'supersaw').length === 4 || 'Expected each lead note to be echoed once.'" }}
+        hints={['`off` plays a copy of the pattern, shifted, with a function applied to it.', 'An eighth of a cycle is an eighth note, an octave is 12, and the copy should be quieter.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4)
+  .off(1/8, x => x.add(note(12)).gain(.2)).orbit(3)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
+    Add an echo an octave up: `.off(1/8, x => x.add(note(12)).gain(.2))`, before the `.orbit(3)`.
+    One line, and the lead suddenly has a counter-melody.
+  </Step>
+  <Step check={{ includes: 'duckorbit("2:3")', fn: "(h) => { const d = h.find((e) => e.value.duckorbit); return (d && Array.isArray(d.value.duckdepth)) || 'Expected the ducker to name two orbits with two depths.' }" }}
+        hints={['Every ducking control takes the same colon-separated list, one value per orbit.', 'The lead should only dip a little: half the depth of the bass.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4)
+  .off(1/8, x => x.add(note(12)).gain(.2)).orbit(3)
+
+duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}>
+    Duck the lead as well, gently: change the duck lane to `.duckorbit("2:3").duckdepth("1:.5")`
+    and `.duckattack(".2:.3")`. The bass ducks fully and fast, the lead only half and slower.
+  </Step>
+</Exercise>
+
+Form is just another pattern. `mask` switches a lane on and off by the bar; `arrange` and `lastOf`
+in <L to="/tutorial/time">Writing in Time</L> do the same job from the other direction.
+
+<Exercise id="performing/track-arrange" title="4. Arrange it"
+  goal="Bring the parts in and out over eight bars, without touching a single note."
+  start={`setcpm(128/4)
+
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
 bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
@@ -153,15 +476,10 @@ lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
 
 duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
   .duckattack(".2:.3").duckonset(.01).postgain(0)`}
-/>
-
-**7. Arrange it** — mask layers in and out over eight cycles.
-
-<Strudel
-  code={`setcpm(128/4)
+  target={`setcpm(128/4)
 
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
-  .mask("<1 1 1 1 1 1 1 1>")
+  .mask("<1 1 1 1 1 1 1 0>")
 
 bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
   .lpf(sine.range(400,1400).slow(8)).lpq(6)
@@ -175,18 +493,114 @@ lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
   .mask("<0 0 0 0 1 1 1 1>")
 
 duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
-  .duckattack(".2:.3").duckonset(.01).postgain(0)`}
-  label="the finished sketch"
-/>
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}>
+  <Step check={{ cycles: 8, fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.t >= 2)) || 'Expected the bass to stay silent for the first two bars.' }" }}
+        hints={['`mask` keeps the events where the pattern is on and drops the rest.', 'Eight values in `< >`, one per bar.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+  .mask("<0 0 1 1 1 1 1 1>")
+
+lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4)
+  .off(1/8, x => x.add(note(12)).gain(.2)).orbit(3)
+
+duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}>
+    Hold the bass back for two bars: add `.mask("<0 0 1 1 1 1 1 1>")` to the end of its chain. Eight
+    values, one per bar, then it loops.
+  </Step>
+  <Step check={{ cycles: 8, fn: "(h) => { const l = h.filter((e) => e.value.s === 'supersaw'); return (l.length > 0 && l.every((e) => e.t >= 4)) || 'Expected the lead to stay silent for the first four bars.' }" }}
+        hints={['Same shape, twice as many zeroes.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+  .mask("<0 0 1 1 1 1 1 1>")
+
+lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4)
+  .off(1/8, x => x.add(note(12)).gain(.2)).orbit(3)
+  .mask("<0 0 0 0 1 1 1 1>")
+
+duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}>
+    The lead enters at bar 5: `.mask("<0 0 0 0 1 1 1 1>")`. Four bars of groove, four of bass, then
+    everything — an intro, written as two strings.
+  </Step>
+  <Step check={{ cycles: 8, fn: "(h) => { const d = h.filter((e) => e.value.bank); return (d.length > 0 && d.every((e) => e.t < 7)) || 'Expected the drums to drop out in the eighth bar.' }" }}
+        hints={['One value of the eight changes, on the drums lane.', 'The last bar is the one that ends the loop.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+  .mask("<1 1 1 1 1 1 1 0>")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(sine.range(400,1400).slow(8)).lpq(6)
+  .lpa(.01).lpd(.12).lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+  .mask("<0 0 1 1 1 1 1 1>")
+
+lead: n("<0 3 5 3>*2".add("<0 0 7 0>")).scale("C4:minor")
+  .s("supersaw").room(.7).rsize(4).gain(.4)
+  .off(1/8, x => x.add(note(12)).gain(.2)).orbit(3)
+  .mask("<0 0 0 0 1 1 1 1>")
+
+duck: s("bd*4").duckorbit("2:3").duckdepth("1:.5")
+  .duckattack(".2:.3").duckonset(.01).postgain(0)`}>
+    Finally, a hole: give the drums `.mask("<1 1 1 1 1 1 1 0>")` so they drop out for the eighth
+    bar while the bass and lead keep going. Dropping the drums for a bar is the oldest trick in
+    dance music and it still works.
+  </Step>
+</Exercise>
 
 <Box kind="try">
-Ways to keep it moving without touching the structure:
+With that playing, try each of these one at a time — each is a single character or word:
 
-- `.sometimesBy(.15, x => x.speed(2))` on the drums
-- `.every(4, x => x.fast(2))` on the hats
-- `.ribbon(n, 4)` around the lead, changing `n` to browse variations
-- `.djf(sine.range(.3,.7).slow(16))` on the whole lead for filter sweeps
+- `_lead:` to drop the lead
+- change `128/4` to `132/4`
+- add `.sometimesBy(.15, x => x.speed(2))` to the drums
+- add `.ribbon(3, 4)` to the lead, then change the 3
+- add `.djf(sine.range(.3,.7).slow(16))` to the lead
 </Box>
+
+<Exercise id="performing/fill-challenge" title="Challenge: a fill every four bars"
+  goal="In the first bar of every four, play the whole drum loop at double speed."
+  start={`s("bd*4, [~ hh]*4").bank("RolandTR909")`}
+  target={`s("bd*4, [~ hh]*4").bank("RolandTR909").every(4, x => x.fast(2))`}
+  check={{ match: { keys: ['s'] }, cycles: 4 }}
+  hints={[
+    'The function that applies a transform on some cycles and not others takes a number and a function.',
+    'The transform itself is the one that squeezes a pattern into less time.',
+    'The shape is `.every(n, x => x.…)`, from the Pattern Functions chapter.',
+  ]} />
+
+<QA q="How do I keep a long live set interesting?">
+The same way the language is built: nest alternations at different rates. `<a b>` changes every
+cycle, `<a b>/4` every four, `<a b>/16` every sixteen. Stack several of those at different rates on
+different parameters and the patch stops repeating in any way a listener can track — while the code
+stays short enough to edit live.
+</QA>
+
+<Exercise id="performing/rates-challenge" title="Challenge: three rates at once"
+  goal="Keep the phrase `<0 3 5 3>*2`, but change the scale between `C4:minor` and `Eb4:major` every four bars, and the sound between `supersaw` and `sawtooth` every eight."
+  start={`n("<0 3 5 3>*2").scale("C4:minor").s("supersaw")`}
+  target={`n("<0 3 5 3>*2").scale("<C4:minor Eb4:major>/4").s("<supersaw sawtooth>/8")`}
+  check={{ match: { keys: ['note', 's'] }, cycles: 8 }}
+  hints={[
+    'Every argument is a pattern, including the one you give to `scale` and the one you give to `s`.',
+    '`< >` steps one element per cycle; dividing it slows that down.',
+    'Two edits, neither of them touching `n(…)`.',
+  ]} />
 
 ## Going outside the browser
 
@@ -198,13 +612,6 @@ Ways to keep it moving without touching the structure:
 | `@strudel/web` | embed Strudel in your own page, like this site does |
 | `@strudel/repl` | the editor web component used on this site |
 | `@strudel/sampler` | serve a local folder of samples |
-
-<QA q="How do I keep a long live set interesting?">
-The same way the language is built: nest alternations at different rates. `<a b>` changes every
-cycle, `<a b>/4` every four, `<a b>/16` every sixteen. Stack several of those at different rates on
-different parameters and the patch stops repeating in any way a listener can track — while the code
-stays short enough to edit live.
-</QA>
 
 ## Where to go next
 

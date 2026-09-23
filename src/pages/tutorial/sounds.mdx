@@ -5,24 +5,57 @@ title: Picking Sounds
 lede: Every noise Strudel makes comes from s(). Here is how to choose which one.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
 
-`s()` (long form `sound()`) is the source selector. It does two different jobs depending on the
-name you give it:
+`s()` (long form `sound()`) is the source selector, and it does two different jobs depending on the
+name you give it: a **sample** name (`bd`, `hh`, `casio`, `jazz`) plays back an audio file, and a
+**synth** name (`sawtooth`, `square`, `triangle`, `sine`, `white`) generates the sound live.
 
-- a **sample** name (`bd`, `hh`, `casio`, `jazz`) plays back an audio file
-- a **synth** name (`sawtooth`, `square`, `triangle`, `sine`, `white`) generates the sound live
+## One function, two kinds of source
 
-<Strudel code={`s("bd hh sd hh")`} label="samples" />
+<Exercise id="sounds/source" title="Samples and synths in one string"
+  goal="Swap a drum pattern for oscillators, then mix the two."
+  start={`s("bd hh sd hh")`} target={`s("bd sawtooth sd square")`}>
+  <Step check={{ excludes: 'bd', match: { keys: ['s'] } }}
+        target={`s("sawtooth square triangle sine")`}
+        hints={['Four waveform names in place of the four drum names.',
+                'Sawtooth, square, triangle, sine — the four classic oscillator shapes, in that order.']}
+        solution={`s("sawtooth square triangle sine")`}>
+    Replace all four names with `sawtooth square triangle sine`. No sample is fetched: these are
+    generated. Each holds its default pitch, so what you hear is the raw waveform character —
+    buzzy, hollow, soft, pure.
+  </Step>
+  <Step check={{ includes: 'sound(', match: { keys: ['s'] } }}
+        target={`sound("sawtooth square triangle sine")`}
+        solution={`sound("sawtooth square triangle sine")`}>
+    Change `s` to `sound`. Identical result: `s` is just the short name, and you will see both in
+    the wild.
+  </Step>
+  <Step check={{ excludes: 'sound(', match: { keys: ['s'] } }}
+        hints={['Slots 1 and 3 are drums, slots 2 and 4 are oscillators.']}
+        solution={`s("bd sawtooth sd square")`}>
+    Go back to `s` and mix the families in one string: `bd sawtooth sd square`. Nothing in
+    mini-notation cares which kind of source a name refers to.
+  </Step>
+</Exercise>
 
-<Strudel code={`s("sawtooth square triangle sine")`} label="synths" />
+<Exercise id="sounds/source-challenge" title="Challenge: alternate the families"
+  goal="Four slots, alternating: kick, sine, clap, triangle."
+  start={`s("bd bd bd bd")`} target={`s("bd sine cp triangle")`}
+  hints={['`cp` is a clap; `sine` and `triangle` are synth waveforms.',
+          'One string, four tokens — the function never changes.',
+          'Three of the four tokens need replacing.']}
+  check={{ match: { keys: ['s'] } }} />
 
 ## Drum sounds
 
 Strudel ships with the [tidal-drum-machines](https://github.com/ritchse/tidal-drum-machines)
-library. The names are standardised abbreviations:
+library, under standardised abbreviations. Learn these once and every drum machine in the library
+answers to them.
 
 | Name | Sound | Name | Sound |
 | --- | --- | --- | --- |
@@ -34,43 +67,133 @@ library. The names are standardised abbreviations:
 | `oh` | open hihat | `tb` | tambourine |
 | `perc` | other percussion | `misc` `fx` | odds and ends |
 
-<Strudel code={`s("bd sd, hh*8, ~ ~ oh ~")`} label="a kit" />
+<Exercise id="sounds/drum-kit" title="Walk the kit"
+  goal="Hear each family of drum abbreviation, then assemble a kit."
+  start={`s("bd sd bd sd")`} target={`s("bd cp, hh*8, ~ ~ oh ~")`}>
+  <Step check={{ includes: 'rim', match: { keys: ['s'] } }}
+        target={`s("bd rim bd rim")`}
+        solution={`s("bd rim bd rim")`}>
+    Replace both `sd` with `rim`. A rimshot is the same drum struck on the rim: much shorter, much
+    drier, and it sits under a vocal where a snare would fight it.
+  </Step>
+  <Step check={{ includes: ['lt', 'mt', 'ht'], match: { keys: ['s'] } }}
+        target={`s("bd lt mt ht")`}
+        hints={['Low, mid, high — three tom sizes, pitched low to high.']}
+        solution={`s("bd lt mt ht")`}>
+    Now the toms: `bd lt mt ht`. Low, mid, high — a descending fill written backwards.
+  </Step>
+  <Step check={{ includes: ['rd', 'cr'], match: { keys: ['s'] } }}
+        target={`s("bd rd sd cr")`}
+        hints={['`rd` is the ride, `cr` the crash.']}
+        solution={`s("bd rd sd cr")`}>
+    The two cymbals: `bd rd sd cr`. The ride is a repeating pulse, the crash is an accent you use
+    once a phrase — notice how much longer the crash rings.
+  </Step>
+  <Step check={{ includes: 'oh', match: { keys: ['s'] } }}
+        hints={['Three comma-separated layers inside one pair of quotes.',
+                'The open hat goes on beat 3 of its own layer, with rests either side.']}
+        solution={`s("bd cp, hh*8, ~ ~ oh ~")`}>
+    Assemble a kit: `s("bd cp, hh*8, ~ ~ oh ~")`. A comma stacks layers inside one string — see
+    <L to="/tutorial/mini-notation">Mini-Notation</L> for the rest of that language.
+  </Step>
+</Exercise>
+
+<Exercise id="sounds/drum-kit-challenge" title="Challenge: name a whole kit"
+  goal="Three layers: kick on 1 and snare on 3 with a clap on 4; closed hats on every eighth; one crash on the downbeat."
+  start={`s("bd sd")`} target={`s("bd ~ sd cp, hh*8, cr ~ ~ ~")`}
+  hints={['`cr` is the crash, `cp` the clap, `hh` the closed hihat.',
+          'Each layer is its own sequence of four slots (or eight for the hats), separated by commas.',
+          'Build it one comma at a time and listen after each — the crash layer is three rests and one sound.']}
+  check={{ match: { keys: ['s'] } }} />
 
 ## Banks — changing the drum machine
 
 Every drum sample is really named `MachineName_bd`. `bank()` prepends the machine name for you, so
-you can swap the entire kit with one word:
+one word swaps the entire kit and leaves the rhythm alone.
 
-<Strudel code={`s("bd sd, hh*8").bank("RolandTR909")`} />
+<Exercise id="sounds/banks" title="Swap the machine, keep the beat"
+  goal="Hear the same rhythm change genre three times without touching a single note."
+  start={`s("bd sd, hh*8")`}
+  target={`s("bd sd, hh*8").bank("<RolandTR808 RolandTR909>")`}>
+  <Step check={{ has: { bank: 'RolandTR909' } }}
+        hints={['It chains onto the end, after the closing parenthesis of `s(...)`.']}
+        solution={`s("bd sd, hh*8").bank("RolandTR909")`}>
+    Add `.bank("RolandTR909")`. The 909 kick is a tuned sine thump and its hats are metallic and
+    bright: that is house and techno in one word.
+  </Step>
+  <Step check={{ has: { bank: 'RolandTR808' } }}
+        solution={`s("bd sd, hh*8").bank("RolandTR808")`}>
+    Change the name to `RolandTR808`. Same rhythm, longer and boomier kick, thin papery snare —
+    now it is hip hop.
+  </Step>
+  <Step check={{ includes: '<', cycles: 2, match: { keys: ['s', 'bank'] } }}
+        hints={['`bank` takes a pattern, like nearly every argument in Strudel.',
+                '`< >` means one element per cycle.']}
+        solution={`s("bd sd, hh*8").bank("<RolandTR808 RolandTR909>")`}>
+    `bank` takes a pattern too. Make it `"<RolandTR808 RolandTR909>"` and it alternates machine per
+    bar.
+  </Step>
+</Exercise>
 
 <Box kind="try">
-Swap `RolandTR909` for `RolandTR808`, `RolandTR707`, `AkaiLinn`, `CasioRZ1`, `ViscoSpaceDrum`,
-`RhythmAce`, `RolandCompurhythm1000`. Each one changes the genre of the beat without touching the
-rhythm.
+In the editor above, swap the machine names for `RolandTR707`, `AkaiLinn`, `CasioRZ1`,
+`ViscoSpaceDrum`, `RhythmAce` or `RolandCompurhythm1000`. Each one changes the genre of the beat
+without touching the rhythm.
 </Box>
 
-Because `bank` takes a pattern like everything else, you can alternate machines per cycle:
-
-<Strudel code={`s("bd sd, hh*8").bank("<RolandTR808 RolandTR909>")`} />
-
 <Box kind="warn">
-Not every bank has every sound. If a bank is missing `oh`, `bank("…").s("oh")` resolves to a name that was never registered and Strudel raises `sound … not found! Is it loaded?`. Only the literal
+Not every bank has every sound. If a bank is missing `oh`, `bank("…").s("oh")` resolves to a name
+that was never registered and Strudel raises `sound … not found! Is it loaded?`. Only the literal
 rests `-`, `~` and `_` are skipped silently.
 </Box>
 
+<Exercise id="sounds/banks-challenge" title="Challenge: two machines, two bars"
+  goal="The same beat played on a `CasioRZ1` in bar one and a `RolandTR707` in bar two."
+  start={`s("bd sd, hh*8")`} target={`s("bd sd, hh*8").bank("<CasioRZ1 RolandTR707>")`}
+  hints={['The rhythm does not change at all — only one chained call is added.',
+          '`bank()` takes a pattern, so the machine name can alternate.',
+          'Angle brackets step one element per cycle.']}
+  check={{ match: { keys: ['s', 'bank'] }, cycles: 2 }} />
+
 ## Sample index: `:` and `n()`
 
-One sound name usually holds several audio files. Pick one by appending `:n`:
+One sound name usually holds several audio files. Indices wrap around, so `:4` on a four-sample
+sound plays `:0` again.
 
-<Strudel code={`s("casio:0 casio:1 casio:2 casio:0")`} />
-
-Indices wrap around, so `:4` on a four-sample sound plays `:0` again. The same thing can be done
-outside the string with `n()`, which is nicer when the rhythm and the choice of sample are
-different ideas:
-
-<Strudel code={`n("0 1 [4 2] 3*2").s("jazz")`} label="n() sets the index, s() sets the sound" />
-
-<Strudel code={`s("hh*8").bank("RolandTR909").n("0 1 2 3")`} label="four different 909 hihats" />
+<Exercise id="sounds/index" title="Pick which file plays"
+  goal="Choose sample files by number, inside the string and outside it."
+  start={`s("casio casio casio casio")`}
+  target={`s("bd:0 bd:1 bd:0:0.3 bd:1:1.4")`}>
+  <Step check={{ includes: ':', match: { keys: ['s', 'n'] } }}
+        target={`s("casio:0 casio:1 casio:2 casio:0")`}
+        hints={['A colon and a number, glued to the name with no spaces.']}
+        solution={`s("casio:0 casio:1 casio:2 casio:0")`}>
+    Append an index to each token: `casio:0 casio:1 casio:2 casio:0`. Four hits of the same sound
+    name, four completely different recordings.
+  </Step>
+  <Step check={{ includes: 'n("', match: { keys: ['s', 'n'] } }}
+        target={`n("0 1 2 0").s("casio")`}
+        hints={['`n` sets the index; `s` sets the sound. The rhythm now comes from `n`.']}
+        solution={`n("0 1 2 0").s("casio")`}>
+    Write the same thing with the indices outside the string: `n("0 1 2 0").s("casio")`. Identical
+    events — but now the rhythm and the choice of sample are two separate patterns you can edit
+    apart.
+  </Step>
+  <Step check={{ includes: 'jazz', match: { keys: ['s', 'n'] } }}
+        target={`n("0 1 [4 2] 3*2").s("jazz")`}
+        hints={['Only the two strings change; the shape of the line stays.']}
+        solution={`n("0 1 [4 2] 3*2").s("jazz")`}>
+    That separation is the point. Make it `n("0 1 [4 2] 3*2").s("jazz")` — a rhythm written in the
+    index pattern, over a single sound name.
+  </Step>
+  <Step check={{ includes: ':0:', match: { keys: ['s', 'n', 'gain'] } }}
+        hints={['The token format is `name:index:gain`.',
+                'Only the third and fourth hits carry a gain.']}
+        solution={`s("bd:0 bd:1 bd:0:0.3 bd:1:1.4")`}>
+    A token can carry loudness too. Replace the line with `s("bd:0 bd:1 bd:0:0.3 bd:1:1.4")`: the
+    third hit is at 30% and the fourth is pushed past 1, which is legal and useful for accents.
+  </Step>
+</Exercise>
 
 <Box>
 `n` is heavily overloaded in Strudel. With `s` it picks a **sample index**; with `scale` it picks a
@@ -78,27 +201,50 @@ different ideas:
 what else is in the chain.
 </Box>
 
-## Loudness and index in one string
-
-Mini-notation lets you pack `sound:index:gain` into a single token:
-
-<Strudel code={`s("bd:0 bd:1 bd:0:0.3 bd:1:1.4")`} label="third and fourth hit have custom gain" />
+<Exercise id="sounds/index-challenge" title="Challenge: four different 909 hats"
+  goal="Eight hihats from the RolandTR909, stepping through samples 0, 1, 2 and 3 — each one twice."
+  start={`s("hh*8").bank("RolandTR909")`}
+  target={`s("hh*8").bank("RolandTR909").n("0 1 2 3")`}
+  hints={['The rhythm is already right; you are only choosing which file each hit uses.',
+          'Structure comes from the left, so a four-value `n` pattern spread over eight hats hits each value twice.',
+          'One more chained call, with four numbers in it.']}
+  check={{ match: { keys: ['s', 'n', 'bank'] } }} />
 
 ## The other sound families
 
-Beyond drums, the default sample set includes instruments from
-[VCSL](https://github.com/sgossner/VCSL) and a full General MIDI soundfont bank. GM sounds all
-start with `gm_`:
+Beyond drums, the default set includes instruments from [VCSL](https://github.com/sgossner/VCSL)
+and a full General MIDI soundfont bank. Every GM name starts with `gm_`.
 
-<Strudel
-  code={`note("c3 eb3 g3 bb3")
-  .s("<gm_electric_guitar_muted gm_acoustic_bass gm_voice_oohs gm_xylophone>")`}
-  label="general midi instruments"
-/>
+<Exercise id="sounds/families" title="General MIDI in one chain"
+  goal="Play the same four notes through three different GM instruments, then all of them."
+  start={`note("c3 eb3 g3 bb3").s("piano")`}
+  target={`note("c3 eb3 g3 bb3").s("<gm_electric_guitar_muted gm_acoustic_bass gm_voice_oohs gm_xylophone>")`}>
+  <Step check={{ has: { s: 'gm_acoustic_bass' } }}
+        hints={['Only the argument of `s` changes.']}
+        solution={`note("c3 eb3 g3 bb3").s("gm_acoustic_bass")`}>
+    Change `piano` to `gm_acoustic_bass`. A soundfont is a set of short recordings mapped across
+    the keyboard, so unlike a synth it already knows how to be in tune.
+  </Step>
+  <Step check={{ has: { s: 'gm_voice_oohs' } }}
+        solution={`note("c3 eb3 g3 bb3").s("gm_voice_oohs")`}>
+    Try `gm_voice_oohs`. Same notes, and suddenly the line is a pad — the source alone decides
+    whether a part reads as rhythm or as texture.
+  </Step>
+  <Step check={{ includes: 'gm_xylophone', cycles: 4, match: { keys: ['note', 's'] } }}
+        hints={['Four names inside `< >`, separated by spaces.',
+                'The order is guitar, bass, voice, xylophone.']}
+        solution={`note("c3 eb3 g3 bb3").s("<gm_electric_guitar_muted gm_acoustic_bass gm_voice_oohs gm_xylophone>")`}>
+    Cycle through four of them:
+    `"<gm_electric_guitar_muted gm_acoustic_bass gm_voice_oohs gm_xylophone>"`. One instrument per
+    bar, four bars to come round.
+  </Step>
+</Exercise>
 
-And a handful of playful named sets, good for sketching:
-
-<Strudel code={`s("<insect wind jazz metal east crow casio space numbers>")`} label="the workshop set" />
+<Box kind="try">
+There is also a handful of playful named sets, good for sketching. Paste
+`s("<insect wind jazz metal east crow casio space numbers>")` into the editor above and listen
+through the workshop set.
+</Box>
 
 <Box kind="try">
 Open the real [Strudel REPL](https://strudel.cc/) and click the **sounds** tab in the side panel.
@@ -107,34 +253,138 @@ It lists every sound name currently loaded, with the number of samples in bracke
 not the goal.
 </Box>
 
+<Exercise id="sounds/families-challenge" title="Challenge: two instruments, one line"
+  goal="The bass line `c2 c2 eb2 f2`, played by `gm_electric_guitar_muted` in bar one and `gm_acoustic_bass` in bar two."
+  start={`note("c2 c2 eb2 f2").s("piano")`}
+  target={`note("c2 c2 eb2 f2").s("<gm_electric_guitar_muted gm_acoustic_bass>")`}
+  hints={['General MIDI names all start with `gm_`.',
+          'The argument of `s` is a pattern like any other.',
+          'Two names, one pair of angle brackets, one pair of double quotes.']}
+  check={{ match: { keys: ['note', 's'] }, cycles: 2 }} />
+
 ## Noise
 
-Three flavours of noise are available as sound sources, from harsh to soft:
+Three flavours of noise are available as sound sources, from harsh to soft: `white` is flat across
+the spectrum and hisses, `pink` rolls off the top and sounds like rain, `brown` rolls off harder
+still and rumbles.
 
-<Strudel code={`s("<white pink brown>")._scope()`} />
+<Exercise id="sounds/noise" title="Noise as a hihat"
+  goal="Compare the three noise colours, then turn them into a hat by cutting them short."
+  start={`s("bd*2, white*8")`}
+  target={`s("bd*2, <white pink brown>*8").decay(.04).sustain(0)`}>
+  <Step check={{ includes: 'brown', cycles: 3, match: { keys: ['s'] } }}
+        target={`s("bd*2, <white pink brown>*8")`}
+        hints={['The angle brackets replace `white` and keep the `*8` outside them.']}
+        solution={`s("bd*2, <white pink brown>*8")`}>
+    Replace `white` with `<white pink brown>`, keeping the `*8`. One colour per bar: white is the
+    brightest and most aggressive, brown the darkest.
+  </Step>
+  <Step check={{ has: { decay: 0.04, sustain: 0 } }}
+        hints={['Two chained calls on the end of the whole pattern.',
+                '`sustain(0)` means the sound never holds; `decay(.04)` is how fast it falls away.']}
+        solution={`s("bd*2, <white pink brown>*8").decay(.04).sustain(0)`}>
+    Add `.decay(.04).sustain(0)`. A 40-millisecond burst of noise *is* a hihat — that is how every
+    analogue drum machine made one. <L to="/tutorial/envelopes">Envelopes</L> is the whole story.
+  </Step>
+</Exercise>
 
-They make excellent hihats when you cut them short with an envelope:
+<Exercise id="sounds/noise-challenge" title="Challenge: a noise hat line"
+  goal="Four-on-the-floor kick with pink-noise sixteenths over it, cut to clicks."
+  start={`s("bd*4")`} target={`s("bd*4, pink*16").decay(.04).sustain(0)`}
+  hints={['`pink` is a source name, so it goes where a drum name would go.',
+          'Sixteenths means sixteen hits in the cycle — one layer, one multiplier.',
+          'Without a short envelope the noise is a continuous hiss, not a hat.']}
+  check={{ match: { keys: ['s', 'decay', 'sustain'] } }} />
 
-<Strudel code={`s("bd*2, <white pink brown>*8").decay(.04).sustain(0)`} />
+`crackle` is a fourth noise source with a gap in it, and `density` controls how busy it is.
 
-There is also `crackle`, whose `density` controls how busy it is:
-
-<Strudel code={`s("crackle*4").density("<0.01 0.04 0.2 0.5>".slow(2))`} />
+<Exercise id="sounds/crackle" title="Vinyl crackle"
+  goal="Set the density of `crackle`, then pattern it."
+  start={`s("crackle*4")`}
+  target={`s("crackle*4").density("<0.01 0.04 0.2 0.5>".slow(2))`}>
+  <Step check={{ has: { density: 0.01 } }}
+        hints={['A very small number: this is events per unit, not a 0–1 mix.']}
+        solution={`s("crackle*4").density(0.01)`}>
+    Add `.density(0.01)`. Almost nothing: the occasional pop, the way a record sounds between
+    tracks.
+  </Step>
+  <Step check={{ includes: '.slow(2)', cycles: 8, match: { keys: ['s', 'density'] } }}
+        hints={['The argument becomes a mini-notation string with four values in `< >`.',
+                '`.slow(2)` is chained onto the string itself, so each value lasts two bars.']}
+        solution={`s("crackle*4").density("<0.01 0.04 0.2 0.5>".slow(2))`}>
+    Make the density a pattern: `.density("<0.01 0.04 0.2 0.5>".slow(2))`. Two bars per value, from
+    a distant pop to a fire.
+  </Step>
+</Exercise>
 
 ## Loading your own samples
 
-`samples()` registers new names. Point it at a base URL plus a map of names to files:
+`samples()` registers new names, and then they behave exactly like the built-in ones.
 
-<Strudel
-  code={`samples({
+<Exercise id="sounds/loading" title="Register your own names"
+  goal="Load a whole library with one line, then build a sample map by hand."
+  start={`s("bd sd bd sd, hh*16")`}
+  target={`samples({
   bassdrum: 'bd/BT0AADA.wav',
   hihat: 'hh27/000_hh27closedhh.wav',
   snaredrum: ['sd/rytm-01-classic.wav', 'sd/rytm-00-hard.wav'],
 }, 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/');
 
-s("bassdrum snaredrum:0 bassdrum snaredrum:1, hihat*16")`}
-  label="custom sample map"
-/>
+s("bassdrum snaredrum:0 bassdrum snaredrum:1, hihat*16")`}>
+  <Step check={{ includes: "samples('github:tidalcycles/dirt-samples')" }}
+        hints={['One line above the pattern, on its own.',
+                'The `github:` prefix tells Strudel to look for a `strudel.json` in that repo.']}
+        solution={`samples('github:tidalcycles/dirt-samples')
+s("bd sd bd sd, hh*16")`}>
+    Add `samples('github:tidalcycles/dirt-samples')` on the line above. That one call replaces the
+    default `bd`, `sd` and `hh` with the classic Dirt library — the beat is unchanged, the
+    recordings are not.
+  </Step>
+  <Step check={{ includes: 'bassdrum', has: { s: 'bassdrum' }, events: 4 }}
+        hints={['`samples()` takes a map of name → file, and a base URL as its second argument.',
+                'Then play the new name like any other: `s("bassdrum*4")`.']}
+        solution={`samples({
+  bassdrum: 'bd/BT0AADA.wav',
+}, 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/');
+
+s("bassdrum*4")`}>
+    Now name things yourself. Replace everything with a `samples({ bassdrum: 'bd/BT0AADA.wav' }, …)`
+    call pointing at `https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/`, and play
+    `s("bassdrum*4")`. You invented that name; Strudel had never heard it before this line.
+  </Step>
+  <Step check={{ includes: 'snaredrum:1', match: { keys: ['s', 'n'] } }}
+        target={`samples({
+  bassdrum: 'bd/BT0AADA.wav',
+  snaredrum: ['sd/rytm-01-classic.wav', 'sd/rytm-00-hard.wav'],
+}, 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/');
+
+s("bassdrum snaredrum:0 bassdrum snaredrum:1")`}
+        hints={['An **array** of files under one name gives that name several indices.',
+                'Then `:0` and `:1` choose between them, exactly like `casio:0` did.']}
+        solution={`samples({
+  bassdrum: 'bd/BT0AADA.wav',
+  snaredrum: ['sd/rytm-01-classic.wav', 'sd/rytm-00-hard.wav'],
+}, 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/');
+
+s("bassdrum snaredrum:0 bassdrum snaredrum:1")`}>
+    Add a second entry whose value is an **array** of two files —
+    `snaredrum: ['sd/rytm-01-classic.wav', 'sd/rytm-00-hard.wav']` — and play
+    `s("bassdrum snaredrum:0 bassdrum snaredrum:1")`. One name, two indices.
+  </Step>
+  <Step check={{ includes: 'hihat', match: { keys: ['s', 'n'] } }}
+        hints={['One more entry, one more layer.',
+                'The hat file is `hh27/000_hh27closedhh.wav`, and the layer is `hihat*16`.']}
+        solution={`samples({
+  bassdrum: 'bd/BT0AADA.wav',
+  hihat: 'hh27/000_hh27closedhh.wav',
+  snaredrum: ['sd/rytm-01-classic.wav', 'sd/rytm-00-hard.wav'],
+}, 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/');
+
+s("bassdrum snaredrum:0 bassdrum snaredrum:1, hihat*16")`}>
+    Add `hihat: 'hh27/000_hh27closedhh.wav'` and a `, hihat*16` layer. That is the whole mechanism:
+    a name, a file, and the rest of Strudel does not care where it came from.
+  </Step>
+</Exercise>
 
 Shorter ways to get sounds in:
 
@@ -147,12 +397,6 @@ Shorter ways to get sounds in:
 | `samples('http://localhost:5432/')` | serves a local folder via `npx @strudel/sampler` |
 | `soundAlias('RolandTR808_bd', 'kick')` | gives an existing sound a second name |
 
-<Strudel
-  code={`samples('github:tidalcycles/dirt-samples')
-s("bd sd bd sd, hh*16")`}
-  label="a whole classic library in one line"
-/>
-
 <QA q="How do I use samples sitting on my own disk?">
 Two ways. In the official REPL, the **sounds → import-sounds** tab has an "import sounds folder"
 button — subfolder names become sound names, files inside become indices in alphabetical order.
@@ -163,21 +407,84 @@ serves it on `localhost:5432`.
 ## Tuning a sample
 
 If you want to play a sample with `note()` and have it be in tune, tell Strudel what pitch it was
-recorded at:
+recorded at. Give the name a map of pitch → file instead of a plain filename, and the sampler picks
+whichever recording is closest to the note you asked for.
 
-<Strudel
-  code={`samples({
+<Exercise id="sounds/tuning" title="A multisampled Moog"
+  goal="Turn one recording into a playable instrument by adding neighbours."
+  start={`samples({
+  'moog': {
+    'g2': 'moog/004_Mighty%20Moog%20G2.wav',
+  }}, 'github:tidalcycles/dirt-samples')
+
+note("g2!2 <bb2 c3>!2").s('moog')`}
+  target={`samples({
   'moog': {
     'g2': 'moog/004_Mighty%20Moog%20G2.wav',
     'g3': 'moog/005_Mighty%20Moog%20G3.wav',
     'g4': 'moog/006_Mighty%20Moog%20G4.wav',
   }}, 'github:tidalcycles/dirt-samples')
 
-note("g2!2 <bb2 c3>!2, <c4@3 [<eb4 bb3> g4 f4]>").s('moog').clip(1).gain(.5)`}
-  label="multisampled and tuned"
-/>
+note("g2!2 <bb2 c3>!2, <c4@3 [<eb4 bb3> g4 f4]>").s('moog').clip(1).gain(.5)`}>
+  <Step check={{ includes: ["'g3'", "'g4'"] }}
+        hints={['Two more lines in the map, same shape as the `g2` line.',
+                'The files are `moog/005_Mighty%20Moog%20G3.wav` and `moog/006_Mighty%20Moog%20G4.wav`.']}
+        solution={`samples({
+  'moog': {
+    'g2': 'moog/004_Mighty%20Moog%20G2.wav',
+    'g3': 'moog/005_Mighty%20Moog%20G3.wav',
+    'g4': 'moog/006_Mighty%20Moog%20G4.wav',
+  }}, 'github:tidalcycles/dirt-samples')
 
-The sampler picks whichever recording is closest to the note you asked for.
+note("g2!2 <bb2 c3>!2").s('moog')`}>
+    Right now everything above g2 is that one recording stretched upward, and it gets thin and
+    chipmunky fast. Add `g3` and `g4` entries to the map. The bass line barely changes — but you
+    have just made the top of the instrument usable.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['note', 's'] } }}
+        target={`samples({
+  'moog': {
+    'g2': 'moog/004_Mighty%20Moog%20G2.wav',
+    'g3': 'moog/005_Mighty%20Moog%20G3.wav',
+    'g4': 'moog/006_Mighty%20Moog%20G4.wav',
+  }}, 'github:tidalcycles/dirt-samples')
+
+note("g2!2 <bb2 c3>!2, <c4@3 [<eb4 bb3> g4 f4]>").s('moog')`}
+        hints={['A second comma-separated layer inside the same `note` string.',
+                'It is one long note for three bars, then three quicker notes in the fourth.']}
+        solution={`samples({
+  'moog': {
+    'g2': 'moog/004_Mighty%20Moog%20G2.wav',
+    'g3': 'moog/005_Mighty%20Moog%20G3.wav',
+    'g4': 'moog/006_Mighty%20Moog%20G4.wav',
+  }}, 'github:tidalcycles/dirt-samples')
+
+note("g2!2 <bb2 c3>!2, <c4@3 [<eb4 bb3> g4 f4]>").s('moog')`}>
+    Play in the upper octaves you just added: add `, <c4@3 [<eb4 bb3> g4 f4]>` as a second layer
+    inside the `note` string. Those notes come from the `g3` and `g4` recordings now, not from a
+    stretched g2.
+  </Step>
+  <Step check={{ has: { clip: 1, gain: 0.5 } }}
+        hints={['Two chained calls at the very end of the pattern line.',
+                '`clip` scales how long each note is held, as a fraction of its slot.']}
+        solution={`samples({
+  'moog': {
+    'g2': 'moog/004_Mighty%20Moog%20G2.wav',
+    'g3': 'moog/005_Mighty%20Moog%20G3.wav',
+    'g4': 'moog/006_Mighty%20Moog%20G4.wav',
+  }}, 'github:tidalcycles/dirt-samples')
+
+note("g2!2 <bb2 c3>!2, <c4@3 [<eb4 bb3> g4 f4]>").s('moog').clip(1).gain(.5)`}>
+    Add `.clip(1).gain(.5)`. `clip(1)` makes each note last exactly its slot, so the layers join up
+    instead of leaving gaps, and `gain(.5)` stops two stacked voices from clipping the output.
+  </Step>
+</Exercise>
+
+<Box>
+Note the `'moog'` in single quotes at the bottom: it is one sound name, not a pattern. Double
+quotes there would still work, but the moment a name contains a space or a comma you need the
+single quotes.
+</Box>
 
 ## Recap
 

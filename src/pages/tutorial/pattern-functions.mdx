@@ -5,119 +5,364 @@ title: Pattern Functions
 lede: The part of Strudel that has no equivalent in a DAW — functions that take a pattern and give you back a different one.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
 
 Up to now most functions have set a parameter. These do something stranger: they take the whole
 pattern as input and transform its **structure**. This is where Strudel stops being a sequencer.
 
-## rev — reverse
+None of them can be read off the page. You have to hear them, so every one below is something you
+type into a running pattern and listen to.
 
-<Strudel code={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").rev()`} />
+## Reverse
 
-`rev` reverses each cycle individually. (`revv` reverses a whole pattern's cycle order.)
+<Exercise id="pattern-functions/rev" title="Backwards, and back again"
+  goal="Hear the difference between reversing inside a cycle and reversing the cycles themselves."
+  start={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano")`}
+  target={`n("0 2 4 7").scale("C:minor").s("piano").palindrome()`}>
+  <Step check={{ includes: '.rev()', cycles: 2, match: { keys: ['note'] } }}
+        target={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano").rev()`}
+        hints={['It chains on the end, like any other function.']}
+        solution={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano").rev()`}>
+    Two bars: a low group, then a high one. Add `.rev()` to the end. Each bar is now played
+    backwards — but the low group is still first. `rev` works *inside* a cycle.
+  </Step>
+  <Step check={{ includes: '.revv()', cycles: 2, match: { keys: ['note'] } }}
+        target={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano").revv()`}
+        hints={['One more `v`.']}
+        solution={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano").revv()`}>
+    Change `.rev()` to `.revv()`. Now the **bars** swap too: the high group comes first.
+  </Step>
+  <Step check={{ includes: '.palindrome()', cycles: 2, match: { keys: ['note'] } }}
+        target={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano").palindrome()`}
+        hints={['`palindrome` is `rev` applied to every other cycle.']}
+        solution={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano").palindrome()`}>
+    Change `.revv()` to `.palindrome()`. Bar 1 forwards, bar 2 backwards.
+  </Step>
+  <Step check={{ excludes: '<', cycles: 2, match: { keys: ['note'] } }}
+        hints={['The `< >` and the second group both go; keep the four numbers of the first group.']}
+        solution={`n("0 2 4 7").scale("C:minor").s("piano").palindrome()`}>
+    Drop the alternation so you can hear `palindrome` on its own: cut the source down to
+    `n("0 2 4 7")`. Up, then down, forever.
+  </Step>
+</Exercise>
 
-## jux — the same thing, but different on the right
+<Box>
+`rev` reverses each cycle on its own. `revv` reverses the order of the cycles as well.
+`palindrome` is the pattern, then `rev` of it, one per cycle.
+</Box>
 
-`jux(f)` plays the pattern hard left and `f(pattern)` hard right.
+## jux — one ear at a time
 
-<Strudel code={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").jux(rev)`} />
+`jux(f)` plays the pattern hard left and `f(pattern)` hard right. Use headphones for this one.
 
-It is exactly this, written short:
-
-<Strudel
-  code={`$: n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").pan(0)
-$: n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").pan(1).rev()`}
-/>
-
-`juxBy(amount, f)` narrows the stereo split — 0 is mono, 1 is full:
-
-<Strudel code={`s("bd lt [~ ht] mt cp ~ bd hh").juxBy("<0 .5 1>/2", rev)`} />
+<Exercise id="pattern-functions/jux" title="Split the stereo image"
+  goal="Hear `jux` as what it really is: two lanes, panned hard, one of them transformed."
+  start={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz")`}
+  target={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").jux(x => x.speed(1.5))`}>
+  <Step check={{ includes: '.jux(rev)', match: { keys: ['n', 'pan'] } }}
+        target={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").jux(rev)`}
+        hints={['`rev` goes in bare, with no parentheses — you are handing `jux` the function itself.']}
+        solution={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").jux(rev)`}>
+    Add `.jux(rev)`. The left ear plays the phrase, the right ear plays it backwards, and the two
+    cross in the middle of the bar.
+  </Step>
+  <Step check={{ includes: '.pan(1)', excludes: '.jux(', match: { keys: ['n', 'pan'] } }}
+        target={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").jux(rev)`}
+        hints={['Two `$:` lanes, the same `n(...)` in both.', 'One gets `.pan(0)`, the other `.pan(1)` and `.rev()`.']}
+        solution={`$: n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").pan(0)
+$: n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").pan(1).rev()`}>
+    Write out what that shorthand stands for: two `$:` lanes of the same pattern, one `.pan(0)`,
+    one `.pan(1).rev()`. It should sound exactly the same.
+  </Step>
+  <Step check={{ includes: '.juxBy(', fn: "(h) => { const p = [...new Set(h.map(e => e.value.pan))].sort(); return (h.length === 18 && p.length === 2 && p[0] > 0 && p[1] < 1) || 'Expected both copies still there, but panned somewhere between hard left and hard right.' }" }}
+        hints={['Back to one line, and the amount is the first argument.']}
+        solution={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").juxBy(.5, rev)`}>
+    Go back to one line and narrow the split: `.juxBy(.5, rev)`. The two copies move towards the
+    centre — `0` would be mono, `1` is the full `jux`.
+  </Step>
+  <Step check={{ includes: '.jux(', excludes: '.juxBy(', match: { keys: ['n', 'pan', 'speed'] } }}
+        hints={['An inline arrow function, like the ones you pass to `map`.']}
+        solution={`n("0 1 [4 3] 2 0 2 [~ 3] 4").s("jazz").jux(x => x.speed(1.5))`}>
+    `jux` takes *any* function, not just `rev`. Widen it back out and change the transform:
+    `.jux(x => x.speed(1.5))`. Same notes both sides, but the right ear is sped up.
+  </Step>
+</Exercise>
 
 <Box kind="try">
-`jux` takes any function: `jux(x => x.speed(2))`, `jux(x => x.add(note(7)))`,
-`jux(x => x.fast(1.5))`. Anything you can do to a pattern, you can do to only one ear.
+Try `jux(x => x.add(note(7)))`, `jux(x => x.fast(1.5))`, `jux(x => x.lpf(400))`. Anything you can
+do to a pattern you can do to only one ear.
 </Box>
+
+<Exercise id="pattern-functions/jux-challenge" title="Challenge: octave in the right ear"
+  goal="The same bass line in both ears, except the right one is an octave up."
+  start={`note("c2 eb2 g2 bb2").s("sawtooth")`}
+  target={`note("c2 eb2 g2 bb2").s("sawtooth").jux(x => x.add(note(12)))`}
+  check={{ includes: '.jux(', match: { keys: ['note', 'pan'] } }}
+  hints={[
+    'An octave is 12 semitones, and `add` is how you move notes.',
+    'The pattern is already a control pattern, so the number you add has to be wrapped: `add(note(12))`.',
+    'Shape: `.jux(x => x.add(…))`.',
+  ]} />
 
 ## off — copy, delay, modify
 
-`off(time, f)` superimposes a modified copy, shifted by `time` cycles. It is a delay line where you
-control what happens to the echo.
+`off(time, f)` superimposes a modified copy, shifted by `time` cycles. It is a delay line where
+you choose what happens to the echo.
 
-<Strudel code={`"c3 eb3 g3".off(1/8, x => x.add(7)).note()`} label="an echo, a fifth up" />
+<Exercise id="pattern-functions/off" title="Build a texture out of one line"
+  goal="Turn three notes into nine by stacking shifted, transposed, quieter copies."
+  start={`note("c3 eb3 g3").s("triangle").decay(.15).sustain(0)`}
+  target={`note("c3 eb3 g3").s("triangle").decay(.15).sustain(0)
+  .off(3/16, x => x.add(note(7)).gain(.4)
+    .off(1/8, y => y.add(note(5)).gain(.2)))`}>
+  <Step check={{ includes: '.off(', match: { keys: ['note'] } }}
+        target={`note("c3 eb3 g3").s("triangle").decay(.15).sustain(0)
+  .off(1/8, x => x.add(note(7)))`}
+        hints={['`1/8` is an eighth of a cycle, so the copy lands an eighth note later.']}
+        solution={`note("c3 eb3 g3").s("triangle").decay(.15).sustain(0)
+  .off(1/8, x => x.add(note(7)))`}>
+    Add `.off(1/8, x => x.add(note(7)))` on a new line. Six notes now: the original three, plus
+    three a fifth up, an eighth of a cycle later.
+  </Step>
+  <Step check={{ includes: '.gain(', fn: "(h) => { const q = h.filter(e => e.value.gain === 0.4).length; return (h.length === 6 && q === 3) || 'Expected 6 notes, the 3 copies at gain .4 and the originals untouched.' }" }}
+        hints={['Chain it inside the arrow function, after the `add`.']}
+        solution={`note("c3 eb3 g3").s("triangle").decay(.15).sustain(0)
+  .off(1/8, x => x.add(note(7)).gain(.4))`}>
+    The copy is as loud as the original, which is not what an echo does. Add `.gain(.4)` to the
+    transform: `x => x.add(note(7)).gain(.4)`.
+  </Step>
+  <Step check={{ events: 9, includes: '.gain(.2' }}
+        hints={['The second `off` chains onto `x`, inside the first arrow function.', 'Name the inner argument something else, `y`, so you can see which is which.']}
+        solution={`note("c3 eb3 g3").s("triangle").decay(.15).sustain(0)
+  .off(1/8, x => x.add(note(7)).gain(.4)
+    .off(1/8, y => y.add(note(5)).gain(.2)))`}>
+    `off` can go inside `off`. Give the copy its own copy:
+    `.off(1/8, y => y.add(note(5)).gain(.2))`, chained onto `x`. Nine notes from three.
+  </Step>
+  <Step check={{ includes: '3/16', match: { keys: ['note', 'gain'] } }}
+        hints={['Only the outer one — leave the inner `1/8` alone.', 'A dotted eighth is 3/16 of a bar.']}
+        solution={`note("c3 eb3 g3").s("triangle").decay(.15).sustain(0)
+  .off(3/16, x => x.add(note(7)).gain(.4)
+    .off(1/8, y => y.add(note(5)).gain(.2)))`}>
+    Move the outer copy to a dotted eighth: change the **outer** `1/8` to `3/16`. The whole thing
+    starts to limp, in a good way.
+  </Step>
+</Exercise>
 
-Nested, it builds whole textures:
+<Box kind="warn">
+`.add(7)` inside an `off` does nothing if the pattern has already been through `note()` or `n()`:
+you get a *"Can't do arithmetic on control pattern"* warning in the console and silence where the
+transposition should be. Either wrap the number in the same control — `.add(note(7))` — or do the
+arithmetic before you name the control: `"c3 eb3 g3".off(1/8, x => x.add(7)).note()`.
+</Box>
 
-<Strudel
-  code={`n("0 [4 <3 2>] <2 3> [~ 1]"
-  .off(1/16, x=>x.add(4))
-  .off(1/8, x=>x.add(7))
-).scale("<C5:minor Db5:mixolydian>/2")
-  .s("triangle").room(.5).dec(.1)`}
-/>
-
-<Strudel
-  code={`s("bd sd [rim bd] sd,[~ hh]*4").bank("CasioRZ1")
-  .off(2/16, x=>x.speed(1.5).gain(.25)
-  .off(3/16, y=>y.vowel("<a e i o>*8")))`}
-  label="off inside off"
-/>
+<Exercise id="pattern-functions/off-challenge" title="Challenge: a dub stab"
+  goal="A rim shot on every beat, with a quarter-volume copy a dotted eighth behind it."
+  start={`s("rim*4").bank("RolandTR707")`}
+  target={`s("rim*4").bank("RolandTR707").off(3/16, x => x.gain(.25))`}
+  check={{ includes: '.off(', match: { keys: ['s', 'gain'] } }}
+  hints={[
+    'A dotted eighth is three sixteenths of a bar, and one bar is one cycle.',
+    'The copy needs a `gain`, the original does not.',
+    'Shape: `.off(time, x => x.gain(…))`.',
+  ]} />
 
 ## superimpose and layer
 
-`superimpose(f)` is `off` with zero delay — the original plus a modified copy.
+<Exercise id="pattern-functions/layer" title="From one part to two instruments"
+  goal="Add a copy on top, then throw the original away and keep only the copies."
+  start={`note("c3 eb3 g3 bb3").lpf(900).s("sawtooth")`}
+  target={`note("c3 eb3 g3 bb3").lpf(900)
+  .layer(x => x.s("sawtooth"), x => x.s("square").add(note(12)))`}>
+  <Step check={{ includes: '.superimpose(', match: { keys: ['note', 's'] } }}
+        target={`note("c3 eb3 g3 bb3").lpf(900).s("sawtooth").superimpose(x => x.add(note(12)))`}
+        hints={['It takes only a function — no time argument.']}
+        solution={`note("c3 eb3 g3 bb3").lpf(900).s("sawtooth").superimpose(x => x.add(note(12)))`}>
+    Add `.superimpose(x => x.add(note(12)))`. Eight notes: the line, plus the same line an octave
+    up, exactly on top.
+  </Step>
+  <Step check={{ includes: '.off(0', match: { keys: ['note', 's'] } }}
+        target={`note("c3 eb3 g3 bb3").lpf(900).s("sawtooth").superimpose(x => x.add(note(12)))`}
+        hints={['The same transform, with a time of zero.']}
+        solution={`note("c3 eb3 g3 bb3").lpf(900).s("sawtooth").off(0, x => x.add(note(12)))`}>
+    Replace `superimpose` with `.off(0, x => x.add(note(12)))`. Identical. `superimpose(f)` *is*
+    `off(0, f)`.
+  </Step>
+  <Step check={{ includes: '.layer(', match: { keys: ['note'] } }}
+        target={`note("c3 eb3 g3 bb3").lpf(900).s("sawtooth").layer(x => x.add(note(12)), x => x.add(note(7)))`}
+        hints={['`layer` takes any number of functions, separated by commas.', 'Nothing in the list means "leave it alone", so the original is gone.']}
+        solution={`note("c3 eb3 g3 bb3").lpf(900).s("sawtooth")
+  .layer(x => x.add(note(12)), x => x.add(note(7)))`}>
+    Replace it with `.layer(x => x.add(note(12)), x => x.add(note(7)))`. Still eight notes, but the
+    untransposed original has vanished: `layer` keeps only what you list.
+  </Step>
+  <Step check={{ includes: '.s("square")', match: { keys: ['note', 's', 'lpf'] } }}
+        hints={['Move the `.s("sawtooth")` out of the chain and into the first layer.']}
+        solution={`note("c3 eb3 g3 bb3").lpf(900)
+  .layer(x => x.s("sawtooth"), x => x.s("square").add(note(12)))`}>
+    That is what `layer` is really for: two instruments from one source. Delete `.s("sawtooth")`
+    from the chain and make the layers
+    `x => x.s("sawtooth")` and `x => x.s("square").add(note(12))`.
+  </Step>
+</Exercise>
 
-<Strudel code={`"<0 2 4 6 ~ 4 ~ 2 0!3 ~!5>*8".superimpose(x=>x.add(2)).scale('C:minor').note()`} />
+<Exercise id="pattern-functions/layer-challenge" title="Challenge: two voices, no original"
+  goal="`c3 eb3 g3` played by a `sawtooth` as written and by a `square` an octave down, with nothing in between."
+  start={`note("c3 eb3 g3").s("sawtooth")`}
+  target={`note("c3 eb3 g3").layer(x => x.s("sawtooth"), x => x.s("square").sub(note(12)))`}
+  check={{ includes: '.layer(', match: { keys: ['note', 's'] } }}
+  hints={[
+    '`sub` is `add` going the other way.',
+    'If a layer sets `.s(...)` itself, the chain does not need one.',
+    'Shape: `.layer(x => …, x => …)`, one function per voice.',
+  ]} />
 
-`layer(...fs)` drops the original and gives you only the transformed versions — the cleanest way to
-make two instruments from one source pattern:
+## Repeating events
 
-<Strudel
-  code={`note("<g1 bb1 d2 f1>").layer(
-  x => x.s("sawtooth").vib(4),
-  x => x.s("square").add(note(12))
-)`}
-/>
+<Exercise id="pattern-functions/ply" title="ply, echo, echoWith"
+  goal="Three ways of turning one hit into several, and how they differ."
+  start={`s("bd sd [~ bd] sd").bank("RolandTR707")`}
+  target={`s("bd sd [~ bd] sd").bank("RolandTR707").echoWith(3, 1/6, (p, n) => p.speed(n + 1))`}>
+  <Step check={{ includes: '.ply(', events: 8 }}
+        hints={['It is the same as writing `*2` on every single element.']}
+        solution={`s("bd sd [~ bd] sd").bank("RolandTR707").ply(2)`}>
+    Add `.ply(2)`. Every event is now two events in the same slot — eight hits instead of four.
+  </Step>
+  <Step check={{ includes: 'ply("<', cycles: 3, events: 24 }}
+        hints={['`< >` gives one value per cycle.']}
+        solution={`s("bd sd [~ bd] sd").bank("RolandTR707").ply("<1 2 3>")`}>
+    The argument is a pattern, which is where `ply` earns its place. Change it to `.ply("<1 2 3>")`:
+    plain, doubled, tripled, one bar each.
+  </Step>
+  <Step check={{ includes: '.echo(', events: 12 }}
+        hints={['`echo(times, timeOffset, feedback)` — three numbers.', 'Three repeats, a sixth of a cycle apart, each at 0.8 of the one before.']}
+        solution={`s("bd sd [~ bd] sd").bank("RolandTR707").echo(3, 1/6, .8)`}>
+    `ply` stacks the copies inside the slot. `echo` spreads them out in time and fades them.
+    Replace it with `.echo(3, 1/6, .8)`.
+  </Step>
+  <Step check={{ includes: '.echoWith(', fn: "(h) => { const sp = [...new Set(h.map(e => e.value.speed))].sort((a, b) => a - b); return (h.length === 12 && sp.join(' ') === '1 2 3') || 'Expected 12 events with speeds 1, 2 and 3 — one speed per repeat.' }" }}
+        hints={['The transform gets two arguments: the pattern, and which repeat it is (counting from 0).']}
+        solution={`s("bd sd [~ bd] sd").bank("RolandTR707").echoWith(3, 1/6, (p, n) => p.speed(n + 1))`}>
+    `echoWith(times, time, f)` hands you the repeat number, so each copy can differ. Replace the
+    line with `.echoWith(3, 1/6, (p, n) => p.speed(n + 1))`: each repeat plays a step higher.
+  </Step>
+</Exercise>
 
-## ply — repeat each event
+<Box kind="warn">
+`stut(times, feedback, time)` does the same job as `echo` with the **last two arguments swapped**.
+`echo(3, 1/6, .8)` is `stut(3, .8, 1/6)`. If your repeats come out at the wrong spacing, that is
+usually why.
+</Box>
 
-<Strudel code={`s("hh hh, bd rim [~ cp] rim").bank("RolandTR707").ply(2)`} />
+<Exercise id="pattern-functions/ply-challenge" title="Challenge: a flam on the last beat"
+  goal="Four kicks a bar, except beat 4, which is three kicks in the space of one."
+  start={`s("bd*4")`}
+  target={`s("bd*4").ply("1 1 1 3")`}
+  check={{ includes: '.ply(', match: { keys: ['s'] } }}
+  hints={[
+    '`ply` takes a pattern, and a four-step pattern lines up with four kicks.',
+    'A value of 1 leaves an event alone.',
+    'Shape: `.ply("… … … …")`, four numbers.',
+  ]} />
 
-Identical to writing `*2` on every element. Patterning it is where it earns its place:
-
-<Strudel code={`s("bd sd [~ bd] sd").ply("<1 2 3>")`} />
-
-## echo and stut
-
-`echo(times, timeOffset, feedback)` — repeats with decaying volume.
-
-<Strudel code={`s("bd sd").echo(3, 1/6, .8)`} />
-
-`echoWith(times, time, f)` gives you the iteration index, so each repeat can differ:
-
-<Strudel code={`"<0 [2 4]>".echoWith(4, 1/8, (p,n) => p.add(n*2)).scale("C:minor").note()`} />
-
-## Conditional application
+## Applying a function some of the time
 
 | Function | Applies `f`… |
 | --- | --- |
-| `every(n, f)` / `firstOf` | on the first of every n cycles |
+| `every(n, f)`, `firstOf(n, f)` | on the first of every n cycles |
 | `lastOf(n, f)` | on the last of every n cycles |
-| `when(binaryPattern, f)` | whenever the pattern is true |
-| `sometimesBy(p, f)` | to a random p of events |
-| `someCyclesBy(p, f)` | to a random p of whole cycles |
-| `within(start, end, f)` | only to part of each cycle |
+| `when(binaryPattern, f)` | wherever the pattern is true |
+| `within(start, end, f)` | only to a part of each cycle |
 
-<Strudel code={`note("c3 d3 e3 g3").every(4, x=>x.rev())`} />
+<Exercise id="pattern-functions/conditional" title="A fill, four ways"
+  goal="Put a double-time fill in the right bar, then in the right half of every bar."
+  start={`s("bd sd bd sd, hh*8").bank("RolandTR909")`}
+  target={`s("bd sd bd sd, hh*8").bank("RolandTR909").within(.5, 1, x => x.ply(2))`}>
+  <Step check={{ includes: '.every(4', cycles: 4, match: { keys: ['s'] } }}
+        target={`s("bd sd bd sd, hh*8").bank("RolandTR909").every(4, x => x.ply(2))`}
+        hints={['The function you pass is the same kind of arrow function `jux` took.']}
+        solution={`s("bd sd bd sd, hh*8").bank("RolandTR909").every(4, x => x.ply(2))`}>
+    Add `.every(4, x => x.ply(2))` and count bars. The fill lands on bar **1** of every four, which
+    is almost never where you want it.
+  </Step>
+  <Step check={{ includes: '.lastOf(', cycles: 4, match: { keys: ['s'] } }}
+        target={`s("bd sd bd sd, hh*8").bank("RolandTR909").lastOf(4, x => x.ply(2))`}
+        hints={['Only the function name changes.']}
+        solution={`s("bd sd bd sd, hh*8").bank("RolandTR909").lastOf(4, x => x.ply(2))`}>
+    Change `every` to `lastOf`. Bar 4 of every four: a fill going into the next phrase.
+  </Step>
+  <Step check={{ includes: '.when(', cycles: 4, match: { keys: ['s'] } }}
+        target={`s("bd sd bd sd, hh*8").bank("RolandTR909").lastOf(4, x => x.ply(2))`}
+        hints={['One value per cycle, three off and one on.', '`when` reads 0 as false and anything else as true.']}
+        solution={`s("bd sd bd sd, hh*8").bank("RolandTR909").when("<0 0 0 1>", x => x.ply(2))`}>
+    Now spell the same thing out by hand: `.when("<0 0 0 1>", x => x.ply(2))`. Identical to
+    `lastOf(4, …)`, but the schedule is a pattern you can write anything into.
+  </Step>
+  <Step check={{ includes: '.within(', match: { keys: ['s'] } }}
+        hints={['`within` takes two positions in the cycle, 0 to 1.', 'The second half runs from .5 to 1.']}
+        solution={`s("bd sd bd sd, hh*8").bank("RolandTR909").within(.5, 1, x => x.ply(2))`}>
+    Replace it with `.within(.5, 1, x => x.ply(2))`: not *some bars*, but the same half of **every**
+    bar.
+  </Step>
+</Exercise>
 
-<Strudel code={`"c3 eb3 g3".when("<0 1>/2", x=>x.sub("5")).note()`} />
+<Box kind="warn">
+`within` filters first and applies `f` second, so a function that moves events in time can throw
+them outside the window you named. `within(0, .5, x => x.fast(2))` takes the first half's events
+and then speeds them up across the whole cycle. Functions that stay put — `ply`, `speed`, `gain`,
+`lpf` — behave the way you expect.
+</Box>
 
-<Strudel code={`s("hh*8").sometimesBy(.4, x=>x.speed("0.5"))`} />
+<Exercise id="pattern-functions/conditional-challenge" title="Challenge: turn the bar around"
+  goal="A four-beat drum bar that plays backwards in the last bar of every four."
+  start={`s("bd sd bd cp").bank("RolandTR909")`}
+  target={`s("bd sd bd cp").bank("RolandTR909").lastOf(4, x => x.rev())`}
+  check={{ cycles: 4, match: { keys: ['s'] } }}
+  hints={[
+    'You met the function that reverses a cycle at the top of this chapter.',
+    'The end of a four-bar phrase is the *last* of every four, not the first.',
+    'Shape: `.lastOf(n, x => …)`.',
+  ]} />
 
-<Strudel code={`s("bd,hh*8").someCyclesBy(.3, x=>x.speed("0.5"))`} label="whole cycles change, not single hits" />
+## Applying a function some of the *time*
 
-Named probability shortcuts, from never to always:
+<Exercise id="pattern-functions/chance" title="Roll the dice"
+  goal="Hit-by-hit randomness, then cycle-by-cycle randomness, then dropping hits altogether."
+  start={`s("hh*8").bank("RolandTR909")`}
+  target={`s("hh*8").bank("RolandTR909").often(x => x.speed(2)).someCyclesBy(.5, x => x.gain(.4)).degradeBy(.3)`}>
+  <Step check={{ includes: '.sometimesBy(', cycles: 8, fn: "(h) => { const n = h.filter(e => e.value.speed === 2).length; return (h.length === 64 && n > 14 && n < 50) || 'Expected all 64 hats, with roughly half of them at speed 2 (got ' + h.filter(e => e.value.speed === 2).length + ').' }" }}
+        hints={['`sometimesBy(probability, f)` — the probability comes first.']}
+        solution={`s("hh*8").bank("RolandTR909").sometimesBy(.5, x => x.speed(2))`}>
+    Add `.sometimesBy(.5, x => x.speed(2))`. Every hat still plays; about half of them are pitched
+    up. Let it run — the choice is remade every cycle.
+  </Step>
+  <Step check={{ includes: '.sometimes(', excludes: '.sometimesBy(', cycles: 8, fn: "(h) => { const n = h.filter(e => e.value.speed === 2).length; return (h.length === 64 && n > 14 && n < 50) || 'It should still sound like the previous step.' }" }}
+        hints={['There is a named shortcut for exactly 0.5.']}
+        solution={`s("hh*8").bank("RolandTR909").sometimes(x => x.speed(2))`}>
+    Replace it with `.sometimes(x => x.speed(2))` — the named shortcut for 0.5. No audible change.
+  </Step>
+  <Step check={{ includes: '.often(', cycles: 8, fn: "(h) => { const n = h.filter(e => e.value.speed === 2).length; return (h.length === 64 && n > 34 && n < 62) || 'Expected roughly three quarters of the 64 hats at speed 2 (got ' + h.filter(e => e.value.speed === 2).length + ').' }" }}
+        hints={['The next one up the list.']}
+        solution={`s("hh*8").bank("RolandTR909").often(x => x.speed(2))`}>
+    Change `sometimes` to `often`, which is 0.75. Noticeably more of them jump.
+  </Step>
+  <Step check={{ includes: '.someCyclesBy(', cycles: 8, fn: "(h) => { const byCycle = [0,1,2,3,4,5,6,7].map(c => h.filter(e => Math.floor(e.t) === c)); const loud = byCycle.filter(c => c.length && c.every(e => e.value.gain === 0.4)).length; const none = byCycle.filter(c => c.length && c.every(e => e.value.gain === undefined)).length; return (loud > 0 && none > 0 && loud + none === 8) || 'Expected whole bars at gain .4 and whole bars untouched — never a mix inside one bar.' }" }}
+        hints={['`someCyclesBy` has the same shape as `sometimesBy`.', 'Chain it after the `often(...)`.']}
+        solution={`s("hh*8").bank("RolandTR909").often(x => x.speed(2)).someCyclesBy(.5, x => x.gain(.4))`}>
+    Add `.someCyclesBy(.5, x => x.gain(.4))`. Listen to the difference: this decides once per bar,
+    so a whole bar is quiet or a whole bar is not. `sometimesBy` decides per hit.
+  </Step>
+  <Step check={{ includes: '.degradeBy(', cycles: 8, events: [30, 58] }}
+        hints={['`degradeBy(p)` drops each event with probability p.']}
+        solution={`s("hh*8").bank("RolandTR909").often(x => x.speed(2)).someCyclesBy(.5, x => x.gain(.4)).degradeBy(.3)`}>
+    Finally, stop playing some of them: add `.degradeBy(.3)`. Three hats in ten go missing.
+    (`degrade` is `degradeBy(.5)`.)
+  </Step>
+</Exercise>
 
 | Name | Probability |
 | --- | --- |
@@ -129,103 +374,241 @@ Named probability shortcuts, from never to always:
 | `almostAlways` | 0.9 |
 | `always` | 1 |
 
-<Strudel code={`s("hh*8").often(x => x.gain(.4)).rarely(x => x.speed(2))`} />
+Each is `sometimesBy` with that number baked in, and each has a `someCycles…` twin
+(`rarelyCycles`, and so on) that decides per cycle instead of per event.
 
-## Randomly removing events
+<Exercise id="pattern-functions/undegrade" title="The other half of the coin"
+  goal="Split one hat line into the hits `degradeBy` keeps and the hits it drops, and treat them differently."
+  start={`s("hh*16").bank("RolandTR909")`}
+  target={`$: s("hh*16").bank("RolandTR909").degradeBy(.5).gain(.8)
+$: s("hh*16").bank("RolandTR909").undegradeBy(.5).gain(.3).speed(2)`}>
+  <Step check={{ includes: '.degradeBy(', cycles: 4, events: [18, 46] }}
+        hints={['Half of them, on average, are dropped.']}
+        solution={`s("hh*16").bank("RolandTR909").degradeBy(.5)`}>
+    Add `.degradeBy(.5)`. Sixteenths, with half of them missing.
+  </Step>
+  <Step check={{ includes: '.undegradeBy(', cycles: 4, events: 64 }}
+        hints={['A second `$:` lane, the same source, `undegradeBy` instead of `degradeBy`.', 'The first lane needs a `$:` too once there are two.']}
+        solution={`$: s("hh*16").bank("RolandTR909").degradeBy(.5)
+$: s("hh*16").bank("RolandTR909").undegradeBy(.5)`}>
+    Add a second lane with `.undegradeBy(.5)` instead. Every sixteenth is back, exactly once:
+    `undegradeBy` keeps precisely the events `degradeBy` threw away.
+  </Step>
+  <Step check={{ includes: '.speed(2)', cycles: 4, events: 64, fn: "(h) => { const g = [...new Set(h.map(e => e.value.gain))]; return (g.length === 2 && h.filter(e => e.value.speed === 2).length > 0 && h.filter(e => e.value.speed === undefined).length > 0) || 'Expected two gains, and only one of the two lanes sped up.' }" }}
+        hints={['One `.gain(.8)`, the other `.gain(.3).speed(2)`.']}
+        solution={`$: s("hh*16").bank("RolandTR909").degradeBy(.5).gain(.8)
+$: s("hh*16").bank("RolandTR909").undegradeBy(.5).gain(.3).speed(2)`}>
+    Now treat them differently: `.gain(.8)` on the first lane, `.gain(.3).speed(2)` on the second.
+    Every hat is played, but the same coin toss decides which of two sounds it gets.
+  </Step>
+</Exercise>
 
-<Strudel code={`s("hh*8").degradeBy(0.2)`} label="drop 20% of hits" />
-
-`degrade` is `degradeBy(0.5)`. `undegradeBy` keeps exactly the events that `degradeBy` would have
-dropped — so the two are complementary and can be given different treatments:
-
-<Strudel
-  code={`$: s("hh*16").degradeBy(.5).gain(.8)
-$: s("hh*16").undegradeBy(.5).gain(.3).speed(2)`}
-  label="every hat is played, but two different ways"
-/>
+<Exercise id="pattern-functions/chance-challenge" title="Challenge: the occasional octave"
+  goal="Eight hats a bar; about a quarter of them jump an octave. Use the named shortcut, not a number."
+  start={`s("hh*8")`}
+  target={`s("hh*8").rarely(x => x.speed(2))`}
+  check={{ includes: '.rarely(', cycles: 4, events: 32, fn: "(h) => { const n = h.filter(e => e.value.speed === 2).length; return (n > 2 && n < 20) || 'Expected all 32 hats to play, with roughly a quarter of them at speed 2 (got ' + n + ').' }" }}
+  hints={[
+    'Doubling `speed` on a sample raises it an octave.',
+    '0.25 has a name in the table above.',
+    'Nothing should be dropped — every hat still plays, it just might be transformed.',
+  ]} />
 
 ## Reordering
 
-<Strudel code={`note("c d e f").s("piano").shuffle(4)`} label="each part played exactly once per cycle" />
+<Exercise id="pattern-functions/reorder" title="Shuffle the deck"
+  goal="Four ways of playing the same four notes in a different order each cycle."
+  start={`n("0 1 2 3").scale("A:minor").s("piano")`}
+  target={`n("0 1 2 3").scale("A:minor").s("piano").chunk(4, x => x.add(note(7)))`}>
+  <Step check={{ includes: '.iter(', cycles: 4, match: { keys: ['note'] } }}
+        target={`n("0 1 2 3").scale("A:minor").s("piano").iter(4)`}
+        hints={['`iter(n)` cuts the cycle into n parts and starts one part later each cycle.']}
+        solution={`n("0 1 2 3").scale("A:minor").s("piano").iter(4)`}>
+    Add `.iter(4)`. Bar 1 starts on note 0, bar 2 on note 1, bar 3 on note 2 — the phrase rotates.
+  </Step>
+  <Step check={{ includes: '.shuffle(', cycles: 4, events: 16, fn: "(h) => [0,1,2,3].every(c => new Set(h.filter(e => Math.floor(e.t) === c).map(e => e.value.note)).size === 4) || 'Expected all four notes exactly once in every bar.'" }}
+        hints={['Same argument, different name.']}
+        solution={`n("0 1 2 3").scale("A:minor").s("piano").shuffle(4)`}>
+    Change `iter` to `shuffle`. Still four parts, still all four in every bar — but in a random
+    order, like dealing a shuffled deck.
+  </Step>
+  <Step check={{ includes: '.scramble(', cycles: 4, events: 16 }}
+        hints={['One more name for the same argument.']}
+        solution={`n("0 1 2 3").scale("A:minor").s("piano").scramble(4)`}>
+    Change `shuffle` to `scramble`. It picks each slot independently, so parts repeat and others
+    never show up. Let it run a while and you will hear notes land twice in a row.
+  </Step>
+  <Step check={{ includes: '.chunk(', cycles: 4, match: { keys: ['note'] } }}
+        hints={['`chunk(n, f)` applies `f` to a different nth of the cycle each cycle.']}
+        solution={`n("0 1 2 3").scale("A:minor").s("piano").chunk(4, x => x.add(note(7)))`}>
+    Replace it with `.chunk(4, x => x.add(note(7)))`. Nothing is reordered now; instead a different
+    quarter of the bar is transposed each time round.
+  </Step>
+</Exercise>
 
-<Strudel code={`note("c d e f").s("piano").scramble(4)`} label="parts chosen at random — repeats allowed" />
+<Exercise id="pattern-functions/reorder-challenge" title="Challenge: a riff that walks"
+  goal="A four-note piano riff `0 2 4 7` in C minor that starts one note later each bar."
+  start={`n("0 2 4 7").scale("C:minor").s("piano")`}
+  target={`n("0 2 4 7").scale("C:minor").s("piano").iter(4)`}
+  check={{ cycles: 4, match: { keys: ['note'] } }}
+  hints={[
+    'Four notes means four parts.',
+    'You want rotation, not randomness — the same function that made bar 2 start on note 1.',
+    'Shape: `.iter(n)`.',
+  ]} />
 
-<Strudel code={`n("0 1 2 3".scale('A:minor')).iter(4).s("piano")`} label="iter: rotate the start point each cycle" />
+## Taking the rhythm from somewhere else
 
-<Strudel code={`"0 1 2 3".chunk(4, x=>x.add(7)).scale("A:minor").note()`} label="chunk: apply f to a different quarter each cycle" />
+<Exercise id="pattern-functions/struct" title="struct, mask, beat"
+  goal="Give a one-note-per-bar pattern a rhythm three different ways, and hear which one creates events."
+  start={`note("<c3 eb3 g3>").s("sawtooth").lpf(800)`}
+  target={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).beat("0,4,6,10,14", 16)`}>
+  <Step check={{ includes: '.struct(', events: 5 }}
+        hints={['`x` means on, `~` means off, and there are eight slots.']}
+        solution={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).struct("x ~ x x ~ x ~ x")`}>
+    One long note per bar. Add `.struct("x ~ x x ~ x ~ x")`: five hits, all on the same note.
+    The rhythm came from the **right**, the pitch from the left.
+  </Step>
+  <Step check={{ includes: '.mask(', events: 1 }}
+        hints={['Only the function name changes.', '`mask` cannot create events — it can only remove ones that exist.']}
+        solution={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).mask("x ~ x x ~ x ~ x")`}>
+    Change `struct` to `mask` and count: one event. There was only ever one note in the bar, and
+    `mask` filters what is there instead of creating anything.
+  </Step>
+  <Step check={{ includes: '.beat(', match: { keys: ['note'] } }}
+        target={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).struct("x ~ x x ~ x ~ x")`}
+        hints={['Eight slots out of a bar is the same as sixteen steps, counting the on ones.', '`beat(positions, steps)` counts from 0.']}
+        solution={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).beat("0,4,6,10,14", 16)`}>
+    Same rhythm, written as step numbers instead of a grid:
+    `.beat("0,4,6,10,14", 16)`. It should sound exactly like the `struct` version.
+  </Step>
+</Exercise>
 
-<Strudel code={`note("c d e g").palindrome()`} label="palindrome: forwards, then backwards" />
-
-## Structure from another pattern
-
-`struct` takes the **rhythm** from one pattern and the **values** from another:
-
-<Strudel code={`note("c3 eb3 g3").struct("x ~ x x ~ x ~ x")`} label="values from the left, rhythm from the right" />
-
-<Strudel code={`n(irand(8)).struct("x x*2 x x*3").scale("C:minor").s("piano")`} label="a continuous signal, given a rhythm" />
-
-`mask` is the opposite kind of filter — it keeps the original rhythm but silences events where the
-mask is false:
-
-<Strudel code={`s("hh*8").mask("1 1 1 0")`} />
-
-`beat(positions, steps)` builds a structure from step numbers, which is often the most readable way
-to write a drum part:
-
-<Strudel code={`$: s("bd").beat("0,7,10", 16)
-$: s("sd").beat("4,12", 16)
-$: s("hh*16").gain(.4)`} />
-
-## Zooming and looping parts of time
-
-<Strudel code={`s("bd*2 hh*3 [sd bd]*2 perc").zoom(0.25, 0.75)`} label="zoom: play a window of the cycle, stretched to fill it" />
-
-<Strudel code={`s("lt ht mt cp, [hh oh]*2").linger("<1 .5 .25 .125>")`} label="linger: take the first fraction and repeat it" />
-
-<Strudel code={`"0 1 2 3 4 3 2 1".inside(4, rev).scale('C:major').note()`} label="inside: apply f at a different time scale" />
-
-## Picking between whole patterns
-
-<Strudel
-  code={`note(squeeze("<0@2 [1!2] 2>", ["g a", "f g f g", "g a c d"]))`}
-  label="squeeze: choose a sub-pattern and fit it to the event"
-/>
-
-<Strudel
-  code={`s("bd*4").pickF("<0 1>", [x=>x.fast(2), x=>x.rev()])`}
-  label="pickF: choose a transformation from a list"
-/>
-
-## Building an arrangement
-
-A long-form structure is just a slow alternation:
-
-<Strudel
-  code={`$: s("bd*4").bank("RolandTR909").mask("<1 1 1 1 0 1 1 1>")
-$: s("~ cp").bank("RolandTR909").mask("<0 0 1 1 1 1 1 1>")
-$: s("hh*8").gain(.5).mask("<0 1 1 1 1 1 1 1>")
-$: note("<c2 eb2 g1 bb1>*2").s("sawtooth").lpf(sine.range(300,2000).slow(8))`}
-  label="an 8-cycle intro, written as masks"
-/>
+Grids get a whole chapter of their own — see <L to="/tutorial/time">Writing in Time</L> for
+`struct`, `mask`, `beat`, `binaryN` and how to think on a step sequencer.
 
 <QA q="When does the argument pattern add events, and when does it not?">
 By default, structure comes from the **left** of the chain: `s("bd*4").speed("1 2")` is four kicks.
-`struct` is the clean exception: it takes structure from the right. `squeeze` takes it from both sides. `ply` looks like it adds events from the right, but it does not — it subdivides each event the left pattern already had.
-`stack`/`,` combines everything. If you are surprised by how many events you get, ask which side
-the structure came from.
+`struct` is the clean exception: it takes structure from the right. `squeeze` takes it from both
+sides. `ply` looks like it adds events from the right, but it does not — it subdivides each event
+the left pattern already had. `stack` / `,` combines everything. If you are surprised by how many
+events you get, ask which side the structure came from.
 </QA>
+
+## Windows of time
+
+<Exercise id="pattern-functions/windows" title="zoom, linger, inside"
+  goal="Play a slice of a bar, loop a slice of a bar, and transform at a different time scale."
+  start={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707")`}
+  target={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").inside(2, rev)`}>
+  <Step check={{ includes: '.zoom(', match: { keys: ['s'] } }}
+        target={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").zoom(.25, .75)`}
+        hints={['Two positions in the cycle, 0 to 1.']}
+        solution={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").zoom(.25, .75)`}>
+    Add `.zoom(.25, .75)`. The middle half of the bar is stretched out to fill the whole bar —
+    beats 1 and 4 are gone, and what is left plays at half speed.
+  </Step>
+  <Step check={{ includes: '.linger(', match: { keys: ['s'] } }}
+        target={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").linger(.25)`}
+        hints={['One number: the fraction of the cycle to keep.']}
+        solution={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").linger(.25)`}>
+    Replace it with `.linger(.25)`. This one takes the first quarter and repeats it for the rest of
+    the bar, at its original speed: an instant stutter.
+  </Step>
+  <Step check={{ includes: 'linger("<', cycles: 4, match: { keys: ['s'] } }}
+        target={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").linger("<1 .5 .25 .125>")`}
+        hints={['`< >`, one value per bar, starting at 1 for "the whole bar".']}
+        solution={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").linger("<1 .5 .25 .125>")`}>
+    Pattern it: `.linger("<1 .5 .25 .125>")`. Four bars that collapse in on themselves.
+  </Step>
+  <Step check={{ includes: '.inside(', match: { keys: ['s'] } }}
+        hints={['`inside(n, f)` slows the pattern by n, applies f, and speeds it back up.', 'With n = 2 the function sees two bars at once, so it reverses half-bars.']}
+        solution={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").inside(2, rev)`}>
+    Replace it with `.inside(2, rev)`. Instead of reversing the whole bar, `rev` now happens at
+    half-bar scale: each half is reversed where it stands.
+  </Step>
+</Exercise>
+
+<Box>
+`inside(n, f)` is `f(pattern.slow(n)).fast(n)` and `outside(n, f)` is `f(pattern.fast(n)).slow(n)`
+— so `outside(n, f)` is just `inside(1/n, f)`. Reach for them when a function like `rev`, `shuffle`
+or `iter` is operating on the wrong unit of time.
+</Box>
+
+## Choosing between whole patterns
+
+<Exercise id="pattern-functions/pick" title="squeeze and pick"
+  goal="Select a sub-pattern with a number, and hear what changes when it is not squeezed to fit."
+  start={`note("g3 a3").s("gm_electric_guitar_muted")`}
+  target={`note(pick("0 1", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}>
+  <Step check={{ includes: 'squeeze(', cycles: 2, match: { keys: ['note'] } }}
+        target={`note(squeeze("<0 1>", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}
+        hints={['`squeeze(indexPattern, listOfPatterns)` goes *inside* `note(...)`.', 'The list is a real JavaScript array, in square brackets.']}
+        solution={`note(squeeze("<0 1>", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}>
+    Replace the notes with `squeeze("<0 1>", ["g3 a3", "f3 g3 f3 g3"])`, keeping it inside
+    `note(...)`. Bar 1 plays the first phrase, bar 2 the second.
+  </Step>
+  <Step check={{ includes: 'squeeze("0 1"', match: { keys: ['note'] } }}
+        target={`note(squeeze("0 1", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}
+        hints={['A space instead of the angle brackets makes it two events in one bar.']}
+        solution={`note(squeeze("0 1", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}>
+    Change the index pattern from `"<0 1>"` to `"0 1"`, so both are chosen within one bar. Six
+    notes: `squeeze` shrinks each chosen phrase to fit the slot that selected it.
+  </Step>
+  <Step check={{ includes: 'pick(', excludes: 'squeeze', match: { keys: ['note'] } }}
+        hints={['Only the function name changes.', '`pick` plays the chosen pattern at its own rate and shows you the part of it that lines up.']}
+        solution={`note(pick("0 1", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}>
+    Change `squeeze` to `pick`. Four notes now, not six: `pick` does not compress the chosen
+    pattern into the slot — it lets it run at its own speed and you hear the window that fits.
+  </Step>
+</Exercise>
+
+`pickF` does the same for **functions** instead of patterns.
+`s("bd*4").pickF("<0 1>", [x => x.fast(2), x => x.rev()])` alternates between doubling and
+reversing, one bar each.
+
+<Exercise id="pattern-functions/pick-challenge" title="Challenge: two bass riffs"
+  goal="Two riffs, `c2 eb2` and `g1 bb1 c2 eb2`, alternating one per bar, each filling its bar."
+  start={`note("c2 eb2").s("sawtooth")`}
+  target={`note(squeeze("<0 1>", ["c2 eb2", "g1 bb1 c2 eb2"])).s("sawtooth")`}
+  check={{ cycles: 2, match: { keys: ['note'] } }}
+  hints={[
+    'One choice per bar is what `< >` does.',
+    'Each riff has to fill its bar, so you want the one that compresses, not the one that windows.',
+    'Shape: `note(squeeze(indexPattern, [ … , … ])).s("sawtooth")`.',
+  ]} />
+
+## The rest of the family
+
+These come up less often, but they are worth recognising. The
+<L to="/reference/cheatsheet">cheat sheet</L> has them all in one place.
+
+| Function | What it does |
+| --- | --- |
+| `firstOf(n, f)` | the same as `every(n, f)`, named the other way round |
+| `stut(times, feedback, time)` | `echo` with the last two arguments swapped |
+| `degrade` | `degradeBy(.5)` |
+| `undegradeBy(p)` | keeps exactly what `degradeBy(p)` would have dropped |
+| `iterBack(n)` | `iter`, rotating the other way |
+| `outside(n, f)` | `inside(1/n, f)` |
+| `pickF(pat, fs)` | chooses a function from a list, instead of a pattern |
+| `binaryN(n, bits)` | a `struct` grid written as a number |
+
+For building a whole arrangement out of these — masks that come in every 8 bars, fills in the last
+bar of a phrase, `arrange` for sections — see the long-form part of
+<L to="/tutorial/time">Writing in Time</L>.
 
 ## Recap
 
 | Function | Purpose |
 | --- | --- |
-| `rev` `palindrome` | reverse |
+| `rev` `revv` `palindrome` | reverse, within a cycle or across cycles |
 | `jux` `juxBy` | split stereo, modify one side |
 | `off` `superimpose` `layer` | add modified copies |
 | `ply` `echo` `echoWith` | repeat events |
-| `every` `lastOf` `when` `within` | conditional application |
+| `every` `firstOf` `lastOf` `when` `within` | conditional application |
 | `sometimesBy` `someCyclesBy` + named shortcuts | probabilistic application |
-| `degradeBy` `undegradeBy` | drop events |
+| `degradeBy` `undegradeBy` | drop events, and keep the complement |
 | `shuffle` `scramble` `iter` `chunk` | reorder |
 | `struct` `mask` `beat` | impose or filter rhythm |
 | `zoom` `linger` `inside` `outside` | change the time window |

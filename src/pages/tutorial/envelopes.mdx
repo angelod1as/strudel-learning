@@ -5,14 +5,16 @@ title: Envelopes
 lede: An envelope is the shape of a value over the life of one note. Get these right and everything else sounds better.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
-import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
 
 Most parameters in Strudel are frozen at the moment a note is triggered. Envelopes are the
 exception: they move **during** the note. There are four kinds — amplitude, filter, pitch, and FM —
-and they all use the same ADSR shape.
+and they all use the same ADSR shape. You will hear each one by typing it and changing one number
+at a time.
 
 ## ADSR
 
@@ -23,51 +25,138 @@ and they all use the same ADSR shape.
 | `sustain` (`sus`) | level held while the note lasts | 0–1 |
 | `release` (`rel`) | time to fade out after the note ends | seconds |
 
-<Strudel
-  code={`note("c3 bb2 f3 eb3")
-  .s("sawtooth").lpf(600)
-  .attack(.1)
-  .decay(.1)
-  .sustain(.25)
-  .release(.2)`}
-  label="a pad-ish envelope"
-/>
+<Exercise id="envelopes/adsr" title="One stage at a time"
+  goal="Build a full amplitude envelope, hearing what each of the four controls does on its own."
+  start={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600)`}
+  target={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1).sustain(0)`}>
+  <Step check={{ includes: '.attack(', has: { attack: [0.3, 1] } }}
+        hints={['`attack` is a time in seconds, chained on like any other control.']}
+        solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.5)`}>
+    Add `.attack(.5)` to the end. Half a second to reach full volume: every note swells in, and the
+    start of each one is soft.
+  </Step>
+  <Step check={{ has: { attack: [0, 0.05] } }}
+        solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01)`}>
+    Now change it to `.attack(.01)`. The swell is gone and the notes hit immediately. That front
+    edge is most of what makes a sound feel hard or soft.
+  </Step>
+  <Step check={{ includes: '.release(', has: { release: [0.3, 1] } }}
+        hints={['`release` starts counting when the note *ends*, not when it starts.']}
+        solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5)`}>
+    Add `.release(.5)`. Each note now keeps ringing for half a second after its slot is over, so
+    the notes bleed into each other.
+  </Step>
+  <Step check={{ includes: '.decay(', has: { decay: [0.05, 0.3] } }}
+        hints={['Add it and listen before you read the next step — the surprise is the point.']}
+        solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1)`}>
+    Add `.decay(.1)` and play it. Listen carefully: nothing changed.
+  </Step>
+  <Step check={{ has: { sustain: [0.1, 0.4] } }}
+        hints={['`sustain` is a level from 0 to 1, not a time.']}
+        solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1).sustain(.25)`}>
+    Add `.sustain(.25)`. *Now* the decay bites: each note drops to a quarter of full volume over
+    0.1 s and holds there. **Decay does nothing when sustain is 1** — there is nothing to decay to,
+    and 1 is the default.
+  </Step>
+  <Step check={{ has: { sustain: [0, 0.02] } }}
+        solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1).sustain(0)`}>
+    Change the sustain to `0`. The note falls all the way to silence in 0.1 s: the decay is now the
+    whole sound.
+  </Step>
+</Exercise>
 
-<Box kind="try">
-Change one value at a time and listen:
-
-- attack `.5` vs `0` — slow swell vs instant hit
-- decay `.5` vs `0`
-- sustain `1` vs `.25` vs `0`
-- release `0` vs `.5` vs `1`
-
-Note that **decay does nothing when sustain is 1** — there is nothing to decay to.
-</Box>
-
-`adsr()` packs all four into one string, which keeps chains short:
-
-<Strudel code={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).adsr(".1:.1:.5:.2")`} />
+<Exercise id="envelopes/adsr-challenge" title="Challenge: all four in one string"
+  goal="Write that same envelope — attack .01, decay .1, sustain .25, release .5 — as a single adsr() call."
+  start={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600)`}
+  target={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).adsr(".01:.1:.25:.5")`}
+  check={{ includes: '.adsr(', match: { keys: ['attack', 'decay', 'sustain', 'release'] } }}
+  hints={[
+    '`adsr` packs all four stages into one string argument, which keeps long chains readable.',
+    'The four values go in ADSR order, separated by colons, inside one pair of quotes.',
+    'It reads like the `"freq:q"` shorthand in the Filters chapter — one string, colon-separated fields, in a fixed order.',
+  ]} />
 
 ## The two useful extremes
 
-**Percussive**: sustain 0, short decay. This is how you get plucks, blips, and synth drums out of
-any sound.
+Almost every patch you write is a lean towards one of two shapes. Learn these two and you can
+reach anything in between.
 
-<Strudel code={`note("c2*8").s("sawtooth").lpf(1200).decay(.08).sustain(0)`} label="pluck" />
+<Exercise id="envelopes/percussive" title="Percussive: sustain 0, short decay"
+  goal="Turn a held sawtooth drone into plucks, then control exactly how long each pluck lasts."
+  start={`note("c2*8").s("sawtooth").lpf(1200)`}
+  target={`note("c2*8").s("sawtooth").lpf(1200).sustain(0).decay("<.05 .1 .2 .4>")`}>
+  <Step check={{ includes: '.sustain(', has: { sustain: [0, 0.02] } }}
+        hints={['With sustain at 0 the note has nowhere to hold, so the decay time becomes the whole length of the sound.']}
+        solution={`note("c2*8").s("sawtooth").lpf(1200).sustain(0)`}>
+    Add `.sustain(0)`. Eight held notes become eight short blips. This one control is the
+    difference between a synth pad and a synth drum.
+  </Step>
+  <Step check={{ has: { decay: [0.04, 0.12] } }}
+        solution={`note("c2*8").s("sawtooth").lpf(1200).sustain(0).decay(.08)`}>
+    Add `.decay(.08)`. Now you are setting the blip length yourself: 80 ms, a tight pluck.
+  </Step>
+  <Step check={{ has: { decay: [0.25, 0.45] } }}
+        solution={`note("c2*8").s("sawtooth").lpf(1200).sustain(0).decay(.3)`}>
+    Stretch it to `.decay(.3)`. Same attack, same notes, but each one now rings for a third of a
+    second and they start overlapping.
+  </Step>
+  <Step check={{ includes: '<', cycles: 4, fn: "(h) => new Set(h.map((e) => e.value.decay)).size === 4 || 'Expected four different decay values, one per cycle.'" }}
+        hints={['Envelope times take mini-notation like every other argument.', 'Four values inside angle brackets means one value per cycle.']}
+        solution={`note("c2*8").s("sawtooth").lpf(1200).sustain(0).decay("<.05 .1 .2 .4>")`}>
+    Pattern the decay: `.decay("<.05 .1 .2 .4>")`. Four bars, four pluck lengths, from a click to a
+    short stab.
+  </Step>
+</Exercise>
 
-**Pad**: slow attack, sustain 1, long release.
-
-<Strudel code={`note("<c2 eb2 g2 bb1>").s("sawtooth").lpf(700).attack(.6).sustain(1).release(1.5)`} label="pad" />
+<Exercise id="envelopes/pad-challenge" title="Challenge: the other extreme"
+  goal="Make the same synth into a pad — it should fade in over about half a second, hold at full level, and ring on for well over a second after each chord change."
+  start={`note("<c2 eb2 g2 bb1>").s("sawtooth").lpf(700)`}
+  target={`note("<c2 eb2 g2 bb1>").s("sawtooth").lpf(700).attack(.6).sustain(1).release(1.5)`}
+  check={{ has: { attack: [0.3, 2], sustain: [0.9, 1], release: [1, 3] } }}
+  hints={[
+    'A pad is the opposite of a pluck in all three places: the fade in, the level it holds, and the tail.',
+    'Holding at full level means the sustain is 1 — which also means the decay is irrelevant, so do not bother setting it.',
+    'The ring-on after the note ends is `release`, and it is measured in seconds, so it can be bigger than 1.',
+  ]} />
 
 ## Note length is not envelope length
 
-There are three different ways to make a sound shorter, and they are not interchangeable:
+There are three different ways to make a sound shorter, and they are not interchangeable. Type all
+three onto the same four notes and the difference becomes obvious.
 
-<Strudel code={`note("f ab bb c").clip("<2 1 .5 .25>")`} label="clip: multiply the event duration" />
-
-<Strudel code={`note("f ab bb c").release("<2 1 .5 .25>")`} label="release: fade after the note ends" />
-
-<Strudel code={`note("f ab bb c").decay("<2 1 .5 .25>").sustain(0)`} label="decay: fade during the note" />
+<Exercise id="envelopes/lengths" title="Three ways to shorten a note"
+  goal="Feel the difference between changing the event, changing what happens after it, and changing the shape inside it."
+  start={`note("f ab bb c")`}
+  target={`note("f ab bb c").sustain(0).decay(.15)`}>
+  <Step check={{ includes: '.clip(', has: { clip: [0.2, 0.3] } }}
+        hints={['`clip` is a multiplier on the event length, not a time in seconds.']}
+        solution={`note("f ab bb c").clip(.25)`}>
+    Add `.clip(.25)`. Each note now occupies a quarter of its slot: staccato, with audible gaps
+    between the notes.
+  </Step>
+  <Step check={{ has: { clip: [1.5, 3] } }}
+        solution={`note("f ab bb c").clip(2)`}>
+    Change it to `.clip(2)`. Each note is now twice as long as its slot, so every note overlaps the
+    next one. `legato` is the same function under another name.
+  </Step>
+  <Step check={{ excludes: '.clip(', has: { release: [0.6, 2] } }}
+        hints={['The notes should still start and stop where they did — only the tail is new.']}
+        solution={`note("f ab bb c").release(1)`}>
+    Delete the `.clip(2)` and put `.release(1)` in its place. It also overlaps, but for a different
+    reason: the events are the same length as before, and what you are hearing is a one-second tail
+    *after* each one ends.
+  </Step>
+  <Step check={{ excludes: '.release(', has: { sustain: [0, 0.02] } }}
+        solution={`note("f ab bb c").sustain(0)`}>
+    Delete the `.release(1)` and write `.sustain(0)` instead. Short again — and this time the event
+    length never moved at all, only the shape inside it.
+  </Step>
+  <Step check={{ has: { decay: [0.05, 0.3] } }}
+        solution={`note("f ab bb c").sustain(0).decay(.15)`}>
+    Add `.decay(.15)` to set how long that shape takes. Compare it with the `.clip(.25)` version:
+    they last about the same time, but one leaves a hole in the pattern and the other does not.
+  </Step>
+</Exercise>
 
 <Box>
 - `clip` (alias `legato`) changes how long the **event** lasts. `clip(2)` makes notes overlap;
@@ -77,61 +166,129 @@ There are three different ways to make a sound shorter, and they are not interch
 - `decay`+`sustain(0)` changes the shape **within** the event.
 </Box>
 
-For samples there is a fourth: `end` cuts relative to the sample's own length.
+<Exercise id="envelopes/lengths-challenge" title="Challenge: pick the right tool"
+  goal="Four notes that overlap into each other, without moving a single onset and without changing how long any event lasts. One chained call."
+  start={`note("f ab bb c")`}
+  target={`note("f ab bb c").release(1)`}
+  check={{ includes: '.release(', has: { release: [0.8, 2] } }}
+  hints={[
+    'Two of the three tools change the note itself; only one adds something after the note is already over.',
+    'Stretching the event is the wrong answer here — that is what you were told not to do.',
+    'The value is a time in seconds, and it needs to be about as long as a slot to be audible.',
+  ]} />
 
-<Strudel code={`s("oh*4").end("<1 .5 .25 .1>")`} label="end: cut the audio file itself" />
+For samples there is a fourth way, and it works on the audio file rather than the envelope: `end`
+cuts the sample relative to **its own length**, so `.end(.5)` means "play the first half of this
+file", whatever that file is.
+
+<Exercise id="envelopes/end-challenge" title="Challenge: cut the sample itself"
+  goal="Play only the first quarter of each open hi-hat sample, so the long ringing hat becomes a closed one."
+  start={`s("oh*4")`}
+  target={`s("oh*4").end(.25)`}
+  check={{ includes: '.end(', has: { end: [0.1, 0.4] } }}
+  hints={[
+    '`end` takes a fraction of the sample, from 0 to 1 — it is not in seconds and not in cycles.',
+    'The whole file is 1, so a quarter of it is the obvious number.',
+    'Try `.end("<1 .5 .25 .1>")` afterwards to hear the hat close a little more each bar.',
+  ]} />
 
 ## Filter envelopes
 
 Every filter gets its own envelope, prefixed `lp`, `hp` or `bp`. The extra parameter is `lpenv`,
-the **depth** — how many octaves the cutoff moves.
+the **depth** — how many octaves the cutoff moves. This is the sound of acid, of every squelchy
+bassline, and it is the single biggest payoff in this chapter.
 
-<Strudel
-  code={`note("g1 bb1 <c2 eb2> d2")
-  .s("sawtooth")
-  .lpf(400).lpenv(4)`}
-  label="decaying filter sweep (the default shape)"
-/>
+<Exercise id="envelopes/filter-env" title="Make the filter move on every note"
+  goal="Build the classic acid shape one control at a time, then flip it."
+  start={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400)`}
+  target={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv(-4).lpq(8).lpa(.2).lpd(.1)`}>
+  <Step check={{ includes: '.lpenv(', has: { lpenv: [2, 6] } }}
+        hints={['`lpenv` is a depth in octaves, measured from the `lpf` you already set.']}
+        solution={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv(4)`}>
+    Add `.lpenv(4)`. The cutoff now starts four octaves above 400 Hz and falls back to it over each
+    note. That decaying sweep is the default shape, and it is what "a filter envelope" means.
+  </Step>
+  <Step check={{ has: { lpq: [4, 12] } }}
+        hints={['Resonance boosts whatever is sitting right at the cutoff, so it makes a moving cutoff audible as a distinct pitch.']}
+        solution={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv(4).lpq(8)`}>
+    Add `.lpq(8)`. The sweep suddenly has a voice — you can follow where the cutoff is, because the
+    resonance sings at it.
+  </Step>
+  <Step check={{ includes: '.lpa(', has: { lpa: [0.1, 0.4] } }}
+        solution={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv(4).lpq(8).lpa(.2)`}>
+    Add `.lpa(.2)`. Giving the filter envelope an attack makes the sweep go **upward** into the
+    note instead of falling away from it: it opens rather than closes.
+  </Step>
+  <Step check={{ includes: '.lpd(', has: { lpd: [0.05, 0.2] } }}
+        hints={['Up, then down, within a single note — the envelope has both an attack and a decay now.']}
+        solution={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv(4).lpq(8).lpa(.2).lpd(.1)`}>
+    Add `.lpd(.1)`. Now it opens and shuts again inside each note. That is the acid shape.
+  </Step>
+  <Step check={{ has: { lpenv: [-6, -2] } }}
+        hints={['Try a minus sign on the depth.']}
+        solution={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv(-4).lpq(8).lpa(.2).lpd(.1)`}>
+    Change the depth to `.lpenv(-4)`. A negative depth flips the whole envelope upside down: it
+    starts bright and closes down instead.
+  </Step>
+</Exercise>
 
-Set `lpa` (attack) and the sweep goes upward instead:
+The full set per filter is `lpattack`/`lpa`, `lpdecay`/`lpd`, `lpsustain`/`lps`,
+`lprelease`/`lpr`, `lpenv`/`lpe` — and the `hp*` and `bp*` families are identical, letter for
+letter.
 
-<Strudel
-  code={`note("g1 bb1 <c2 eb2> d2")
-  .s("sawtooth").lpq(8)
-  .lpf(400).lpa(.2).lpenv(4)`}
-  label="attacking filter"
-/>
-
-Both at once — the classic acid shape:
-
-<Strudel
-  code={`note("g1 bb1 <c2 eb2> d2")
-  .s("sawtooth").lpq(8)
-  .lpf(400).lpa(.1).lpd(.1).lpenv(4)`}
-/>
-
-Full set per filter: `lpattack`/`lpa`, `lpdecay`/`lpd`, `lpsustain`/`lps`, `lprelease`/`lpr`,
-`lpenv`/`lpe`. Same with `hp*` and `bp*`.
-
-<Box kind="try">
-Negative depth flips the envelope: `lpenv(-3)` starts bright and closes down. Try it on the
-example above.
-</Box>
+<Exercise id="envelopes/filter-env-challenge" title="Challenge: the same thing on a highpass"
+  goal="Give this highpass an envelope three octaves deep, with a 0.2 s attack and a resonance of 6, so the low end is eaten away as each note starts."
+  start={`note("c2 eb2 g2 bb1").s("sawtooth").hpf(300)`}
+  target={`note("c2 eb2 g2 bb1").s("sawtooth").hpf(300).hpenv(3).hpa(.2).hpq(6)`}
+  check={{ has: { hpenv: [2, 4], hpa: [0.1, 0.4], hpq: [4, 8] } }}
+  hints={[
+    'Every control you used on the lowpass exists on the highpass with the same suffix.',
+    'Depth, attack and resonance: three chained calls, all beginning with the same two letters.',
+    'Swap `lp` for `hp` and the numbers from the goal fall straight into place.',
+  ]} />
 
 ## Pitch envelopes
 
-`penv(semitones)` sweeps the pitch over the note. Small amounts add life; large amounts make drums.
+`penv(semitones)` sweeps the **pitch** over the note. Small amounts add life; large amounts make
+drums. A kick drum is not a special waveform — it is a sine with a pitch envelope on it, and you
+are about to build one.
 
-<Strudel code={`note("c").penv("<12 7 1 .5 0 -1 -7 -12>")`} label="pitch envelope depth" />
-
-The single most useful application — a synthesised kick drum:
-
-<Strudel
-  code={`note("g1*4").s("sine")
-  .pdec(.5).penv(32).pcurve(1)
-  .decay(.2).sustain(0)`}
-  label="pitch drops 32 semitones, exponentially = kick"
-/>
+<Exercise id="envelopes/pitch" title="Build a kick out of a sine"
+  goal="Take a plain sine tone and turn it into a kick drum using nothing but envelopes."
+  start={`note("g1*4").s("sine")`}
+  target={`note("g1*4").s("sine").penv(32).pdec(.5).pcurve(1).sustain(0).decay(.2)`}>
+  <Step check={{ includes: '.penv(', has: { penv: [10, 14] } }}
+        hints={['`penv` is a depth in semitones, like `lpenv` is a depth in octaves.']}
+        solution={`note("g1*4").s("sine").penv(12)`}>
+    Add `.penv(12)`. Each note now slides an octave: instead of a flat tone you get a bend.
+  </Step>
+  <Step check={{ has: { penv: [24, 40] } }}
+        solution={`note("g1*4").s("sine").penv(32)`}>
+    Push it to `.penv(32)`. Nearly three octaves of movement — too much to hear as a melody, so
+    your ear stops hearing a note and starts hearing a hit.
+  </Step>
+  <Step check={{ includes: '.pdec(', has: { pdec: [0.3, 0.7] } }}
+        solution={`note("g1*4").s("sine").penv(32).pdec(.5)`}>
+    Add `.pdec(.5)` — the pitch envelope's own decay time. Half a second is a slow, exaggerated
+    drop, so you can hear the whole thing.
+  </Step>
+  <Step check={{ has: { pcurve: [1, 1] } }}
+        hints={['0 is linear, 1 is exponential.']}
+        solution={`note("g1*4").s("sine").penv(32).pdec(.5).pcurve(1)`}>
+    Add `.pcurve(1)`. Linear is the default and it sounds like a slide-whistle; exponential drops
+    fast and then settles, which is what a real drum head does.
+  </Step>
+  <Step check={{ has: { sustain: [0, 0.02] } }}
+        solution={`note("g1*4").s("sine").penv(32).pdec(.5).pcurve(1).sustain(0)`}>
+    The pitch is right but it still rings like an organ. Add `.sustain(0)` — the amplitude
+    envelope, exactly as in the pluck exercise.
+  </Step>
+  <Step check={{ has: { decay: [0.1, 0.35] } }}
+        solution={`note("g1*4").s("sine").penv(32).pdec(.5).pcurve(1).sustain(0).decay(.2)`}>
+    Add `.decay(.2)` to set the length of the hit. That is a kick drum, from a sine wave and four
+    envelope controls.
+  </Step>
+</Exercise>
 
 | Control | Meaning |
 | --- | --- |
@@ -140,43 +297,116 @@ The single most useful application — a synthesised kick drum:
 | `pdecay` / `pdec` | time to fall back |
 | `prelease` | tail after note end |
 | `pcurve` | 0 linear, 1 exponential (use 1 for kicks) |
-| `panchor` | where the note sits in the sweep: 0 = range is `[note, note+penv]`, 1 = range is `[note-penv, note]` |
+| `panchor` | where the note sits in the sweep |
 
-<Strudel code={`note("c c4").penv(12).panchor("<0 .5 1 .5>")`} label="panchor decides where the note sits in the sweep" />
+`panchor` is the one that trips people up. The depth tells you how *wide* the sweep is; the anchor
+tells you where the note you actually wrote sits inside it.
 
-Musical rather than percussive use:
+<Exercise id="envelopes/panchor" title="Where does the written note sit?"
+  goal="Hear the same 12-semitone sweep land on two completely different pitches."
+  start={`note("c4*4").penv(12)`}
+  target={`note("c4*4").penv(12).panchor("<0 .5 1>")`}>
+  <Step check={{ includes: '.panchor(', has: { panchor: [0, 0] } }}
+        solution={`note("c4*4").penv(12).panchor(0)`}>
+    Add `.panchor(0)` and play it. Nothing changes, because 0 is the default: the sweep covers the
+    range `[note, note+penv]`, so the `c4` you wrote is the **bottom** of it.
+  </Step>
+  <Step check={{ has: { panchor: [1, 1] } }}
+        hints={['The anchor goes from 0 to 1, so there is only one other end to try.']}
+        solution={`note("c4*4").penv(12).panchor(1)`}>
+    Change it to `.panchor(1)`. Same 12-semitone width, but the range is now `[note-penv, note]` —
+    the `c4` is the **top**, and everything you hear is an octave lower than before.
+  </Step>
+  <Step check={{ includes: '<', cycles: 3, fn: "(h) => new Set(h.map((e) => e.value.panchor)).size === 3 || 'Expected three different anchor values, one per cycle.'" }}
+        hints={['Angle brackets give you one value per cycle.']}
+        solution={`note("c4*4").penv(12).panchor("<0 .5 1>")`}>
+    Pattern it: `.panchor("<0 .5 1>")`. The middle value puts the written note halfway up the
+    sweep, so the whole thing slides down bar by bar.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`n("<-4,0 5 2 1>*<2!3 4>")
+<Exercise id="envelopes/pitch-challenge" title="Challenge: a tom"
+  goal="Four toms per bar on a sine at c2 — the pitch drops 12 semitones exponentially over 0.2 s, and the amplitude decays over 0.25 s with no sustain."
+  start={`note("c2*4").s("sine")`}
+  target={`note("c2*4").s("sine").penv(12).pdec(.2).pcurve(1).decay(.25).sustain(0)`}
+  check={{ has: { penv: [8, 16], pdec: [0.1, 0.3], pcurve: [1, 1], decay: [0.15, 0.4], sustain: [0, 0.02] } }}
+  hints={[
+    'A tom is the same recipe as the kick, only shallower and shorter.',
+    'Five chained calls: two for the pitch envelope, one for its curve, two for the amplitude.',
+    'Every number you need is written in the goal — the only thing to work out is which control each one belongs to.',
+  ]} />
+
+Pitch envelopes are not only for drums. Shallow ones — a semitone or less — read as expression
+rather than as pitch, which is how you fake a player leaning into a note.
+
+<Exercise id="envelopes/pitch-expression-challenge" title="Challenge: shallow and musical"
+  goal="Add a pitch envelope to this guitar part whose depth changes twice per cycle, stepping through .5, 0, 7 and -2 semitones."
+  start={`n("<-4,0 5 2 1>*<2!3 4>")
   .scale("<C F>/8:pentatonic")
   .s("gm_electric_guitar_jazz")
-  .penv("<.5 0 7 -2>*2").vib("4:.1")
   .phaser(2).delay(.25).room(.3).size(4).fast(1.5)`}
-  label="pitch envelopes as expression"
-/>
+  target={`n("<-4,0 5 2 1>*<2!3 4>")
+  .scale("<C F>/8:pentatonic")
+  .s("gm_electric_guitar_jazz")
+  .penv("<.5 0 7 -2>*2")
+  .phaser(2).delay(.25).room(.3).size(4).fast(1.5)`}
+  check={{ includes: '.penv(', cycles: 2, fn: "(h) => new Set(h.map((e) => e.value.penv)).size >= 3 || 'The pitch envelope depth should step through several values.'" }}
+  hints={[
+    'The depth argument takes mini-notation, exactly like `decay` did earlier.',
+    'Angle brackets step one value per cycle — you need them to step twice as fast as that.',
+    'Negative depths are allowed and bend the other way, which is why `-2` is in the list.',
+  ]} />
 
 ## The general-purpose envelope: env()
 
 Newer Strudel has `env({...})`, which can attach an ADSR to **any** control, not just the built-in
 ones. The control being modulated is either named explicitly or taken from whatever came
-immediately before in the chain.
+immediately before in the chain — and that second rule is easy to trip over.
 
-<Strudel code={`s("saw").note("F1").lpf(500).env({ a: 1 })`} label="1 second attack on the lpf" />
+<Exercise id="envelopes/general" title="Attach an envelope to anything"
+  goal="Watch env() pick its target from the chain, get it wrong, and then pin it down."
+  start={`s("saw").note("f1").lpf(500)`}
+  target={`s("saw").note("f1").lpf(500).lpq(4).env({ c: "lpf", a: 1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })`}>
+  <Step check={{ includes: '.env(', fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.control === 'cutoff' && v.attack >= 0.5))) || 'Expected an env() with about a one-second attack, attached to the cutoff.'" }}
+        hints={['The object keys are the short names: `a` for attack, `d` for decay.']}
+        solution={`s("saw").note("f1").lpf(500).env({ a: 1 })`}>
+    Add `.env({ a: 1 })`. One long note, and its lowpass now takes a full second to open, because
+    `lpf` was the last control in the chain and `env` attached itself to that.
+  </Step>
+  <Step check={{ fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.control === 'resonance'))) || 'Expected the env() to land on the resonance instead — put the .lpq() between the .lpf() and the .env().'" }}
+        hints={['Insert it *before* the `.env(…)`, not after.']}
+        solution={`s("saw").note("f1").lpf(500).lpq(4).env({ a: 1 })`}>
+    Now insert `.lpq(4)` between the `.lpf(500)` and the `.env(…)`. The sweep disappears: `env` is
+    now modulating the resonance, because that is what came immediately before it.
+  </Step>
+  <Step check={{ fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.control === 'cutoff') && e.value.resonance !== undefined)) || 'Keep the .lpq(4), and name the lowpass as the env target with c:.'" }}
+        hints={['`c` is short for "control", and it takes the name you would have typed as a function.']}
+        solution={`s("saw").note("f1").lpf(500).lpq(4).env({ c: "lpf", a: 1 })`}>
+    Keep the resonance, but take back control: make it `.env({ c: "lpf", a: 1 })`. The sweep is
+    back, now with resonance on top of it.
+  </Step>
+  <Step check={{ fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.acurve !== undefined && v.dcurve !== undefined && v.decay > 0))) || 'Expected d, ac and dc in the env object.'" }}
+        hints={['Curves run from -1 to 1.']}
+        solution={`s("saw").note("f1").lpf(500).lpq(4).env({ c: "lpf", a: 1, d: 1, ac: 0.8, dc: 0.3 })`}>
+    Add `d: 1, ac: 0.8, dc: 0.3`. `ac`, `dc` and `rc` bend the shape of each stage: -1 is relaxed,
+    1 is snappy. Set `ac` to `-0.8` and listen to the attack go soft.
+  </Step>
+  <Step check={{ fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.depth > 1))) || 'Expected a depth in the env object.'" }}
+        solution={`s("saw").note("f1").lpf(500).lpq(4).env({ c: "lpf", a: 1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })`}>
+    Add `depth: 50` — how far the control travels. The same envelope, now with a much bigger reach.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`s("saw").lpf(500).diode(0.3)
-  .env({ c: "lpf", a: 0.5, d: 0.5 })`}
-  label="c: names the target explicitly"
-/>
-
-Curve controls make it snap or relax:
-
-<Strudel
-  code={`s("saw").env({ d: 1 }).note("F1")
-  .lpq(4).lpf(50)
-  .env({ a: 0.1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })`}
-  label="ac / dc / rc: -1 relaxed, 1 snappy"
-/>
+<Exercise id="envelopes/general-challenge" title="Challenge: name the target"
+  goal="Fade this note in over two seconds by putting an envelope on its gain — even though the lowpass is the last thing in the chain."
+  start={`s("saw").note("c2").gain(.8).lpf(500)`}
+  target={`s("saw").note("c2").gain(.8).lpf(500).env({ c: "gain", a: 2 })`}
+  check={{ fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.control === 'gain' && v.attack >= 1.5))) || 'Expected an env() on gain with an attack of about 2 seconds.'" }}
+  hints={[
+    'Left alone, `env` would grab the lowpass — so do not leave it alone.',
+    'One key names the control, another sets the attack time in seconds.',
+    'The control name is the same word you would type as a function call.',
+  ]} />
 
 <QA q="Which continuous things actually move during a note?">
 Most parameters are sampled once, when the event is triggered. The ones that genuinely vary

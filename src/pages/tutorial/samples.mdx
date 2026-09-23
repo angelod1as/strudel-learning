@@ -5,29 +5,93 @@ title: Samples
 lede: Playing back audio files, and then cutting them to pieces.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
-import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
 
-<L to="/tutorial/sounds">Picking Sounds</L> covered how to *load* and *select* samples. This one is about what
-you can do to them once they are playing.
+<L to="/tutorial/sounds">Picking Sounds</L> covered how to *load* and *select* samples. This chapter
+is about what you can do to one once it is playing, and you do all of it by typing: each step asks
+for one change, you press ctrl+enter, and you listen.
 
-Most examples below use a drum break, so load one first — the `samples()` call at the top of each
-patch is what makes `amen` available.
+Several exercises start with a `samples('github:…')` line. That line only registers the names — the
+audio itself downloads the first time you ask for it, so the first hit of a new sample is often
+silent. Play it twice. (Chaining `._scope()` on any pattern draws the waveform, which is a quick way
+to see whether anything arrived at all.)
 
 ## Playback rate
 
-`speed` changes playback rate, which changes pitch and duration together — like a turntable.
-Negative values play backwards.
+`speed` is a turntable: it changes pitch and duration together. Double the speed and you get the
+octave above, in half the time. Negative values run the tape backwards.
 
-<Strudel code={`s("bd*6").speed("1 2 4 1 -2 -4")`} />
+<Exercise id="samples/speed" title="Spin it faster, then backwards"
+  goal="Pitch a kick up and down with `speed`, then pattern it, then reverse it."
+  start={`s("bd*4")`}
+  target={`s("bd*4").speed("1 2 -1 -2")`}>
+  <Step check={{ includes: '.speed(', has: { speed: 2 } }}
+        solution={`s("bd*4").speed(2)`}>
+    Add `.speed(2)`. An octave up and half as long — the kick turns into a tom hit.
+  </Step>
+  <Step check={{ has: { speed: 0.5 } }}
+        hints={['Halving the rate drops it an octave.']}
+        solution={`s("bd*4").speed(.5)`}>
+    Change it to `.speed(.5)`. An octave down, twice as long, and suddenly it is a sub drop.
+  </Step>
+  <Step check={{ match: { keys: ['speed'] } }}
+        target={`s("bd*4").speed("1 2 4 8")`}
+        hints={['`speed` takes mini-notation like every other argument.']}
+        solution={`s("bd*4").speed("1 2 4 8")`}>
+    Change it to `.speed("1 2 4 8")`: one value per kick, climbing four octaves across the bar.
+  </Step>
+  <Step check={{ includes: '-1', match: { keys: ['s', 'speed'] } }}
+        hints={['A minus sign in front of the number plays the file from the end.']}
+        solution={`s("bd*4").speed("1 2 -1 -2")`}>
+    Change it to `.speed("1 2 -1 -2")`. The last two play backwards. On a kick that is a suck-in;
+    on a crash it is the classic reverse-cymbal lead-in.
+  </Step>
+</Exercise>
 
-<Strudel code={`s("bd rim [~ bd] rim").speed("<1 2 -1 -2>").room(.2)`} />
+<Exercise id="samples/speed-challenge" title="Challenge: every other one backwards"
+  goal="Eight kicks in the bar. The odd ones normal, the even ones backwards at double speed."
+  start={`s("bd*8")`}
+  target={`s("bd*8").speed("[1 -2]*4")`}
+  check={{ match: { keys: ['s', 'speed'] } }}
+  hints={[
+    'The speed pattern needs eight values, but only two of them are different.',
+    '`[a b]*4` repeats a pair of values four times across the bar.',
+    'Backwards at double speed is one number, not two.',
+  ]} />
 
-`stretch` changes pitch **without** changing duration, using a phase vocoder:
+`stretch` does the other half of the job: it moves the pitch and leaves the duration alone, using a
+phase vocoder.
 
-<Strudel code={`s("gm_flute").stretch("<2 1 0 -2>")`} label="positive = up, 0 = unchanged, negative = down" />
+<Exercise id="samples/stretch" title="Pitch without time"
+  goal="Shift a rhodes chord up and down without its length changing."
+  start={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
+s("rhodes").speed("<1 2>")`}
+  target={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
+s("rhodes").stretch("<2 1 0 -2>")`}>
+  <Step check={{ excludes: '.speed(', has: { stretch: 2 } }}
+        hints={['Same shape of call, different name.']}
+        solution={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
+s("rhodes").stretch(2)`}>
+    Listen to the start first: the second pass is shorter as well as higher. Now replace
+    `.speed("<1 2>")` with `.stretch(2)`. Higher, and exactly as long as before.
+  </Step>
+  <Step check={{ has: { stretch: -2 } }}
+        solution={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
+s("rhodes").stretch(-2)`}>
+    Change it to `.stretch(-2)`: down instead of up, still the same length. This is what a DAW
+    calls transposition on a warped clip.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['s', 'stretch'] } }}
+        solution={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
+s("rhodes").stretch("<2 1 0 -2>")`}>
+    Change it to `.stretch("<2 1 0 -2>")`. Up, a little up, unchanged, down — and listen for the
+    smearing on the extreme values. A phase vocoder is not free.
+  </Step>
+</Exercise>
 
 <Box>
 `speed` is cheap and sounds like a sampler. `stretch` is expensive and sounds like a studio. For
@@ -36,151 +100,440 @@ drums, `speed` is usually more musical; for melodic material, `stretch` keeps yo
 
 ## Fitting a sample to the grid
 
-A two-bar break recorded at 174 bpm will not line up with your pattern. Three tools — note that
-`fit` and `loopAt` work by setting `speed`, so the pitch moves with the tempo, exactly like a
-turntable. `stretch` is the one that does not.
+A two-bar break recorded at 174 bpm will not line up with your pattern. Two tools fix that, and
+both of them work **by setting `speed`** — so the pitch moves with the tempo, exactly like a
+turntable. `stretch` is the only one that does not.
 
-<Strudel
-  code={`samples('github:yaxu/clean-breaks')
-s("amen/4").fit()`}
-  label="fit: resample so the file fills its event"
-/>
+<Exercise id="samples/fit" title="Lock a break to the cycle"
+  goal="Make a whole break fill its event, at two different lengths, two different ways."
+  start={`samples('github:yaxu/clean-breaks')
+s("amen/2")`}
+  target={`samples('github:yaxu/clean-breaks')
+s("amen").loopAt(4)`}>
+  <Step check={{ includes: '.fit()', has: { unit: 'c' } }}
+        hints={['It takes no arguments: the event length is the argument.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen").fit()`}>
+    The break is playing at its recorded speed and drifting out of time. Rewrite the line as
+    `s("amen").fit()`: the file is resampled to fill exactly one cycle.
+  </Step>
+  <Step check={{ fn: "(h) => h.every((e) => Math.abs(e.value.speed - 0.25) < 1e-6) || 'Expected the break stretched over four cycles (speed 0.25).'" }}
+        hints={['`x/n` spreads one event over n cycles, and `fit` follows whatever event it lands on.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen/4").fit()`}>
+    Change `s("amen")` to `s("amen/4")`. The event is now four cycles long, so `fit` slows the file
+    down to match — and it drops two octaves on the way. `fit` is a turntable, not a time-stretcher.
+  </Step>
+  <Step check={{ includes: '.loopAt(', excludes: '.fit()', has: { unit: 'c' } }}
+        hints={['`loopAt` takes the number of cycles you want the file to last, so the `/4` is no longer needed.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen").loopAt(4)`}>
+    Say the same thing the other way round: replace the line with `s("amen").loopAt(4)`. It slows
+    the pattern *and* the playback so the file spans four cycles. Same pitch drop, because it is
+    the same mechanism.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
-s("rhodes").loopAt(2)`}
-  label="loopAt(n): make the sample last exactly n cycles"
-/>
+<Exercise id="samples/fit-challenge" title="Challenge: lock it to the kick"
+  goal="Two lanes: the break spread over four bars and fitted to them, plus a `bd` on every beat so you can hear it lock."
+  start={`samples('github:yaxu/clean-breaks')
+$: s("amen/4")
+$: s("bd*4")`}
+  target={`samples('github:yaxu/clean-breaks')
+$: s("amen/4").fit()
+$: s("bd*4")`}
+  check={{ cycles: 4, match: { keys: ['s', 'speed', 'unit'] } }}
+  hints={[
+    'Only one of the two lanes needs anything added.',
+    'The break already lasts four cycles; it just is not playing at the right rate.',
+  ]} />
 
-<Strudel code={`s("oh*4").end("<1 .5 .25 .1>")`} label="end: play only the first x of the file" />
+## Trimming: begin and end
 
-`begin` and `end` are both 0…1 fractions of the file:
+`begin` and `end` are fractions of the file, from 0 to 1. They pick the part that plays.
 
-<Strudel
-  code={`samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
-s("rave").begin("<0 .25 .5 .75>").fast(2)`}
-  label="begin: skip into the file"
-/>
+<Exercise id="samples/trim" title="Cut the front and the back off"
+  goal="Shorten a sample from the end, then skip into it from the front."
+  start={`samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
+s("rave*2")`}
+  target={`samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
+s("rave*2").begin("<0 .25 .5 .75>")`}>
+  <Step check={{ includes: '.end(', has: { end: [0.1, 0.4] } }}
+        hints={['`.25` means a quarter of the way through the file, not a quarter of a second.']}
+        solution={`samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
+s("rave*2").end(.25)`}>
+    Add `.end(.25)`: only the first quarter of the file plays. A vocal sample becomes a stab.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['end'] } }}
+        target={`samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
+s("rave*2").end("<.25 .5 .75 1>")`}
+        solution={`samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
+s("rave*2").end("<.25 .5 .75 1>")`}>
+    Change it to `.end("<.25 .5 .75 1>")`: the phrase gets one quarter longer each bar. Note that
+    nothing moves in time — trimming the end never changes when the next event starts.
+  </Step>
+  <Step check={{ includes: '.begin(', excludes: '.end(', has: { begin: [0.3, 0.7] } }}
+        solution={`samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
+s("rave*2").begin(.5)`}>
+    Replace `.end(...)` with `.begin(.5)`: playback starts halfway into the file. This is how you
+    find the syllable you actually want.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['s', 'begin'] } }}
+        solution={`samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
+s("rave*2").begin("<0 .25 .5 .75>")`}>
+    Change it to `.begin("<0 .25 .5 .75>")` and walk through the file a quarter at a time.
+  </Step>
+</Exercise>
 
-## chop — granular slicing
+<Exercise id="samples/trim-challenge" title="Challenge: the middle half"
+  goal="An open hat on every eighth, playing only the middle half of the file — no attack, no tail."
+  start={`s("oh*8")`}
+  target={`s("oh*8").begin(.25).end(.75)`}
+  check={{ events: 8, has: { begin: [0.2, 0.3], end: [0.7, 0.8] } }}
+  hints={[
+    'Two controls, both fractions of the file.',
+    'The middle half starts a quarter of the way in and stops three quarters of the way in.',
+  ]} />
+
+## chop — grains
 
 `chop(n)` cuts every event into `n` consecutive pieces and plays them in order. On its own you hear
-nothing new — the point is what you do to the pieces afterwards.
+nothing new; the point is what you do to the pieces afterwards.
 
-<Strudel
-  code={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
-s("rhodes").chop(4).rev().loopAt(2)`}
-  label="chopped, then the chunks played in reverse order"
-/>
-
-<Strudel
-  code={`samples('github:yaxu/clean-breaks')
-s("amen/4").fit().chop(16).cut(1)
+<Exercise id="samples/chop" title="Mangle a break"
+  goal="Cut a break into grains, reverse their order, then stutter and reverse them at random."
+  start={`samples('github:yaxu/clean-breaks')
+s("amen/2").fit()`}
+  target={`samples('github:yaxu/clean-breaks')
+s("amen/2").fit().chop(8).rev().cut(1)
   .sometimesBy(.5, ply("2"))
-  .sometimesBy(.25, mul(speed("-1")))`}
-  label="the classic mangled break: random stutters and reversals"
-/>
+  .sometimesBy(.25, mul(speed("-1")))`}>
+  <Step check={{ includes: '.chop(', cycles: 2, events: 8 }}
+        hints={['One argument: how many pieces.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen/2").fit().chop(8)`}>
+    Add `.chop(8)`. It sounds identical — eight pieces of the same file, played back to back in
+    the right order, is just the file.
+  </Step>
+  <Step check={{ cycles: 2, match: { keys: ['begin', 'end'] } }}
+        target={`samples('github:yaxu/clean-breaks')
+s("amen/2").fit().chop(8).rev()`}
+        hints={['`rev` reverses the order of the events, not the audio inside them.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen/2").fit().chop(8).rev()`}>
+    Add `.rev()`. Now the grains play last-to-first: the same drums, in a new order, each one still
+    forwards. That is what `chop` is for.
+  </Step>
+  <Step check={{ includes: '.cut(', has: { cut: 1 } }}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen/2").fit().chop(8).rev().cut(1)`}>
+    Add `.cut(1)`. Any two events in the same cut group cannot overlap — a new one stops the
+    previous. It should get tighter and less washy immediately.
+  </Step>
+  <Step check={{ includes: 'sometimesBy(', cycles: 2, events: [9, 24] }}
+        hints={['`ply(n)` repeats each event n times inside its own slot.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen/2").fit().chop(8).rev().cut(1)
+  .sometimesBy(.5, ply("2"))`}>
+    Add `.sometimesBy(.5, ply("2"))` on a new line. Half the grains double up: the stutter that
+    jungle is built on.
+  </Step>
+  <Step check={{ includes: 'mul(speed(', cycles: 2, events: [9, 24] }}
+        hints={['`mul` multiplies a control that is already there, instead of replacing it — `fit` has already set `speed`.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen/2").fit().chop(8).rev().cut(1)
+  .sometimesBy(.5, ply("2"))
+  .sometimesBy(.25, mul(speed("-1")))`}>
+    Add `.sometimesBy(.25, mul(speed("-1")))`. A quarter of the grains now play backwards, and
+    because it *multiplies*, the speed `fit` computed is preserved.
+  </Step>
+</Exercise>
 
 <Box>
-`cut(1)` puts all these events in cut group 1, meaning each new one **stops** the previous. Without
-it, overlapping chops pile up into mush. Any time you chop, reach for `cut`.
+`cut(1)` puts every event in cut group 1, meaning each new one **stops** the previous. Without it,
+overlapping chops pile up into mush. Any time you chop, reach for `cut`. Different numbers are
+different groups, so hats can choke hats without touching the bass.
 </Box>
+
+<Exercise id="samples/chop-challenge" title="Challenge: grains in reverse"
+  goal="A rhodes chord stretched over two bars, cut into four grains that play in reverse order."
+  start={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
+s("rhodes").loopAt(2)`}
+  target={`samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
+s("rhodes").chop(4).rev().loopAt(2)`}
+  check={{ includes: ['.chop(', '.rev('], cycles: 2, match: { keys: ['s', 'begin', 'end', 'speed'] } }}
+  hints={[
+    'Two functions, chained before the one that is already there.',
+    'One cuts the file into pieces, the other flips the order they come in.',
+  ]} />
 
 ## slice and splice — choosing the order
 
-`chop` plays pieces in order. `slice(n, pattern)` lets you name which piece plays when:
+`chop` plays the pieces in order. `slice(n, pattern)` lets you say which piece plays when.
 
-<Strudel
-  code={`samples('github:tidalcycles/dirt-samples')
-s("breaks165").slice(8, "0 1 <2 2*2> 3 [4 0] 5 6 7".every(3, rev)).slow(0.75)`}
-/>
+<Exercise id="samples/slice" title="Re-sequence a break"
+  goal="Number the pieces of a break, play them in any order, then let `splice` fix the timing."
+  start={`samples('github:yaxu/clean-breaks')
+s("amen").fit()`}
+  target={`samples('github:yaxu/clean-breaks')
+s("amen").splice(8, "7 6 5 4 3 2 1 0").cut(1)`}>
+  <Step check={{ includes: '.slice(', events: 8 }}
+        hints={['Two arguments: how many pieces the file has, and which of them to play.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen").fit().slice(8, "0 1 2 3 4 5 6 7")`}>
+    Add `.slice(8, "0 1 2 3 4 5 6 7")`. Identical to `chop(8)` so far — but now every piece has a
+    number you can move around. Note where the rhythm comes from: with `slice` it is the index
+    pattern, not the event you chained onto.
+  </Step>
+  <Step check={{ match: { keys: ['begin'] } }}
+        target={`samples('github:yaxu/clean-breaks')
+s("amen").fit().slice(8, "7 6 5 4 3 2 1 0")`}
+        hints={['The second argument is an ordinary mini-notation pattern of indices.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen").fit().slice(8, "7 6 5 4 3 2 1 0")`}>
+    Reverse the order by hand: `.slice(8, "7 6 5 4 3 2 1 0")`. Try `"0 0 4 0 2 [4 5] 6 7"` too —
+    any pattern of numbers works, including `*`, `< >` and rests. Listen to the ones that repeat:
+    each piece still plays at its own speed, so it does not fill its slot.
+  </Step>
+  <Step check={{ includes: '.splice(', excludes: '.slice(' }}
+        hints={['One letter more than `slice`.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen").fit().splice(8, "7 6 5 4 3 2 1 0")`}>
+    Change `slice` to `splice`. `splice` is `slice` plus an automatic `speed` for each piece, so
+    every piece fills its slot exactly however you re-order or repeat them.
+  </Step>
+  <Step check={{ excludes: '.fit()', match: { keys: ['s', 'begin', 'end', 'speed'] } }}
+        target={`samples('github:yaxu/clean-breaks')
+s("amen").splice(8, "7 6 5 4 3 2 1 0")`}
+        hints={['One deletion.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen").splice(8, "7 6 5 4 3 2 1 0")`}>
+    `splice` already sets the speed, so `fit` has nothing left to do: delete it. Try
+    `"<0 1 2 3 4*2 5 6 [6 7]>*2"` as the index pattern — however you subdivide, `splice` keeps
+    every piece in time.
+  </Step>
+  <Step check={{ has: { cut: 1 }, match: { keys: ['s', 'begin', 'end', 'speed', 'cut'] } }}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen").splice(8, "7 6 5 4 3 2 1 0").cut(1)`}>
+    Add `.cut(1)` again, for the same reason as before: slices that overlap sound like a smear.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`samples('github:yaxu/clean-breaks')
-s("amen/4").fit()
-  .slice(8, "<0 1 2 3 4*2 5 6 [6 7]>*2")
-  .cut(1).rarely(ply("2"))`}
-/>
+The slice points do not have to be even. Pass an array instead of a count —
+`.slice([0, .25, .5, .75], "0 1 1 <2 3>")` — and you can mark where the interesting moments actually
+are in the file.
 
-`splice` is `slice` plus automatic speed adjustment, so each piece fills its event exactly:
-
-<Strudel
-  code={`samples('github:yaxu/clean-breaks')
-s("amen")
-  .splice(8, "<0 1 2 3 4*2 5 6 [6 7]>*2")
-  .cut(1).rarely(ply("2"))`}
-  label="no fit() needed — splice handles the timing"
-/>
-
-You can also slice at arbitrary points instead of evenly:
-
-<Strudel
-  code={`samples('github:tidalcycles/dirt-samples')
-s("breaks125").fit().slice([0,.25,.5,.75], "0 1 1 <2 3>")`}
-/>
+<Exercise id="samples/slice-challenge" title="Challenge: first half, second half"
+  goal="Eight slices of the break: bar 1 plays 0 1 2 3, bar 2 plays 4 5 6 7, in time, each slice cutting the last."
+  start={`samples('github:yaxu/clean-breaks')
+s("amen")`}
+  target={`samples('github:yaxu/clean-breaks')
+s("amen").splice(8, "<[0 1 2 3] [4 5 6 7]>").cut(1)`}
+  check={{ cycles: 2, match: { keys: ['s', 'begin', 'end', 'speed', 'cut'] } }}
+  hints={[
+    '“In time” rules out one of the two functions.',
+    'The file still has eight slices even though only four play per bar.',
+    'Two groups, one per cycle: `< >` with a bracketed group inside each slot.',
+  ]} />
 
 ## striate — interlacing
 
 Where `chop` keeps each sample's pieces together, `striate(n)` plays the **first** piece of every
-sample, then the second of every sample, and so on. It smears a sequence of sounds into each other.
+sample, then the second of every sample, and so on. It braids a sequence of sounds into each other.
 
-<Strudel code={`s("numbers:0 numbers:1 numbers:2").striate(6).slow(3)`} />
+<Exercise id="samples/striate" title="Braid three samples"
+  goal="Hear the difference between chopping three samples and interlacing them."
+  start={`s("numbers:0 numbers:1 numbers:2")`}
+  target={`s("numbers:0 numbers:1 numbers:2").striate(6).slow(3)`}>
+  <Step check={{ includes: '.chop(', events: 12 }}
+        solution={`s("numbers:0 numbers:1 numbers:2").chop(4)`}>
+    Add `.chop(4)`: twelve events, but you still hear three separate words, each stuttered.
+  </Step>
+  <Step check={{ includes: '.striate(', excludes: '.chop(', match: { keys: ['s', 'n', 'begin', 'end'] } }}
+        target={`s("numbers:0 numbers:1 numbers:2").striate(4)`}
+        hints={['Same argument, different function name.']}
+        solution={`s("numbers:0 numbers:1 numbers:2").striate(4)`}>
+    Change `chop` to `striate`. The same twelve pieces, reordered: first quarter of each word,
+    then second quarter of each word. One braided texture instead of three stutters.
+  </Step>
+  <Step check={{ events: 18 }}
+        solution={`s("numbers:0 numbers:1 numbers:2").striate(6)`}>
+    Change it to `.striate(6)`: finer pieces, so the three sources blur further into each other.
+  </Step>
+  <Step check={{ includes: '.slow(', cycles: 3, match: { keys: ['s', 'n', 'begin', 'end'] } }}
+        hints={['Eighteen events in one cycle is a blur; give them three.']}
+        solution={`s("numbers:0 numbers:1 numbers:2").striate(6).slow(3)`}>
+    Add `.slow(3)` so you can actually hear the braid.
+  </Step>
+</Exercise>
 
 <Box kind="try">
-Replace `striate(6)` with `chop(6)` in that example. Same pieces, completely different result —
-`chop` gives you three separate stuttered words, `striate` gives you one braided texture.
+Go back and put `chop(6)` where `striate(6)` is. Same pieces, completely different result: `chop`
+gives you three stuttered words, `striate` gives you one texture made of all three.
 </Box>
+
+<Exercise id="samples/striate-challenge" title="Challenge: braid a drum kit"
+  goal="`bd`, `sd` and `cp` interlaced in eight pieces each, spread over two bars."
+  start={`s("bd sd cp")`}
+  target={`s("bd sd cp").striate(8).slow(2)`}
+  check={{ includes: '.striate(', cycles: 2, match: { keys: ['s', 'begin', 'end'] } }}
+  hints={[
+    'Interlacing is one function with one argument.',
+    'Twenty-four pieces in one cycle is a buzz — stretch the whole thing out.',
+  ]} />
 
 ## scrub — the tape head
 
-`scrub` takes positions in the file and plays from there, optionally with a speed after a colon.
+`scrub` takes positions in the file and plays from each of them, so you can drag the playhead around
+in rhythm. A colon adds a playback speed to a position.
 
-<Strudel
-  code={`samples('github:switchangel/pad')
-s("swpad:0").scrub("{0.1!2 .25@3 0.7!2 <0.8:1.5>}%8")`}
-/>
+<Exercise id="samples/scrub" title="Drag the playhead"
+  goal="Jump around inside a pad in a fixed rhythm, then speed up one of the jumps."
+  start={`samples('github:switchangel/pad')
+s("swpad:0")`}
+  target={`samples('github:switchangel/pad')
+s("swpad:0").scrub("{0!3 .25 .5!2 <0.75:1.5>@2}%8")`}>
+  <Step check={{ includes: '.scrub(', events: 8 }}
+        hints={['The positions are fractions of the file, like `begin`.']}
+        solution={`samples('github:switchangel/pad')
+s("swpad:0").scrub("{0 .25 .5 .75}%8")`}>
+    Add `.scrub("{0 .25 .5 .75}%8")`. Eight steps per cycle walking through four positions: the
+    pad is being played by a very steady hand.
+  </Step>
+  <Step check={{ events: 7, match: { keys: ['begin'] } }}
+        target={`samples('github:switchangel/pad')
+s("swpad:0").scrub("{0!3 .25 .5!2 .75@2}%8")`}
+        hints={['`!` repeats a position as separate steps, `@` makes one step longer.']}
+        solution={`samples('github:switchangel/pad')
+s("swpad:0").scrub("{0!3 .25 .5!2 .75@2}%8")`}>
+    Give it a rhythm: `.scrub("{0!3 .25 .5!2 .75@2}%8")`. Still eight steps, but they are no
+    longer one event each — the `@2` holds the playhead in one place for two of them.
+  </Step>
+  <Step check={{ includes: ':1.5', fn: "(h) => h.some((e) => e.value.speed === 1.5) || 'One position should carry a speed of 1.5.'" }}
+        hints={['Position and speed go in one token, separated the way `vib(\"6:12\")` does it.']}
+        solution={`samples('github:switchangel/pad')
+s("swpad:0").scrub("{0!3 .25 .5!2 <0.75:1.5>@2}%8")`}>
+    Change the last position to `<0.75:1.5>`: from three quarters in, at one and a half times
+    speed. Every position can carry its own rate.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`samples('github:yaxu/clean-breaks/main');
-s("amen/4").fit().scrub("{0@3 0@2 4@3}%8".div(16))`}
-/>
+<Exercise id="samples/scrub-challenge" title="Challenge: two halves"
+  goal="Eight steps per cycle: the first four play from the start of the file, the last four from halfway."
+  start={`samples('github:switchangel/pad')
+s("swpad:0")`}
+  target={`samples('github:switchangel/pad')
+s("swpad:0").scrub("{0@4 .5@4}%8")`}
+  check={{ includes: '.scrub(', match: { keys: ['s', 'begin'] } }}
+  hints={[
+    'Two positions only, each held for half the cycle.',
+    '`@n` is how a step takes up more than one step of a polymeter.',
+  ]} />
 
 ## Looping
 
 `loop(1)` makes a sample repeat for as long as its event lasts. `loopBegin` and `loopEnd` set the
-loop points — which is how wavetable synthesis works under the hood.
+loop points, as fractions of the file.
 
-<Strudel code={`note("<c eb g f>").s("bd").loop(1).loopEnd(.05).gain(.2)`} label="looping 5% of a kick = an oscillator" />
+<Exercise id="samples/looping" title="Loop a piece of a pad"
+  goal="Loop a pad, then narrow the loop until the repeats turn into a pitch."
+  start={`samples('github:switchangel/pad')
+s("swpad:0")`}
+  target={`samples('github:switchangel/pad')
+s("swpad:0").loop(1).loopEnd(.26).loopBegin(.25)`}>
+  <Step check={{ includes: '.loop(', has: { loop: 1 } }}
+        solution={`samples('github:switchangel/pad')
+s("swpad:0").loop(1)`}>
+    Add `.loop(1)`. The pad now restarts as often as it needs to fill the cycle instead of decaying
+    away.
+  </Step>
+  <Step check={{ has: { loopEnd: [0.3, 0.7] } }}
+        solution={`samples('github:switchangel/pad')
+s("swpad:0").loop(1).loopEnd(.5)`}>
+    Add `.loopEnd(.5)`: only the first half of the file is in the loop, so it comes round twice as
+    often.
+  </Step>
+  <Step check={{ includes: '.loopBegin(', has: { loopBegin: [0.1, 0.4] } }}
+        hints={['Playback still starts at the top of the file; this only moves the point it jumps back to.']}
+        solution={`samples('github:switchangel/pad')
+s("swpad:0").loop(1).loopEnd(.5).loopBegin(.25)`}>
+    Add `.loopBegin(.25)`. The loop is now the quarter of the file between .25 and .5.
+  </Step>
+  <Step check={{ has: { loopEnd: [0.25, 0.3] }, match: { keys: ['s', 'loop', 'loopBegin', 'loopEnd'] } }}
+        hints={['Move the end almost onto the beginning.']}
+        solution={`samples('github:switchangel/pad')
+s("swpad:0").loop(1).loopEnd(.26).loopBegin(.25)`}>
+    Change the end to `.loopEnd(.26)`: a 1% window. The loop now repeats hundreds of times a
+    second, and you hear a pitch instead of a rhythm. Add a `note("<c3 eb3>")` and it plays like a
+    synth — which is exactly how the `wt_*` wavetables in
+    <L to="/tutorial/synths">Synths</L> work.
+  </Step>
+</Exercise>
+
+<Exercise id="samples/loop-challenge" title="Challenge: a two-bar drone"
+  goal="One pad event stretched over two bars, looping only the slice of the file between .4 and .45."
+  start={`samples('github:switchangel/pad')
+s("swpad:0").slow(2)`}
+  target={`samples('github:switchangel/pad')
+s("swpad:0").slow(2).loop(1).loopBegin(.4).loopEnd(.45)`}
+  check={{ cycles: 2, has: { loop: 1, loopBegin: [0.35, 0.45], loopEnd: [0.4, 0.5] } }}
+  hints={[
+    'Three controls: switch looping on, then set where the loop starts and where it ends.',
+    'Both points are fractions of the file, not seconds.',
+  ]} />
 
 ## Running through a sample bank
 
-When a sound holds many similar recordings, `run(n)` with `n()` sweeps through them:
+When one sound name holds many similar recordings, `n` picks between them and `run(n)` sweeps
+through the lot.
 
-<Strudel
-  code={`samples('bubo:fox')
-n(run(8)).s("ftabla")`}
-/>
-
-The musical phrase often does not start at index 0 — nudge the whole thing with `early`:
-
-<Strudel
-  code={`samples('bubo:fox')
+<Exercise id="samples/run-bank" title="Sweep a bank"
+  goal="Play eight different tabla recordings in a row, then move the phrase onto the beat."
+  start={`samples('bubo:fox')
+s("ftabla*8")`}
+  target={`samples('bubo:fox')
 n(run(8)).s("ftabla").early(2/8)
-  .sometimes(mul(speed("1.5")))`}
-/>
+  .sometimes(mul(speed("1.5")))`}>
+  <Step check={{ includes: 'run(', match: { keys: ['n', 's'] } }}
+        target={`samples('bubo:fox')
+n(run(8)).s("ftabla")`}
+        hints={['`run(8)` is the pattern `0 1 2 3 4 5 6 7`. Remember that the rhythm comes from the left.']}
+        solution={`samples('bubo:fox')
+n(run(8)).s("ftabla")`}>
+    Replace the pattern with `n(run(8)).s("ftabla")`: still eight events, but each one is a
+    different recording from the bank.
+  </Step>
+  <Step check={{ includes: '.early(', match: { keys: ['n'] } }}
+        target={`samples('bubo:fox')
+n(run(8)).s("ftabla").early(2/8)`}
+        hints={['`early(x)` pulls the whole pattern x cycles earlier; an eighth of a cycle is `1/8`.']}
+        solution={`samples('bubo:fox')
+n(run(8)).s("ftabla").early(2/8)`}>
+    The musical phrase in a bank rarely starts at index 0. Add `.early(2/8)` to rotate the whole
+    run two slots earlier, so it starts on sample 2.
+  </Step>
+  <Step check={{ includes: 'sometimes(', events: 8 }}
+        hints={['`sometimes` is `sometimesBy(.5, …)`, and `mul` multiplies a control instead of setting it.']}
+        solution={`samples('bubo:fox')
+n(run(8)).s("ftabla").early(2/8)
+  .sometimes(mul(speed("1.5")))`}>
+    Add `.sometimes(mul(speed("1.5")))` on a new line: half the hits jump up a fifth. A bank plus
+    a little randomness is a whole percussion track.
+  </Step>
+</Exercise>
 
 <QA q="chop, slice, splice, striate — which one?">
 `chop` when you want to mangle a single sound into grains. `slice` when you want to re-sequence a
-break and you will handle timing yourself. `splice` when you want to re-sequence a break and have
-it stay in time automatically — this is the one you want most of the time. `striate` when you want
-to blend several different samples into one texture.
+break and you will handle the timing yourself. `splice` when you want to re-sequence a break and
+have it stay in time automatically — this is the one you want most of the time. `striate` when you
+want to blend several different samples into one texture.
 </QA>
 
 ## Recap
 
 | Function | Purpose |
 | --- | --- |
-| `speed` | playback rate (pitch + time) |
+| `speed` | playback rate (pitch + time), negative = backwards |
 | `stretch` | pitch without time |
 | `fit` | resample so the file fills its event (pitch moves) |
 | `loopAt(n)` | resample so the file spans n cycles (pitch moves) |
@@ -189,6 +542,7 @@ to blend several different samples into one texture.
 | `slice(n, pat)` | play named pieces |
 | `splice(n, pat)` | slice, with speed corrected |
 | `striate(n)` | interlace pieces of several samples |
-| `scrub` | play from arbitrary positions |
+| `scrub` | play from arbitrary positions, `position:speed` |
 | `loop` `loopBegin` `loopEnd` | looped playback |
-| `cut(n)` | cut group — new event stops the previous |
+| `cut(n)` | cut group — a new event stops the previous |
+| `n` + `run(n)` | step through a bank of recordings |

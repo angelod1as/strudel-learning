@@ -5,6 +5,8 @@ title: Filters
 lede: Subtractive synthesis in one page — what a lowpass, highpass and bandpass actually do, and how to make them move.
 ---
 
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Strudel from '../../components/Strudel.astro';
 import Box from '../../components/Box.astro';
 import L from '../../components/L.astro';
@@ -24,137 +26,429 @@ is around the cutoff).
 
 ## Lowpass — the workhorse
 
-<Strudel
-  code={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
-  .s("sawtooth").lpf(800)`}
-/>
+Cutoff is in hertz, and the audible range is roughly 20–20000. Type your way down through it.
 
-<Box kind="try">
-Set `lpf(200)`. The sound gets muffled — you are outside the club with the door shut. Now
-`lpf(5000)`. The door opens. That single number is most of what makes electronic music breathe.
-</Box>
+<Exercise id="filters/lowpass" title="Close the door"
+  goal="Hear a sawtooth bass go from open to muffled, then put the cutoff on a pattern."
+  start={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth")`}
+  target={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth").lpf("200 1200 200 1200")`}>
+  <Step check={{ includes: '.lpf(', has: { lpf: [3000, 8000] } }}
+        hints={['The argument is a frequency in hertz.']}
+        solution={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth").lpf(5000)`}>
+    Add `.lpf(5000)`. Almost nothing happens — a bass note has very little content up there, so
+    there is nothing for the filter to throw away yet.
+  </Step>
+  <Step check={{ has: { lpf: [600, 1200] } }}
+        solution={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth").lpf(800)`}>
+    Change it to `.lpf(800)`. Now you hear it: the buzz goes and a round, dull bass is left. A
+    sawtooth is a stack of harmonics, and you just deleted most of them.
+  </Step>
+  <Step check={{ has: { lpf: [100, 300] } }}
+        solution={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth").lpf(200)`}>
+    Now `.lpf(200)`. You are outside the club with the door shut. That single number is most of
+    what makes electronic music breathe.
+  </Step>
+  <Step check={{ includes: '<', cycles: 6, fn: "(h) => new Set(h.map((e) => e.value.cutoff)).size === 6 || 'Expected six different cutoff values, one per cycle.'" }}
+        hints={['Every argument takes mini-notation, including this one.', 'Angle brackets step one value per cycle.']}
+        solution={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth").lpf("<4000 2000 1000 500 200 100>")`}>
+    Open the door again, slowly: `.lpf("<4000 2000 1000 500 200 100>")`. Six bars, closing one step
+    at a time. That is a filter sweep written by hand.
+  </Step>
+  <Step check={{ events: 8, fn: "(h) => { const v = h.map((e) => e.value.cutoff); return (new Set(v).size === 2 && v.filter((x) => x === v[0]).length === 4) || 'Expected the cutoff to alternate between two values, four events on each.' }" }}
+        hints={['Four slots in the filter pattern, eight notes in the note pattern.']}
+        solution={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
+  .s("sawtooth").lpf("200 1200 200 1200")`}>
+    Now speed the sweep up past the bar line: `.lpf("200 1200 200 1200")`. Count the notes — still
+    eight. **Patterning the filter never changes the rhythm**; the notes just sample whatever value
+    the filter pattern holds at that moment.
+  </Step>
+</Exercise>
 
-Cutoff is in hertz, and the audible range is roughly 20–20000. Like every argument, it takes a
-pattern:
-
-<Strudel code={`s("bd sd [~ bd] sd, hh*6").lpf("<4000 2000 1000 500 200 100>")`} />
-
-<Strudel
-  code={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
-  .s("sawtooth").lpf("200 1000 200 1000")`}
-  label="patterning the filter does not change the rhythm"
-/>
+<Exercise id="filters/lowpass-challenge" title="Challenge: a four-bar fade-out"
+  goal="Take the whole drum kit down over four bars, one cutoff per bar: 4000, then 2000, then 800, then 300."
+  start={`s("bd sd [~ bd] sd, hh*6")`}
+  target={`s("bd sd [~ bd] sd, hh*6").lpf("<4000 2000 800 300>")`}
+  check={{ match: { keys: ['s', 'lpf'] }, cycles: 4 }}
+  hints={[
+    'One `.lpf()` on the end of the whole pattern filters every layer in it at once.',
+    'Four values, one per bar — that is exactly what angle brackets do.',
+    'The numbers go in the order they are written in the goal; nothing else changes.',
+  ]} />
 
 ## Highpass — making space
 
 A highpass removes low end. Musically it is how you stop two sounds fighting: the bass owns the
 bottom, everything else gets highpassed out of its way.
 
-<Strudel code={`s("bd sd [~ bd] sd, hh*8").hpf("<4000 2000 1000 500 200 100>")`} />
+<Exercise id="filters/highpass" title="Take the bottom out"
+  goal="Hear a full drum kit lose its weight as the highpass climbs."
+  start={`s("bd sd [~ bd] sd, hh*8")`}
+  target={`s("bd sd [~ bd] sd, hh*8").hpf("<4000 2000 1000 500 200 100>")`}>
+  <Step check={{ includes: '.hpf(', has: { hpf: [50, 200] } }}
+        solution={`s("bd sd [~ bd] sd, hh*8").hpf(100)`}>
+    Add `.hpf(100)`. Barely anything — only the very bottom of the kick has gone. A highpass down
+    here is what you use to clean up rumble without anyone noticing.
+  </Step>
+  <Step check={{ has: { hpf: [800, 1500] } }}
+        solution={`s("bd sd [~ bd] sd, hh*8").hpf(1000)`}>
+    Change it to `.hpf(1000)`. The kick has lost its body and the snare has lost its thump: you
+    are left with the attack of each hit and none of the weight.
+  </Step>
+  <Step check={{ has: { hpf: [3000, 6000] } }}
+        solution={`s("bd sd [~ bd] sd, hh*8").hpf(4000)`}>
+    Now `.hpf(4000)`. Pure sizzle. This is the "radio" or "small speaker" trick, and it is also
+    what a build-up sounds like just before the drop.
+  </Step>
+  <Step check={{ includes: '<', cycles: 6, fn: "(h) => new Set(h.map((e) => e.value.hcutoff)).size === 6 || 'Expected six different highpass values, one per cycle.'" }}
+        solution={`s("bd sd [~ bd] sd, hh*8").hpf("<4000 2000 1000 500 200 100>")`}>
+    Pattern it: `.hpf("<4000 2000 1000 500 200 100>")`. Six bars, the kit fading back in from the
+    top down. Compare with the lowpass sweep — they empty the sound from opposite ends.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`$: s("sawtooth").note("c2 eb2 g2 c2").lpf(500)
-$: s("sawtooth").note("<c4 eb4 g4 bb4>").hpf(800).gain(.5)`}
-  label="lowpass the bass, highpass the pad — no mud"
-/>
+<Exercise id="filters/highpass-challenge" title="Challenge: no mud"
+  goal="The bass lane is here. Add a second lane below it: a sawtooth stepping through c4, eb4, g4 and bb4, one per bar, highpassed at 800 and at half gain, so the two never fight for the low end."
+  start={`$: note("c2 eb2 g2 c2").s("sawtooth").lpf(500)`}
+  target={`$: note("c2 eb2 g2 c2").s("sawtooth").lpf(500)
+$: note("<c4 eb4 g4 bb4>").s("sawtooth").hpf(800).gain(.5)`}
+  check={{ match: { keys: ['note', 's', 'lpf', 'hpf', 'gain'] }, cycles: 4 }}
+  hints={[
+    'Each `$:` line is its own lane; they play at the same time.',
+    'The second lane needs four chained calls: the sound, the highpass, the gain, and the notes themselves.',
+    'Angle brackets around the four notes give you one per bar; `.gain(.5)` is the half volume.',
+  ]} />
 
 ## Resonance (q)
 
 Q boosts frequencies right at the cutoff. Low q is gentle; high q whistles and eventually screams.
+It is also what makes a *moving* cutoff audible, because the resonant peak sings the frequency the
+filter is currently sitting on.
 
-<Strudel code={`s("bd sd [~ bd] sd,hh*8").lpf(2000).lpq("<0 10 20 30>")`} />
+<Exercise id="filters/resonance" title="From gentle to screaming"
+  goal="Hear what resonance adds at a fixed cutoff, then sweep the resonance instead of the cutoff."
+  start={`s("bd sd [~ bd] sd, hh*8").lpf(2000)`}
+  target={`s("bd sd [~ bd] sd, hh*8").lpf(2000).lpq("<0 10 20 30>")`}>
+  <Step check={{ includes: '.lpq(', has: { lpq: [0, 0.2] } }}
+        solution={`s("bd sd [~ bd] sd, hh*8").lpf(2000).lpq(0)`}>
+    Add `.lpq(0)`. Nothing changes, because 0 is the default: no boost at the cutoff, just the
+    plain slope.
+  </Step>
+  <Step check={{ has: { lpq: [8, 15] } }}
+        solution={`s("bd sd [~ bd] sd, hh*8").lpf(2000).lpq(10)`}>
+    Change it to `.lpq(10)`. A bump appears around 2 kHz — the kit gets a nasal, hyped edge right
+    where the filter is working.
+  </Step>
+  <Step check={{ has: { lpq: [25, 40] } }}
+        solution={`s("bd sd [~ bd] sd, hh*8").lpf(2000).lpq(30)`}>
+    Push it to `.lpq(30)`. Now the filter is nearly ringing: every hit sets off a whistle at 2 kHz.
+    Higher q = narrower and louder at the peak.
+  </Step>
+  <Step check={{ includes: '<', cycles: 4, fn: "(h) => new Set(h.map((e) => e.value.resonance)).size === 4 || 'Expected four different resonance values, one per cycle.'" }}
+        solution={`s("bd sd [~ bd] sd, hh*8").lpf(2000).lpq("<0 10 20 30>")`}>
+    Pattern it: `.lpq("<0 10 20 30>")`. Same cutoff all four bars — the only thing changing is how
+    hard the filter rings at it.
+  </Step>
+</Exercise>
 
-<Strudel code={`s("bd sd [~ bd] sd").bpf(500).bpq("<0 1 2 3>")`} label="bandpass q: from 'thin' to 'telephone'" />
+<Exercise id="filters/resonance-challenge" title="Challenge: the freq:q shorthand"
+  goal="Write the same cutoff and resonance as one lpf() call, using the colon shorthand, with no .lpq() left in the chain."
+  start={`s("bd*16").lpf(1000).lpq(20)`}
+  target={`s("bd*16").lpf("1000:20")`}
+  check={{ excludes: '.lpq(', has: { lpf: [1000, 1000], lpq: [20, 20] } }}
+  hints={[
+    'Filter controls accept two colon-separated fields in a single string: the cutoff first, then the q.',
+    'It has to be a string, so the whole thing goes inside the quotes.',
+    'Then delete the `.lpq()` call — you are not allowed to keep it.',
+  ]} />
 
-You can also pass q inline after a colon:
+## Bandpass — keep only a slice
 
-<Strudel code={`s("bd*16").lpf("1000:0 1000:10 1000:20 1000:30")` } label='lpf("freq:q")' />
+A bandpass throws away everything above *and* below the cutoff, leaving a band around it. Higher q
+means a narrower band, which is why a bandpass with high q sounds like a telephone.
+
+<Exercise id="filters/bandpass" title="Squeeze the band"
+  goal="Narrow a drum loop down to a single band, then move that band up and down the spectrum."
+  start={`s("bd sd [~ bd] sd")`}
+  target={`s("bd sd [~ bd] sd").bpf("<200 500 1500 4000>").bpq(6)`}>
+  <Step check={{ includes: '.bpf(', has: { bpf: [400, 600] } }}
+        solution={`s("bd sd [~ bd] sd").bpf(500)`}>
+    Add `.bpf(500)`. The weight and the sizzle both disappear at once and a boxy midrange is left —
+    a lowpass and a highpass meeting in the middle.
+  </Step>
+  <Step check={{ has: { bpq: [0.5, 1.5] } }}
+        solution={`s("bd sd [~ bd] sd").bpf(500).bpq(1)`}>
+    Add `.bpq(1)`. Narrower still, and thin.
+  </Step>
+  <Step check={{ has: { bpq: [4, 10] } }}
+        solution={`s("bd sd [~ bd] sd").bpf(500).bpq(6)`}>
+    Now `.bpq(6)`. That is the telephone. On a bandpass, q is the width of the slice you kept.
+  </Step>
+  <Step check={{ includes: '<', cycles: 4, fn: "(h) => new Set(h.map((e) => e.value.bandf)).size === 4 || 'Expected four different band centres, one per cycle.'" }}
+        solution={`s("bd sd [~ bd] sd").bpf("<200 500 1500 4000>").bpq(6)`}>
+    Move the slice: `.bpf("<200 500 1500 4000>")`. Four bars, four completely different drum kits
+    out of the same samples.
+  </Step>
+</Exercise>
 
 ## Filter character: ftype and drive
 
-The cutoff slope and the colouring differ per filter model.
+The cutoff slope and the colouring differ per filter model. Same cutoff, same q, different
+circuit.
 
-<Strudel
-  code={`note("c f g g a c4 d4").fast(2)
-  .s('sawtooth')
-  .lpf(200).fanchor(0)
-  .lpenv(3).lpq(1)
-  .ftype("<ladder 12db 24db>")`}
-  label="12db = gentle, 24db = steeper, ladder = Moog-ish and aggressive"
-/>
+<Exercise id="filters/ftype" title="Three filter models"
+  goal="Hear 12db, 24db and ladder on the same line, then overdrive the ladder."
+  start={`note("c f g g a c4 d4").fast(2)
+  .s("sawtooth")
+  .lpf(200).lpenv(3).lpq(1)`}
+  target={`note("c f g g a c4 d4").fast(2)
+  .s("sawtooth")
+  .lpf(200).lpenv(3).lpq(1)
+  .ftype("ladder").drive("<.5 4>")`}>
+  <Step check={{ includes: '.ftype(', has: { ftype: '12db' } }}
+        hints={['The argument is a string naming the model.']}
+        solution={`note("c f g g a c4 d4").fast(2)
+  .s("sawtooth")
+  .lpf(200).lpenv(3).lpq(1)
+  .ftype("12db")`}>
+    Add `.ftype("12db")`. This is the default and the gentlest: above the cutoff the level falls
+    away slowly, so a fair bit of the top still leaks through.
+  </Step>
+  <Step check={{ has: { ftype: '24db' } }}
+        solution={`note("c f g g a c4 d4").fast(2)
+  .s("sawtooth")
+  .lpf(200).lpenv(3).lpq(1)
+  .ftype("24db")`}>
+    Change it to `.ftype("24db")`. Twice the slope: what is above the cutoff is cut much harder,
+    so the whole line sounds darker and tighter even though no number moved.
+  </Step>
+  <Step check={{ has: { ftype: 'ladder' } }}
+        solution={`note("c f g g a c4 d4").fast(2)
+  .s("sawtooth")
+  .lpf(200).lpenv(3).lpq(1)
+  .ftype("ladder")`}>
+    Now `.ftype("ladder")`. A model of the Moog ladder filter — Moog-ish, coloured and aggressive
+    rather than clean.
+  </Step>
+  <Step check={{ includes: '.drive(', has: { drive: [2, 8] } }}
+        hints={['`drive` only does something on the filter types that model an overdriving circuit, which is why it comes after `ladder`.']}
+        solution={`note("c f g g a c4 d4").fast(2)
+  .s("sawtooth")
+  .lpf(200).lpenv(3).lpq(1)
+  .ftype("ladder").drive(4)`}>
+    Add `.drive(4)`. This overdrives the filter itself, not the output — it dirties the sound from
+    inside the circuit rather than just making it louder.
+  </Step>
+  <Step check={{ includes: '<', cycles: 2, fn: "(h) => new Set(h.map((e) => e.value.drive)).size === 2 || 'Expected two different drive amounts, one per cycle.'" }}
+        solution={`note("c f g g a c4 d4").fast(2)
+  .s("sawtooth")
+  .lpf(200).lpenv(3).lpq(1)
+  .ftype("ladder").drive("<.5 4>")`}>
+    A/B it every bar: `.drive("<.5 4>")`. Clean bar, filthy bar, back to back.
+  </Step>
+</Exercise>
 
-`drive` overdrives the filter itself on supported types:
-
-<Strudel
-  code={`note("{f g g c d a a#}%16".sub(17)).s("supersaw")
+<Exercise id="filters/ftype-challenge" title="Challenge: a ladder bass"
+  goal="Give this supersaw a ladder filter at 150 Hz, q .8, a filter envelope 8 octaves deep, and drive alternating between .5 and 4 each bar."
+  start={`note("{f g g c d a a#}%16".sub(17)).s("supersaw")`}
+  target={`note("{f g g c d a a#}%16".sub(17)).s("supersaw")
   .lpenv(8).lpf(150).lpq(.8).ftype('ladder').drive("<.5 4>")`}
-/>
+  check={{ includes: '.drive(', has: { ftype: 'ladder', lpf: [100, 200], lpq: [0.5, 1], lpenv: [6, 10] }, cycles: 2 }}
+  hints={[
+    'Five chained calls, and every number is given to you in the goal.',
+    'The filter model and the drive are the two you have only just met; the rest you already know.',
+    'The alternating drive is a pattern, so it goes inside quotes with angle brackets.',
+  ]} />
 
 ## Making the filter move
 
-This is the important part. A static filter is an EQ; a moving filter is an instrument.
+This is the important part. A static filter is an EQ; a moving filter is an instrument. There are
+exactly three ways to make one move, and they fail in different places.
 
 ### 1. Filter envelopes — per note
 
-Covered in <L to="/tutorial/envelopes">Envelopes</L>: `lpenv` sets the depth, `lpa`/`lpd`/`lps`/`lpr` the
-shape. This moves the filter **on every note**.
+The envelope re-runs on **every note**. `lpenv` is the depth in octaves, and `lpa`/`lpd`/`lps`/`lpr`
+are its ADSR — all of it is covered properly in <L to="/tutorial/envelopes">Envelopes</L>.
 
-<Strudel code={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpq(8).lpf(400).lpa(.1).lpd(.1).lpenv(4)`} />
+<Exercise id="filters/move-env" title="A sweep on every note"
+  goal="Add a per-note filter envelope, then pattern how deep it goes."
+  start={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400)`}
+  target={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv("<0 2 4 8>").lpq(8)`}>
+  <Step check={{ includes: '.lpenv(', has: { lpenv: [2, 6] } }}
+        solution={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv(4)`}>
+    Add `.lpenv(4)`. Each note now starts four octaves above 400 Hz and falls back to it. The line
+    is identical; what changed is that every note has a shape.
+  </Step>
+  <Step check={{ has: { lpq: [4, 12] } }}
+        solution={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv(4).lpq(8)`}>
+    Add `.lpq(8)`. Resonance and a moving cutoff belong together: now you can follow exactly where
+    the filter is, because the peak sings it.
+  </Step>
+  <Step check={{ includes: '<', cycles: 4, fn: "(h) => new Set(h.map((e) => e.value.lpenv)).size === 4 || 'Expected four different envelope depths, one per cycle.'" }}
+        hints={['The depth is an argument like any other, so it takes a pattern.']}
+        solution={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv("<0 2 4 8>").lpq(8)`}>
+    Pattern the depth: `.lpenv("<0 2 4 8>")`. Bar one is dead flat, bar four is a full sweep — an
+    eight-bar build with one edit.
+  </Step>
+</Exercise>
 
 ### 2. Signals — per event
 
-A signal like `sine` is sampled once per event and scaled with `range`:
+A signal like `sine` or `saw` is a continuous value, but it is **sampled once per event** and
+scaled into range with `range(lo, hi)`. That per-event part is a trap, and the next exercise walks
+straight into it on purpose.
 
-<Strudel code={`s("hh*16").lpf(saw.range(500, 2000))`} />
-
-<Strudel
-  code={`note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
-  .s("sawtooth")
-  .lpf(sine.range(100, 2000).slow(4))`}
-  label="a 4-cycle-long sweep"
-/>
+<Exercise id="filters/move-signal" title="The signal trap"
+  goal="Drive a filter with a signal, then break it, then fix it twice."
+  start={`s("hh*16")`}
+  target={`s("supersaw").lpf(800).lfo({ r: 2, depthabs: 250 })`}>
+  <Step check={{ includes: 'range(', has: { lpf: [500, 2000] }, fn: "(h) => new Set(h.map((e) => e.value.cutoff)).size >= 12 || 'Each of the sixteen hats should get its own cutoff value.'" }}
+        hints={['`saw` on its own runs 0 to 1; `range` maps it onto the two numbers you give it.']}
+        solution={`s("hh*16").lpf(saw.range(500, 2000))`}>
+    Add `.lpf(saw.range(500, 2000))`. Sixteen hats, and each one samples the ramp at a slightly
+    later point, so the hats climb from dull to bright and snap back at the bar line.
+  </Step>
+  <Step check={{ includes: 'sine.range(', fn: "(h) => (h.length > 8 && h[8].value.cutoff < h[4].value.cutoff) || 'With a sine the cutoff should come back down in the second half of the cycle.'" }}
+        solution={`s("hh*16").lpf(sine.range(500, 2000))`}>
+    Swap `saw` for `sine`. Instead of climbing and snapping back it now rises and falls smoothly —
+    same range, no seam at the bar line.
+  </Step>
+  <Step check={{ includes: '.slow(', cycles: 4, fn: "(h) => { const c = h.filter((e) => e.t < 1).map((e) => e.value.cutoff); return (c.length > 0 && Math.min(...c) > 1000) || 'The sweep should now take four cycles, so the first bar only climbs.' }" }}
+        hints={['`.slow(4)` goes on the signal, not on the pattern.']}
+        solution={`s("hh*16").lpf(sine.range(500, 2000).slow(4))`}>
+    Stretch the sweep over four bars: `.lpf(sine.range(500, 2000).slow(4))`. One slow breath
+    instead of one per bar.
+  </Step>
+  <Step check={{ includes: 'supersaw', events: 1 }}
+        hints={['Replace the whole `s(...)` call, leaving the `.lpf(...)` exactly as it is.']}
+        solution={`s("supersaw").lpf(sine.range(500, 2000).slow(4))`}>
+    Now break it. Replace `s("hh*16")` with `s("supersaw")`: one long note per cycle instead of
+    sixteen hats. The sweep is gone — the filter picks one value when the note starts and holds it
+    for the whole bar, because **a signal is only read when an event is triggered**.
+  </Step>
+  <Step check={{ code: "\\.seg(ment)?\\(", events: 16 }}
+        hints={['You do not need more notes musically — you need more *events* for the signal to be sampled at.']}
+        solution={`s("supersaw").seg(16).lpf(sine.range(500, 2000).slow(4))`}>
+    Fix it the cheap way: add `.seg(16)` before the `.lpf(...)`. That chops the long note into
+    sixteen retriggered events, and each one re-samples the sine. It moves again — but listen for
+    the sixteen little restarts, because they are really there.
+  </Step>
+  <Step check={{ includes: '.lfo(', events: 1 }}
+        hints={['`lfo` takes an object, not a number.']}
+        solution={`s("supersaw").lpf(800).lfo({ r: 2, depthabs: 250 })`}>
+    Fix it properly: replace everything after `s("supersaw")` with
+    `.lpf(800).lfo({ r: 2, depthabs: 250 })`. One event per cycle again — and the filter still
+    wobbles, because an LFO runs inside the audio engine rather than being sampled per event.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
-A signal is only read **when an event is triggered**. On a long, sparse note it will not move:
-
-`s("supersaw").lpf(tri.range(100,5000).slow(2))` sounds static, because there is one event per
-cycle. Add events with `seg(16)` — or reach for a real LFO.
+The trap in step 4 is the single most common "why doesn't my filter move?" in Strudel. A long,
+sparse pattern plus a signal equals a static filter, every time. Either add events
+(`seg`/`segment`) or use a real LFO.
 </Box>
-
-<Strudel code={`s("supersaw").seg(16).lpf(tri.range(100, 5000).slow(2))`} label="seg: fake continuous movement with more events" />
 
 ### 3. LFOs — true audio-rate
 
 `lfo()` modulates the parameter continuously inside the audio engine, no extra events needed. It
 gets <L to="/tutorial/lfo">its own chapter</L>.
 
-<Strudel code={`s("saw").lpf(800).lfo({ r: 2, depthabs: 250 })`} label="continuous, even on one long note" />
+<Exercise id="filters/move-challenge" title="Challenge: make the pad sweep without an LFO"
+  goal="This pad has one event per cycle, so the signal never re-samples and the filter sits still. Make it sweep — keeping the signal, and without touching lfo()."
+  start={`s("supersaw").lpf(tri.range(100, 5000).slow(2))`}
+  target={`s("supersaw").seg(16).lpf(tri.range(100, 5000).slow(2))`}
+  check={{ events: [8, 64], fn: "(h) => new Set(h.map((e) => e.value.cutoff)).size >= 8 || 'The cutoff should land on a different value on each event.'" }}
+  hints={[
+    'The signal is fine; the problem is that there is nothing to sample it.',
+    'One extra call, inserted before the `.lpf(...)`, turns the single long note into many.',
+    'It takes a number: how many events you want per cycle. Eight or more will be audible.',
+  ]} />
 
 ## The one-knob DJ filter
 
 `djf` is a single control that is a lowpass below 0.5 and a highpass above it — the filter knob on
-a DJ mixer.
+a DJ mixer, where one direction takes the bass out and the other takes the highs out.
 
-<Strudel code={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf("<.5 .3 .2 .75>")`} />
+<Exercise id="filters/djf" title="One knob, both directions"
+  goal="Work the DJ filter by hand in both directions, then let a signal do it."
+  start={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw")`}
+  target={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(sine.range(0.2, 0.8).slow(8))`}>
+  <Step check={{ includes: '.djf(', has: { djf: [0.5, 0.5] } }}
+        solution={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(.5)`}>
+    Add `.djf(.5)`. Dead centre is neutral: nothing is removed, exactly as on a mixer with the knob
+    at twelve o'clock.
+  </Step>
+  <Step check={{ has: { djf: [0.05, 0.35] } }}
+        solution={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(.2)`}>
+    Turn it down: `.djf(.2)`. Below 0.5 it is a lowpass, so the highs drop out. This is the
+    transition where a track sinks underwater.
+  </Step>
+  <Step check={{ has: { djf: [0.6, 0.95] } }}
+        solution={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(.75)`}>
+    Turn it up past centre: `.djf(.75)`. Above 0.5 it is a highpass, so the bass leaves instead.
+    This is the build.
+  </Step>
+  <Step check={{ includes: 'range(', cycles: 8, has: { djf: [0.15, 0.85] }, fn: "(h) => new Set(h.map((e) => e.value.djf)).size >= 8 || 'The knob should be moving continuously, not sitting on one value.'" }}
+        hints={['A signal plus `range` gives you the hand on the knob — and this pattern has eight events per cycle, so it re-samples often enough to sound smooth.']}
+        solution={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(sine.range(0.2, 0.8).slow(8))`}>
+    Let go of the knob: `.djf(sine.range(0.2, 0.8).slow(8))`. Eight bars from underwater to
+    weightless and back, on one control.
+  </Step>
+</Exercise>
 
-<Box kind="try">
-`djf(0.5)` is neutral. Sweeping it towards 0 is the "drop out the highs" transition; towards 1 is
-the "drop out the bass" build. Try `.djf(sine.range(0.2, 0.8).slow(8))`.
-</Box>
+<Exercise id="filters/djf-challenge" title="Challenge: four bars on one knob"
+  goal="One value per bar on the DJ filter: neutral, then highs gone, then neutral, then bass gone."
+  start={`s("bd*4, hh*8").djf(.5)`}
+  target={`s("bd*4, hh*8").djf("<.5 .2 .5 .8>")`}
+  check={{ cycles: 4, fn: "(h) => { const at = (c) => h.filter((e) => Math.floor(e.t) === c).map((e) => e.value.djf); const ok = (v, f) => v.length > 0 && v.every(f); return (ok(at(0), (x) => x === 0.5) && ok(at(1), (x) => x < 0.45) && ok(at(2), (x) => x === 0.5) && ok(at(3), (x) => x > 0.55)) || 'Expected neutral, then below centre, then neutral, then above centre — one value per bar.' }" }}
+  hints={[
+    'Neutral is the number that is already there.',
+    '"Highs gone" is below centre and "bass gone" is above it — pick one clear value for each.',
+    'Four values, one per bar, in angle brackets inside the quotes.',
+  ]} />
 
 ## Vowel — the formant filter
 
-`vowel` runs a bank of formant filters so the sound appears to be speaking.
+`vowel` runs a bank of formant filters, the same resonances your mouth makes, so the sound appears
+to be speaking. Available vowels: `a e i o u ae aa oe ue y uh un en an on`.
 
-<Strudel code={`note("[c2 <eb2 <g2 g1>>]*2").s('sawtooth').vowel("<a e i <o u>>")`} />
+<Exercise id="filters/vowel" title="Make it talk"
+  goal="Put a vowel on a synth line, then make it change every bar."
+  start={`note("[c2 <eb2 <g2 g1>>]*2").s("sawtooth")`}
+  target={`note("[c2 <eb2 <g2 g1>>]*2").s("sawtooth").vowel("<a e i o u>")`}>
+  <Step check={{ includes: '.vowel(', has: { vowel: 'a' } }}
+        solution={`note("[c2 <eb2 <g2 g1>>]*2").s("sawtooth").vowel("a")`}>
+    Add `.vowel("a")`. The sawtooth suddenly has a mouth. Nothing was added — the formants are
+    bandpasses, so this is still only subtraction.
+  </Step>
+  <Step check={{ cycles: 5, fn: "(h) => new Set(h.map((e) => e.value.vowel)).size === 5 || 'Expected five different vowels, one per cycle.'" }}
+        hints={['Five vowels, one per cycle.']}
+        solution={`note("[c2 <eb2 <g2 g1>>]*2").s("sawtooth").vowel("<a e i o u>")`}>
+    Change it to `.vowel("<a e i o u>")`. Five bars of the same line singing five different vowels.
+  </Step>
+</Exercise>
 
-<Strudel code={`s("bd sd mt ht bd [~ cp] ht lt").vowel("[a|e|i|o|u]")`} label="on drums, for texture" />
-
-Available vowels: `a e i o u ae aa oe ue y uh un en an on`.
+<Exercise id="filters/vowel-challenge" title="Challenge: vowels on drums"
+  goal="Give this drum pattern a vowel picked at random from a, e, i, o and u each cycle."
+  start={`s("bd sd mt ht bd [~ cp] ht lt")`}
+  target={`s("bd sd mt ht bd [~ cp] ht lt").vowel("[a|e|i|o|u]")`}
+  check={{ includes: ['.vowel(', '|'], fn: "(h) => (h.length > 0 && h.every((e) => ['a', 'e', 'i', 'o', 'u'].includes(e.value.vowel))) || 'Every hit should get one of a e i o u.'" }}
+  hints={[
+'The random-choice operator from Mini-Notation picks one of several alternatives, freshly each cycle.',
+    'Five alternatives separated by that operator, wrapped in square brackets so they share one slot.',
+    'It is an argument like any other, so the whole thing goes inside the quotes.',
+  ]} />
 
 ## A worked example
 
-Everything in this chapter, in one patch:
+Everything in this chapter, in one patch — filter envelope, signals on four different controls,
+and a modulated q. Read it, play it, then pull one line out at a time and listen to what goes
+missing.
 
 <Strudel
   code={`note("[c eb g <f bb>](3,8,<0 1>)".sub(12))
@@ -189,6 +483,7 @@ last one counts, because each effect is single-use per event.
 | `lpf` `lpq` | lowpass cutoff / resonance |
 | `hpf` `hpq` | highpass cutoff / resonance |
 | `bpf` `bpq` | bandpass centre / resonance (higher = narrower band) |
+| `"freq:q"` | cutoff and q in one string |
 | `ftype` | 12db, 24db, or ladder |
 | `drive` | overdrive into the filter |
 | `lpenv lpa lpd lps lpr` | filter envelope |

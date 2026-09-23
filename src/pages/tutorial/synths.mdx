@@ -5,17 +5,60 @@ title: Synths
 lede: 'Everything Strudel can generate without a sample: oscillators, FM, additive, wavetables and ZZFX.'
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
+
+Every sound in this chapter is generated on the spot, with no audio file behind it. You will build
+each one by typing: a step asks for one change, you press ctrl+enter, and you listen to what moved.
+
+<Box kind="try">
+Chain `._scope()` onto any pattern to watch its waveform, or `._spectrum()` to watch its harmonics.
+They draw into the page and change nothing about the sound, so leave them on while you work — half
+of what follows is easier to see than to describe.
+</Box>
 
 ## The basic waveforms
 
-<Strudel
-  code={`note("c2 <eb2 <g2 g1>>".fast(2))
-  .s("<sawtooth square triangle sine>")
-  ._scope()`}
-/>
+Four oscillators, in order of how much they contain: `sine` has the fundamental and nothing else,
+`triangle` and `square` have the odd harmonics (weak, then strong), `sawtooth` has all of them.
+
+<Exercise id="synths/waveforms" title="Hear all four"
+  goal="Take one bass line through every basic oscillator, then through the short aliases."
+  start={`note("c2 eb2 g2 c3")`}
+  target={`note("c2 eb2 g2 c3").s("<saw sqr tri sin>")`}>
+  <Step check={{ includes: '.s(', has: { s: 'sawtooth' } }}
+        hints={['`.s()` picks the sound source, the same function you use for drum samples.']}
+        solution={`note("c2 eb2 g2 c3").s("sawtooth")`}>
+    Play it first: with `note` and no `s`, you are hearing the default, `triangle`. Now add
+    `.s("sawtooth")`. Every harmonic is present, so it buzzes — this is the classic synth bass.
+  </Step>
+  <Step check={{ has: { s: 'square' } }}
+        solution={`note("c2 eb2 g2 c3").s("square")`}>
+    Change it to `.s("square")`. Only odd harmonics, all of them strong: hollow and reedy, a
+    clarinet or a Game Boy.
+  </Step>
+  <Step check={{ has: { s: 'sine' } }}
+        solution={`note("c2 eb2 g2 c3").s("sine")`}>
+    Change it to `.s("sine")`. Nothing but the fundamental. Down here it is a sub bass, and it
+    almost disappears on laptop speakers.
+  </Step>
+  <Step check={{ includes: '<', cycles: 4, match: { keys: ['s'] } }}
+        target={`note("c2 eb2 g2 c3").s("<sawtooth square triangle sine>")`}
+        hints={['`< >` plays one element per cycle, and `s` takes mini-notation like any other argument.']}
+        solution={`note("c2 eb2 g2 c3").s("<sawtooth square triangle sine>")`}>
+    Put all four in one string, one per bar: `.s("<sawtooth square triangle sine>")`. Four bars,
+    four timbres, same notes.
+  </Step>
+  <Step check={{ includes: 'sqr', cycles: 4, match: { keys: ['s', 'note'] } }}
+        hints={['Each name shortens to its first syllable.']}
+        solution={`note("c2 eb2 g2 c3").s("<saw sqr tri sin>")`}>
+    Every name has a short alias. Replace them with `<saw sqr tri sin>`: identical sound, less
+    typing.
+  </Step>
+</Exercise>
 
 | Wave | Harmonics | Sounds like |
 | --- | --- | --- |
@@ -24,14 +67,60 @@ import QA from '../../components/QA.astro';
 | `square` | odd, strong | reedy, chiptune |
 | `sawtooth` | all | bright, buzzy — the classic synth bass/lead |
 
-If you set `note` but no `s`, the default is `triangle`.
+If you set `note` but no `s`, the default is `triangle`. Besides the four, the engine also registers
+`supersaw`, `pulse`, `sbd` and `bytebeat`.
 
-Short aliases exist: `saw`, `sqr`, `tri`, `sin`. The engine also registers `supersaw`, `pulse`,
-`sbd` and `bytebeat`:
+<Exercise id="synths/waveforms-challenge" title="Challenge: two bars, two waves"
+  goal="Eight `c2` eighth notes per bar: a square in bar 1, a sine in bar 2."
+  start={`note("c2*8")`}
+  target={`note("c2*8").s("<square sine>")`}
+  check={{ cycles: 2, match: { keys: ['s', 'note'] } }}
+  hints={[
+    'Eight eighth notes in one bar is `"c2*8"`, which you already have.',
+    'The sound is an argument like any other, so it takes mini-notation too.',
+    'One element per cycle is what `< >` does.',
+  ]} />
 
-<Strudel code={`note("d f a a# a d3").fast(2).s("supersaw").unison("<1 2 7>")`} label="supersaw: stacked detuned saws" />
+## Fat oscillators: supersaw and pulse
 
-| Control | Effect on supersaw / pulse |
+`supersaw` is not one saw but a stack of them, each detuned a little and spread across the stereo
+field — the Roland JP-8000 sound under most trance leads. Ableton's Unison device does the same job.
+
+<Exercise id="synths/supersaw" title="Stack and detune"
+  goal="Turn one saw into a wall of saws, and control how wide it gets."
+  start={`note("<c2 eb2 g1 bb1>").s("sawtooth")`}
+  target={`note("<c2 eb2 g1 bb1>").s("supersaw").unison("<1 3 7>").detune(.2).spread(.8)`}>
+  <Step check={{ has: { s: 'supersaw' } }}
+        solution={`note("<c2 eb2 g1 bb1>").s("supersaw")`}>
+    Change `sawtooth` to `supersaw`. Already thicker, and slightly restless: the voices are
+    beating against each other.
+  </Step>
+  <Step check={{ includes: '.unison(', has: { unison: [2, 16] } }}
+        hints={['`unison` counts voices, not semitones.']}
+        solution={`note("<c2 eb2 g1 bb1>").s("supersaw").unison(7)`}>
+    Add `.unison(7)`: seven saws instead of the default. More voices, more movement.
+  </Step>
+  <Step check={{ includes: '.detune(', has: { detune: [0.05, 1] } }}
+        hints={['Small values are a chorus; whole numbers start to sound like separate notes.']}
+        solution={`note("<c2 eb2 g1 bb1>").s("supersaw").unison(7).detune(.2)`}>
+    Add `.detune(.2)`: how far apart the seven are tuned. Try `2` and then `24.1` before you move
+    on — at `24.1` it stops being one note and becomes a chord.
+  </Step>
+  <Step check={{ has: { spread: [0.5, 1] } }}
+        hints={['`spread` runs from 0 (all voices centred) to 1 (hard left to hard right).']}
+        solution={`note("<c2 eb2 g1 bb1>").s("supersaw").unison(7).detune(.2).spread(.8)`}>
+    Add `.spread(.8)`. The voices fan out across the stereo image. Listen in headphones: the note
+    stops coming from one point.
+  </Step>
+  <Step check={{ cycles: 3, match: { keys: ['unison'] } }}
+        hints={['`unison` is an argument, so it takes mini-notation.']}
+        solution={`note("<c2 eb2 g1 bb1>").s("supersaw").unison("<1 3 7>").detune(.2).spread(.8)`}>
+    Make the width itself move: change `.unison(7)` to `.unison("<1 3 7>")`. One voice, three,
+    seven — the bass line opens up over three bars.
+  </Step>
+</Exercise>
+
+| Control | Effect on `supersaw` / `pulse` |
 | --- | --- |
 | `unison(n)` | how many stacked voices |
 | `detune(x)` | how far apart they are tuned |
@@ -39,37 +128,192 @@ Short aliases exist: `saw`, `sqr`, `tri`, `sin`. The engine also registers `supe
 | `pw(x)` | pulse width of the `pulse` oscillator |
 | `pwrate` / `pwsweep` | LFO on the pulse width |
 
-<Strudel code={`note("d f a a# a d3").fast(2).s("supersaw").detune("<.1 .2 .5 24.1>")`} />
+<Exercise id="synths/supersaw-challenge" title="Challenge: a trance lead"
+  goal="`c4 eb4 g4 bb4` on a supersaw: 5 voices, detune .3, spread all the way out."
+  start={`note("c4 eb4 g4 bb4")`}
+  target={`note("c4 eb4 g4 bb4").s("supersaw").unison(5).detune(.3).spread(1)`}
+  check={{ events: 4, has: { s: 'supersaw', unison: 5, detune: [0.2, 0.4], spread: [0.8, 1] } }}
+  hints={[
+    'Four controls in a chain: the source, the voice count, the detune amount, the stereo width.',
+    '“All the way out” is the top of the `spread` range.',
+  ]} />
 
-<Strudel code={`n(run(8)).scale("D:pentatonic").s("pulse").pw("0 .75 .5 1")`} label="pulse width modulation by hand" />
+A `pulse` is a square whose two halves are no longer equal. At a width of 0.5 it *is* a square; push
+it towards 0 and it thins out into something nasal. Sweeping that width is the oldest trick in
+subtractive synthesis, because a static pulse sounds dead and a moving one sounds alive.
 
-<Strudel code={`n(run(8)).scale("D:pentatonic").s("pulse").pw("0.5").pwrate("<5 .1 25>").pwsweep("<0.3 .8>")` } label="PWM by LFO" />
+<Exercise id="synths/pulse" title="Pulse width modulation"
+  goal="Thin out a square by hand, then hand the job to an LFO."
+  start={`note("d2*8").s("sawtooth")`}
+  target={`note("d2*8").s("pulse").pw("<.1 .3 .5>").pwrate(4).pwsweep(.5)`}>
+  <Step check={{ has: { s: 'pulse' } }}
+        solution={`note("d2*8").s("pulse")`}>
+    Change `sawtooth` to `pulse`. With no width set you are hearing something square-ish.
+  </Step>
+  <Step check={{ includes: '.pw(', has: { pw: [0.02, 0.2] } }}
+        hints={['`pw` is the fraction of each period the wave spends high: 0.5 is a square.']}
+        solution={`note("d2*8").s("pulse").pw(.1)`}>
+    Add `.pw(.1)`. A tenth high, nine tenths low: thin, buzzy, and much quieter in the low end.
+  </Step>
+  <Step check={{ cycles: 3, match: { keys: ['pw'] } }}
+        target={`note("d2*8").s("pulse").pw("<.1 .3 .5>")`}
+        solution={`note("d2*8").s("pulse").pw("<.1 .3 .5>")`}>
+    Change it to `.pw("<.1 .3 .5>")` and listen to the tone fill out over three bars.
+  </Step>
+  <Step check={{ has: { pwrate: [1, 20] } }}
+        hints={['The rate is in Hz, like any LFO.']}
+        solution={`note("d2*8").s("pulse").pw("<.1 .3 .5>").pwrate(4)`}>
+    Add `.pwrate(4)`: an LFO wobbling the width four times a second, around whatever `pw` you set.
+  </Step>
+  <Step check={{ has: { pwsweep: [0.1, 1] }, cycles: 3, match: { keys: ['note', 's', 'pw', 'pwrate', 'pwsweep'] } }}
+        hints={['`pwsweep` is how far the LFO pushes the width, not how fast.']}
+        solution={`note("d2*8").s("pulse").pw("<.1 .3 .5>").pwrate(4).pwsweep(.5)`}>
+    Add `.pwsweep(.5)` for the depth of that wobble. This is the sound of a string machine, and
+    the reason PWM pads never sit still.
+  </Step>
+</Exercise>
+
+<Exercise id="synths/pulse-challenge" title="Challenge: a chiptune lead"
+  goal="`a4 c5 e5 c5` on a pulse: width .25, wobbled at 6 Hz with depth .4."
+  start={`note("a4 c5 e5 c5")`}
+  target={`note("a4 c5 e5 c5").s("pulse").pw(.25).pwrate(6).pwsweep(.4)`}
+  check={{ events: 4, has: { s: 'pulse', pw: [0.15, 0.35], pwrate: [5, 7], pwsweep: [0.3, 0.5] } }}
+  hints={[
+    'Three controls shape a pulse: the width itself, the speed of the LFO on it, and its depth.',
+    '“Wobbled at 6 Hz” is a rate; “depth .4” is a sweep.',
+  ]} />
 
 ## Noise
 
-<Strudel code={`s("<white pink brown>")._scope()`} label="hard, medium, soft" />
+Noise has no pitch, only a colour: `white` is flat and hissy, `pink` rolls the top off, `brown`
+rolls off twice as hard and sounds like distant surf.
 
-Noise can also be mixed **into** an oscillator rather than replacing it:
+<Exercise id="synths/noise" title="Three colours, then grit"
+  goal="Compare the three noise sources, mix noise into a pitched tone, and thin it into crackle."
+  start={`s("white*4")`}
+  target={`s("crackle*4").density("<.01 .1 1>")`}>
+  <Step check={{ cycles: 3, match: { keys: ['s'] } }}
+        target={`s("<white pink brown>*4")`}
+        hints={['`< >` inside the quotes, `*4` outside it.']}
+        solution={`s("<white pink brown>*4")`}>
+    Change it to `s("<white pink brown>*4")`. Three bars: hard, medium, soft. The difference is
+    how fast the energy falls off as the frequency rises.
+  </Step>
+  <Step check={{ includes: '.noise(', has: { s: 'sine', noise: [0.05, 1] } }}
+        hints={['This is the `noise` *control*, not the `noise` sound source.']}
+        solution={`note("c3*4").s("sine").noise(.3)`}>
+    Noise is also something you mix **into** an oscillator. Replace the whole line with
+    `note("c3*4").s("sine").noise(.3)`: a clean sine with breath on it.
+  </Step>
+  <Step check={{ cycles: 3, match: { keys: ['noise'] } }}
+        target={`note("c3*4").s("sine").noise("<0 .1 .5>")`}
+        solution={`note("c3*4").s("sine").noise("<0 .1 .5>")`}>
+    Change it to `.noise("<0 .1 .5>")`. Bar 1 is pure, bar 2 is a flute, bar 3 is a broken speaker.
+  </Step>
+  <Step check={{ has: { s: 'crackle', density: [0.01, 2] } }}
+        hints={['`crackle` is its own sound source, and `density` is how many clicks per second.']}
+        solution={`s("crackle*4").density(.2)`}>
+    Now the opposite of a wall of noise: replace the line with `s("crackle*4").density(.2)`.
+    Individual clicks, vinyl-style.
+  </Step>
+  <Step check={{ cycles: 3, match: { keys: ['s', 'density'] } }}
+        solution={`s("crackle*4").density("<.01 .1 1>")`}>
+    Change it to `.density("<.01 .1 1>")`. From an occasional tick to a downpour.
+  </Step>
+</Exercise>
 
-<Strudel code={`note("c3").noise("<0.1 0.25 0.5>")._scope()`} label="a bit of grit on a pitched tone" />
-
-<Strudel code={`s("crackle*4").density("<0.01 0.04 0.2 0.5>".slow(2))`} label="crackle: vinyl-style clicks" />
+<Exercise id="synths/noise-challenge" title="Challenge: breath and dust"
+  goal="Two lanes: `c4 e4 g4 e4` on a sine with 20% noise mixed in, and crackle twice a bar at density .3."
+  start={`$: note("c4 e4 g4 e4").s("sine")
+$: s("crackle*2")`}
+  target={`$: note("c4 e4 g4 e4").s("sine").noise(.2)
+$: s("crackle*2").density(.3)`}
+  check={{ events: 6, match: { keys: ['s', 'note', 'noise', 'density'] } }}
+  hints={[
+    'One control goes on the melodic lane, the other on the crackle lane.',
+    'Mixing noise into a pitched tone is a control you chain, not a sound you select.',
+  ]} />
 
 ## Vibrato
 
-A built-in pitch LFO. `vib` is the rate in Hz, `vibmod` the depth in semitones — or put both in one
-string separated by `:`.
+A pitch LFO, built in. `vib` is the rate in Hz and `vibmod` the depth in semitones — or write both
+in one string, `"rate:depth"`.
 
-<Strudel code={`note("a e").vib("<.5 1 2 4 8 16>")._scope()`} />
+<Exercise id="synths/vibrato" title="Wobble the pitch"
+  goal="Go from a gentle singer's vibrato to a siren, then write it in one string."
+  start={`note("<a4 e4>").s("triangle")`}
+  target={`note("<a4 e4>").s("triangle").vib("6:12")`}>
+  <Step check={{ includes: '.vib(', has: { vib: [1, 10] } }}
+        hints={['The number is a rate in Hz — around 5 is what a singer does.']}
+        solution={`note("<a4 e4>").s("triangle").vib(4)`}>
+    Add `.vib(4)`: the pitch wobbles four times a second. That is expression.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['vib'] } }}
+        target={`note("<a4 e4>").s("triangle").vib("<.5 2 8 16>")`}
+        solution={`note("<a4 e4>").s("triangle").vib("<.5 2 8 16>")`}>
+    Change it to `.vib("<.5 2 8 16>")`. Past about 10 Hz you stop hearing a wobble and start
+    hearing a new timbre — which is the whole idea behind FM, two sections down.
+  </Step>
+  <Step check={{ includes: '.vibmod(', has: { vibmod: [0.1, 12] } }}
+        hints={['Depth is in semitones, so `1` is a semitone either side.']}
+        solution={`note("<a4 e4>").s("triangle").vib("<.5 2 8 16>").vibmod(2)`}>
+    Add `.vibmod(2)`: two semitones of depth. Rate without depth is nothing; this is the knob that
+    decides between "tasteful" and "seasick".
+  </Step>
+  <Step check={{ excludes: '.vibmod(', has: { vib: 6, vibmod: 12 } }}
+        hints={['One string, one colon, no `vibmod` call left.']}
+        solution={`note("<a4 e4>").s("triangle").vib("6:12")`}>
+    Replace both calls with `.vib("6:12")` — rate and depth in one string. Twelve semitones is an
+    octave each way: an air-raid siren.
+  </Step>
+</Exercise>
 
-<Strudel code={`note("a e").vib("<.5 1 2 4 8 16>:12")._scope()`} label="rate:depth — 12 semitones is a siren" />
-
-<Strudel code={`note("a e").vib(4).vibmod("<.25 .5 1 2 12>")._scope()`} />
+<Exercise id="synths/vibrato-challenge" title="Challenge: siren"
+  goal="One held `a4` per bar on a sawtooth, vibrato at 2 Hz and 12 semitones deep, written in the one-string form."
+  start={`note("a4").s("sawtooth")`}
+  target={`note("a4").s("sawtooth").vib("2:12")`}
+  check={{ includes: ':', has: { vib: 2, vibmod: 12 } }}
+  hints={[
+    'Rate first, then depth.',
+    'The separator inside the string is the same one `hh:2` uses for sample numbers.',
+  ]} />
 
 ## FM synthesis
 
-FM modulates the frequency of the carrier with another oscillator, fast enough that you hear it as
-timbre rather than as vibrato.
+Modulate the frequency of one oscillator with another, fast enough and you stop hearing a wobble and
+start hearing a new harmonic spectrum. Two numbers do almost all of it: **how much** (`fm`, the
+modulation index) and **what ratio** the modulator runs at (`fmh`, harmonicity). This is a DX7 in
+two function calls.
+
+<Exercise id="synths/fm" title="Index and harmonicity"
+  goal="Take a sine from pure to metallic with `fm`, then change its character with `fmh`."
+  start={`note("c3 e3 g3 b3").s("sine")`}
+  target={`note("c3 e3 g3 b3").s("sine").fm("<0 1 4 12>").fmh("<1 2 3 1.41>")`}>
+  <Step check={{ includes: '.fm(', has: { fm: [1, 20] } }}
+        hints={['`fm` is the modulation index: 0 is off, and it has no upper limit worth respecting.']}
+        solution={`note("c3 e3 g3 b3").s("sine").fm(4)`}>
+    Add `.fm(4)`. The sine grows a whole set of sidebands and turns into something hollow and
+    reedy — nothing was filtered, the harmonics were *created*.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['fm'] } }}
+        target={`note("c3 e3 g3 b3").s("sine").fm("<0 1 4 12>")`}
+        solution={`note("c3 e3 g3 b3").s("sine").fm("<0 1 4 12>")`}>
+    Change it to `.fm("<0 1 4 12>")`: off, a hint, obvious, aggressive. Index is the brightness
+    knob of FM.
+  </Step>
+  <Step check={{ includes: '.fmh(', has: { fmh: [1.5, 4] } }}
+        hints={['Harmonicity is a ratio against the note you are playing, not a frequency.']}
+        solution={`note("c3 e3 g3 b3").s("sine").fm("<0 1 4 12>").fmh(2)`}>
+    Add `.fmh(2)`: the modulator now runs an octave above the carrier. Still musical, because 2 is
+    a whole number.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['fm', 'fmh'] } }}
+        hints={['Whole numbers land on harmonics; anything in between lands between them.']}
+        solution={`note("c3 e3 g3 b3").s("sine").fm("<0 1 4 12>").fmh("<1 2 3 1.41>")`}>
+    Change it to `.fmh("<1 2 3 1.41>")`. The first three bars stay in tune with themselves. The
+    fourth, on a decimal, goes inharmonic: bells, gongs, metal.
+  </Step>
+</Exercise>
 
 | Control | Meaning |
 | --- | --- |
@@ -78,141 +322,286 @@ timbre rather than as vibrato.
 | `fmattack` `fmdecay` `fmsustain` `fmrelease` | envelope on the modulation amount |
 | `fmenv('lin'/'exp')` | envelope curve |
 
-<Strudel code={`note("c e g b g e").fm("<0 1 2 4 8 16>")._scope()`} label="index: how much modulation" />
+A fixed index is a static timbre. Real instruments are bright at the attack and mellow after it, and
+that is what the FM envelope is for: it shapes the modulation amount over time, independently of
+the volume envelope.
 
-<Strudel code={`note("c e g b g e").fm(4).fmh("<1 2 1.5 1.61>")._scope()`} label="harmonicity: whole numbers are musical, decimals are metallic" />
-
-<Strudel
-  code={`note("c e g b g e").fm(4).fmattack("<0 .05 .1 .2>")._scope()`}
-  label="fm attack: the timbre fades in"
-/>
-
-<Strudel
-  code={`note("c e g b g e").fm(4).fmdecay(.2).fmsustain(0).fmenv("<exp lin>")._scope()`}
-  label="a decaying FM envelope is the classic electric piano / bell"
-/>
+<Exercise id="synths/fm-envelope" title="Shape the modulation over time"
+  goal="Move the metal to where it belongs: late, then early, then gone."
+  start={`note("c3 e3 g3 b3").s("sine").fm(8).fmh(2)`}
+  target={`note("c3 e3 g3 b3").s("sine").fm(8).fmh(2).fmdecay("<.05 .2 .8>").fmsustain(0).fmenv("<exp lin>")`}>
+  <Step check={{ includes: '.fmattack(', has: { fmattack: [0.1, 1] } }}
+        solution={`note("c3 e3 g3 b3").s("sine").fm(8).fmh(2).fmattack(.3)`}>
+    Add `.fmattack(.3)`. Each note starts as a clean sine and the metal arrives 300 ms late — a
+    bowed, swelling sound.
+  </Step>
+  <Step check={{ excludes: '.fmattack(', has: { fmdecay: [0.05, 1] } }}
+        hints={['Delete the attack call and chain a decay instead.']}
+        solution={`note("c3 e3 g3 b3").s("sine").fm(8).fmh(2).fmdecay(.2)`}>
+    Replace `.fmattack(.3)` with `.fmdecay(.2)`. Almost nothing changes yet — a decay has nothing
+    to fall *to* while the FM sustain level is still full.
+  </Step>
+  <Step check={{ includes: '.fmsustain(', has: { fmsustain: 0 } }}
+        hints={['Sustain is a level, and you want it at the bottom.']}
+        solution={`note("c3 e3 g3 b3").s("sine").fm(8).fmh(2).fmdecay(.2).fmsustain(0)`}>
+    Add `.fmsustain(0)`. Now the decay bites: a metallic attack that drops to a plain sine. That
+    single change is the difference between a buzz and an instrument.
+  </Step>
+  <Step check={{ cycles: 3, match: { keys: ['fmdecay'] } }}
+        target={`note("c3 e3 g3 b3").s("sine").fm(8).fmh(2).fmdecay("<.05 .2 .8>").fmsustain(0)`}
+        solution={`note("c3 e3 g3 b3").s("sine").fm(8).fmh(2).fmdecay("<.05 .2 .8>").fmsustain(0)`}>
+    Change the decay to `"<.05 .2 .8>"`. Short is a mallet, medium is an electric piano, long is a
+    bell still ringing.
+  </Step>
+  <Step check={{ includes: '.fmenv(', cycles: 6, match: { keys: ['fmdecay', 'fmenv'] } }}
+        hints={['It takes `"exp"` or `"lin"`, and both fit in a `< >`.']}
+        solution={`note("c3 e3 g3 b3").s("sine").fm(8).fmh(2).fmdecay("<.05 .2 .8>").fmsustain(0).fmenv("<exp lin>")`}>
+    Add `.fmenv("<exp lin>")` to switch the curve every bar. Exponential dumps the brightness
+    immediately and lingers; linear bleeds it away evenly. Percussion wants `exp`.
+  </Step>
+</Exercise>
 
 <Box kind="try">
-For a bell: `fmh` around 1.4–3.5, `fm` high, `fmdecay` short, `fmsustain(0)`.
-For an electric piano: `fmh(1)`, `fm(3)`, `fmdecay(.3)`, `fmsustain(0)`, plus a short amplitude decay.
+Two recipes to start from. **Bell:** `fmh` between 1.4 and 3.5 (decimals, deliberately), `fm` high,
+`fmdecay` short, `fmsustain(0)`. **Electric piano:** `fmh(1)`, `fm(3)`, `fmdecay(.3)`,
+`fmsustain(0)`, plus a short amplitude decay from <L to="/tutorial/envelopes">Envelopes</L>. The
+difference between the two is almost entirely `fmh`.
 </Box>
 
-## Additive synthesis: partials and phases
+<Exercise id="synths/fm-challenge" title="Challenge: electric piano"
+  goal="A two-bar chord change, `[c3,e3,g3]` then `[f3,a3,c4]`, as an FM electric piano: index 3, harmonicity 1, FM decay .3, FM sustain 0."
+  start={`note("<[c3,e3,g3] [f3,a3,c4]>").s("sine")`}
+  target={`note("<[c3,e3,g3] [f3,a3,c4]>").s("sine").fm(3).fmh(1).fmdecay(.3).fmsustain(0)`}
+  check={{ events: 3, has: { fm: 3, fmh: 1, fmdecay: [0.2, 0.5], fmsustain: 0 } }}
+  hints={[
+    'Four controls, all of them named in the goal: how much, what ratio, how long the timbre falls, and where it falls to.',
+    'Harmonicity 1 means the modulator runs at the note itself — the reason this sounds warm rather than metallic.',
+  ]} />
 
-`partials` sets the amplitude of each harmonic, as an array. It can spectrally tame a harsh
-waveform:
+## Additive: partials and phases
 
-<Strudel
-  code={`note("c2 <eb2 <g2 g1>>".fast(2))
-  .sound("sawtooth")
-  .partials([1, 1, "<1 0>", "<1 0>", "<1 0>", "<1 0>", "<1 0>"])
-  ._scope()`}
-  label="note that list entries can themselves be patterns"
-/>
+Instead of carving harmonics away with a filter, state their amplitudes directly. `partials` takes
+an array, one entry per harmonic; `phases` says where each harmonic starts in its cycle.
 
-With the `user` source you build a waveform from scratch:
+<Exercise id="synths/partials" title="Build a tone from harmonics"
+  goal="Tame a saw with a partials array, then build a waveform from scratch and compute one."
+  start={`note("c2 g2 c3 g2").s("sawtooth")`}
+  target={`note("c2 g2 c3 g2").s("user").partials(new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1))).phases(randL(16))`}>
+  <Step check={{ includes: '.partials(', fn: "(h) => h.every((e) => Array.isArray(e.value.partials)) || 'Every note needs a partials array.'" }}
+        hints={['One number per harmonic, starting at the fundamental.']}
+        solution={`note("c2 g2 c3 g2").s("sawtooth").partials([1, 1, 1, 0, 0, 0, 0, 0])`}>
+    Add `.partials([1, 1, 1, 0, 0, 0, 0, 0])`. You have muted everything above the third harmonic:
+    the saw loses its edge without a filter anywhere in sight.
+  </Step>
+  <Step check={{ has: { s: 'user' } }}
+        hints={['The source is called `user`.']}
+        solution={`note("c2 g2 c3 g2").s("user").partials([1, 1, 1, 0, 0, 0, 0, 0])`}>
+    Change `.s("sawtooth")` to `.s("user")`. Now there is no starting waveform at all — the array
+    *is* the waveform.
+  </Step>
+  <Step check={{ fn: "(h) => h.every((e) => e.value.partials && e.value.partials.length === 8 && e.value.partials[1] === 0 && e.value.partials[2] === 0.3) || 'Expected eight partials, the second 0 and the third 0.3.'" }}
+        hints={['Zero out the even entries and give the odd ones falling amplitudes.']}
+        solution={`note("c2 g2 c3 g2").s("user").partials([1, 0, 0.3, 0, 0.1, 0, 0, 0.3])`}>
+    Change the array to `[1, 0, 0.3, 0, 0.1, 0, 0, 0.3]`. Mostly odd harmonics, plus a loud eighth:
+    hollow with a glassy ring on top.
+  </Step>
+  <Step check={{ includes: 'new Array(', fn: "(h) => h.every((e) => e.value.partials && e.value.partials.length === 16) || 'Expected a computed array of 16 partials.'" }}
+        hints={['It is plain JavaScript inside the call: build the array, then `.map` it.']}
+        solution={`note("c2 g2 c3 g2").s("user").partials(new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1)))`}>
+    Compute them instead. Replace the array with
+    `new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1))`. Every harmonic at `1/n`
+    with alternating signs is the Fourier series of a sawtooth: you have just rebuilt one by hand.
+  </Step>
+  <Step check={{ includes: '.phases(', fn: "(h) => h.every((e) => Array.isArray(e.value.phases) && e.value.phases.length === 16) || 'Expected a phases array of 16 entries.'" }}
+        hints={['`randL(n)` is a list of n random numbers.']}
+        solution={`note("c2 g2 c3 g2").s("user").partials(new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1))).phases(randL(16))`}>
+    Add `.phases(randL(16))`. The spectrum is unchanged — the same harmonics at the same
+    amplitudes — but the waveform looks and feels different. Re-evaluate a few times: each one is
+    a new random set.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`note("c2 <eb2 <g2 g1>>".fast(2))
-  .sound("user")
-  .partials([1, 0, 0.3, 0, 0.1, 0, 0, 0.3])
-  ._scope()`}
-/>
+Entries can be patterns as well as numbers: `partials([1, 1, "<1 0>", "<1 0>"])` switches the upper
+harmonics on and off every bar. And `randL(200)` in both `partials` and `phases` is a cheap way to
+generate a waveform nobody has heard before.
 
-And since it is JavaScript, you can compute them:
-
-<Strudel
-  code={`note("c2 <eb2 <g2 g1>>").fast(2)
-  .sound("user")
-  .partials(new Array(50).fill(0)
-    .map((_, idx) => ((-1) ** (idx + 1)) / (idx + 1))
-  )
-  ._scope()`}
-  label="that series reconstructs a sawtooth"
-/>
-
-<Strudel code={`note("c2 <eb2 g2>").fast(2).sound("user").partials(randL(10))._scope()`} label="randL: a random list" />
-
-`phases` sets where each harmonic starts in its cycle. It barely changes the spectrum but changes
-the feel:
-
-<Strudel
-  code={`s("saw").seg(16).n(irand(12)).scale("F1:minor")
-  .penv(48).panchor(0).pdec(0.05)
-  .delay(0.25).room(0.25)
-  .compressor(-20).vib(0.3)
-  .partials(randL(200))
-  .phases(randL(200))`}
-/>
+<Exercise id="synths/partials-challenge" title="Challenge: odd harmonics only"
+  goal="`c3 e3 g3 e3` on the `user` source, built from harmonics 1, 3, 5 and 7 at full strength and nothing else."
+  start={`note("c3 e3 g3 e3").s("user")`}
+  target={`note("c3 e3 g3 e3").s("user").partials([1, 0, 1, 0, 1, 0, 1])`}
+  check={{ events: 4, has: { s: 'user' }, fn: "(h) => h.every((e) => { const p = e.value.partials; return Array.isArray(p) && p.length >= 7 && p[0] > 0 && p[2] > 0 && p[4] > 0 && p[6] > 0 && !p[1] && !p[3] && !p[5]; }) || 'Expected the odd harmonics on and the even ones at 0.'" }}
+  hints={[
+    'The first entry of the array is the fundamental, the second is the octave above it.',
+    'Seven entries is enough to reach the seventh harmonic.',
+    'This is how a clarinet is built — it is also what `square` already does for you.',
+  ]} />
 
 ## Wavetables
 
-Any sample whose name starts with `wt_` is loaded as a **wavetable**: a single-cycle waveform,
-looped to produce a pitch. Over a thousand from the AKWF set are available.
+Any sample whose name starts with `wt_` is treated as a **wavetable**: a file of single-cycle
+waveforms, looped at your note's frequency instead of played back. `n` picks which waveform in the
+file, and sweeping `n` is the whole point — it is the wavetable-position knob from Serum or the
+Wavetable device in Live. Over a thousand from the AKWF set are available.
 
-<Strudel
-  code={`samples('bubo:waveforms');
-note("<[g3,b3,e4]!2 [a3,c3,e4] [b3,d3,f#4]>")
-  .n("<1 2 3 4 5 6 7 8 9 10>/2").room(0.5).size(0.9)
-  .s('wt_flute').velocity(0.25).often(n => n.ply(2))
-  .release(0.125).decay("<0.1 0.25 0.3 0.4>").sustain(0)
-  .lpf("<1000 2000 4000>").fast(4)`}
-/>
+<Exercise id="synths/wavetables" title="Scan a wavetable"
+  goal="Play a bass line through a wavetable and sweep across the table while it runs."
+  start={`samples('github:bubobubobubobubo/dough-waveforms')
+note("c2*8").s("sawtooth")`}
+  target={`samples('github:bubobubobubobubo/dough-waveforms')
+note("c2*8").s("wt_dbass").n(saw.range(0, 8).slow(4))`}>
+  <Step check={{ has: { s: 'wt_dbass' } }}
+        hints={['The `samples(...)` line on top is what makes the `wt_*` names available.']}
+        solution={`samples('github:bubobubobubobubo/dough-waveforms')
+note("c2*8").s("wt_dbass")`}>
+    Change `sawtooth` to `wt_dbass`. The first bar may be silent while the file downloads — sounds
+    load lazily, so the first hit of anything new can be missing.
+  </Step>
+  <Step check={{ includes: '.n(', has: { n: 3 } }}
+        hints={['`n` here is an index into the file, exactly like picking a sample from a folder.']}
+        solution={`samples('github:bubobubobubobubo/dough-waveforms')
+note("c2*8").s("wt_dbass").n(3)`}>
+    Add `.n(3)`: a different single-cycle waveform out of the same file. Try `0`, `3` and `7` and
+    listen to how far apart they are.
+  </Step>
+  <Step check={{ includes: 'run(', match: { keys: ['n'] } }}
+        target={`samples('github:bubobubobubobubo/dough-waveforms')
+note("c2*8").s("wt_dbass").n(run(8))`}
+        solution={`samples('github:bubobubobubobubo/dough-waveforms')
+note("c2*8").s("wt_dbass").n(run(8))`}>
+    Change it to `.n(run(8))`: a different waveform on every eighth note. One note, eight timbres.
+  </Step>
+  <Step check={{ includes: 'saw.range(', cycles: 4, match: { keys: ['n'] } }}
+        hints={['`saw` is a signal that ramps from 0 to 1 every cycle; `.range(a, b)` rescales it.']}
+        solution={`samples('github:bubobubobubobubo/dough-waveforms')
+note("c2*8").s("wt_dbass").n(saw.range(0, 8).slow(4))`}>
+    Now automate it properly: `.n(saw.range(0, 8).slow(4))`. One slow sweep across the whole table
+    every four bars, sampled at each note — the knob is now moving by itself.
+  </Step>
+</Exercise>
 
-Scanning through wavetables with `n` is where the character comes from:
+A wavetable is only a looped fragment of audio, so you can make one out of anything: loop a short
+enough piece of any sample and the loop rate lands in the audio range, which your ear reads as
+pitch rather than rhythm.
 
-<Strudel
-  code={`samples('github:bubobubobubobubo/dough-waveforms')
-note("c2*8").s("wt_dbass").n(run(8))
-  .lpf(perlin.range(100,1000).slow(8))
-  .lpenv(-3).lpa(.1).room(.5).fast(2)`}
-/>
+<Exercise id="synths/loop-oscillator" title="Turn a kick into an oscillator"
+  goal="Loop the first few percent of a bass drum until it stops being a drum and becomes a note."
+  start={`s("bd*4").gain(.2)`}
+  target={`note("<c3 eb3 g3 f3>").s("bd").gain(.2).loop(1).loopEnd(.05)`}>
+  <Step check={{ includes: 'note(', match: { keys: ['note', 's'] } }}
+        target={`note("<c3 eb3 g3 f3>").s("bd").gain(.2)`}
+        hints={['`note` sets the playback pitch of a sample, one per bar here.']}
+        solution={`note("<c3 eb3 g3 f3>").s("bd").gain(.2)`}>
+    Replace `s("bd*4")` with `note("<c3 eb3 g3 f3>").s("bd")`, keeping the `.gain(.2)` — what
+    comes next gets loud. One kick per bar, transposed, still unmistakably a kick.
+  </Step>
+  <Step check={{ includes: '.loop(', has: { loop: 1 } }}
+        solution={`note("<c3 eb3 g3 f3>").s("bd").gain(.2).loop(1)`}>
+    Add `.loop(1)`. The file now repeats for as long as the event lasts instead of playing once.
+  </Step>
+  <Step check={{ includes: '.loopEnd(', has: { loopEnd: [0.3, 0.8] } }}
+        hints={['`loopEnd` is a fraction of the file, so `.5` is its first half.']}
+        solution={`note("<c3 eb3 g3 f3>").s("bd").gain(.2).loop(1).loopEnd(.5)`}>
+    Add `.loopEnd(.5)`: only the first half of the file loops. You can still count the repeats —
+    it is a very fast rhythm.
+  </Step>
+  <Step check={{ has: { loopEnd: [0.005, 0.1] }, cycles: 4, match: { keys: ['note', 's', 'loop', 'loopEnd', 'gain'] } }}
+        hints={['Ten times shorter than the last one.']}
+        solution={`note("<c3 eb3 g3 f3>").s("bd").gain(.2).loop(1).loopEnd(.05)`}>
+    Change it to `.loopEnd(.05)`. Counting the repeats is now impossible: the loop rate has crossed
+    into the audio range and your ear hears a pitch that follows the `note`. That is a wavetable,
+    hand-made — and the same threshold as `hh*32` in
+    <L to="/tutorial/mini-notation">Mini-Notation</L>.
+  </Step>
+</Exercise>
 
-You can also make a wavetable out of any sample by looping a tiny piece of it:
-
-<Strudel code={`note("<c eb g f>").s("bd").loop(1).loopEnd(.05).gain(.2)`} label="the first 5% of a kick, played as a synth" />
+<Exercise id="synths/wavetable-challenge" title="Challenge: wavetable chords"
+  goal="Two alternating triads, `[c3,eb3,g3]` and `[f3,ab3,c4]`, on `wt_flute`, moving through table positions 0, 3, 6 and 9 — one per bar."
+  start={`samples('bubo:waveforms')
+note("<[c3,eb3,g3] [f3,ab3,c4]>")`}
+  target={`samples('bubo:waveforms')
+note("<[c3,eb3,g3] [f3,ab3,c4]>").s("wt_flute").n("<0 3 6 9>")`}
+  check={{ cycles: 4, match: { keys: ['note', 's', 'n'] } }}
+  hints={[
+    'Two things are missing from the start: which wavetable, and where in it.',
+    'The chords change every two bars and the position every one bar, so the pair only repeats every four.',
+    '`n` takes mini-notation, so one `< >` does the whole sweep.',
+  ]} />
 
 ## ZZFX
 
-The "Zuper Zmall Zound Zynth" is a whole second engine, built for game sound effects. Its sounds
-are prefixed `z_`:
+The "Zuper Zmall Zound Zynth" is a second engine bolted on for game sound effects, with its own
+parameter set. Its sounds are prefixed `z_`.
 
-<Strudel
-  code={`note("c2 eb2 f2 g2")
-  .s("{z_sawtooth z_tan z_noise z_sine z_square}%4")
-  .zrand(0)
-  .attack(0.001).decay(0.1).sustain(.8).release(.1)
-  .curve(1)         // waveshape 1-3
-  .slide(0)         // +/- pitch slide
-  .deltaSlide(0)
-  .noise(0)
-  .zmod(0)          // fm speed
-  .zcrush(0)        // bit crush 0-1
-  .zdelay(0)
-  .pitchJump(0)     // +/- pitch change after pitchJumpTime
-  .pitchJumpTime(0)
-  .tremolo(0.5)
-  ._scope()`}
-  label="the ZZFX parameters (minus zzfx's own lfo, which collides with the modulator lfo)"
-/>
+<Exercise id="synths/zzfx" title="The other engine"
+  goal="Play one bass line through the ZZFX oscillators and bend it with two ZZFX-only controls."
+  start={`note("c2 eb2 f2 g2").s("sawtooth")`}
+  target={`note("c2 eb2 f2 g2").s("{z_sawtooth z_tan z_noise z_sine z_square}%4").zcrush(.4).pitchJump(12).pitchJumpTime(.05)`}>
+  <Step check={{ has: { s: 'z_sawtooth' } }}
+        solution={`note("c2 eb2 f2 g2").s("z_sawtooth")`}>
+    Change `sawtooth` to `z_sawtooth`. Same waveform on paper, rougher in practice: this is a
+    different synthesis engine with its own envelope defaults.
+  </Step>
+  <Step check={{ includes: '%4', cycles: 5, match: { keys: ['s'] } }}
+        target={`note("c2 eb2 f2 g2").s("{z_sawtooth z_tan z_noise z_sine z_square}%4")`}
+        hints={['Five sounds, four steps per cycle: a polymeter, so the pairing rotates.']}
+        solution={`note("c2 eb2 f2 g2").s("{z_sawtooth z_tan z_noise z_sine z_square}%4")`}>
+    Change the sound to `"{z_sawtooth z_tan z_noise z_sine z_square}%4"`. Five sources over four
+    steps, so the combination only comes round every five bars.
+  </Step>
+  <Step check={{ includes: '.zcrush(', has: { zcrush: [0.1, 1] } }}
+        hints={['`zcrush` runs from 0 to 1.']}
+        solution={`note("c2 eb2 f2 g2").s("{z_sawtooth z_tan z_noise z_sine z_square}%4").zcrush(.4)`}>
+    Add `.zcrush(.4)`: bit crushing, built into the engine. Straight to 8-bit.
+  </Step>
+  <Step check={{ includes: '.pitchJump(', has: { pitchJump: [1, 24] } }}
+        solution={`note("c2 eb2 f2 g2").s("{z_sawtooth z_tan z_noise z_sine z_square}%4").zcrush(.4).pitchJump(12)`}>
+    Add `.pitchJump(12)`. Nothing audible yet — it says *how far* the pitch jumps mid-note, not
+    when.
+  </Step>
+  <Step check={{ has: { pitchJumpTime: [0.01, 0.5] }, cycles: 5, match: { keys: ['s', 'note', 'zcrush', 'pitchJump', 'pitchJumpTime'] } }}
+        hints={['The companion control ends in `Time` and takes seconds.']}
+        solution={`note("c2 eb2 f2 g2").s("{z_sawtooth z_tan z_noise z_sine z_square}%4").zcrush(.4).pitchJump(12).pitchJumpTime(.05)`}>
+    Add `.pitchJumpTime(.05)`: 50 ms in, every note leaps an octave. That is a power-up sound, and
+    there is no way to write it with an envelope.
+  </Step>
+</Exercise>
+
+The rest of the ZZFX parameters follow the same shape: `zrand`, `curve` (waveshape, 1–3), `slide`
+and `deltaSlide` for pitch slides, `noise`, `zmod` (FM speed), `zdelay` and `tremolo`. ZZFX's own
+LFO is not exposed, because it collides with the modulator LFO in
+<L to="/tutorial/lfo">LFOs</L>.
+
+## Building an instrument from nothing
 
 <QA q="How do I make a kick drum from scratch?">
-A sine with a fast, deep, exponential pitch envelope and a short amplitude decay:
-`note("g1*4").s("sine").penv(32).pcurve(1).pdec(.08).decay(.2).sustain(0)`. Add
-`.distort("2:.4")` for weight. The whole trick is that a kick is a pitch envelope, not a
-waveform.
+A sine with a fast, deep, exponential pitch envelope and a short amplitude decay. The whole trick is
+that a kick is a *pitch envelope*, not a waveform: it starts up near 100 Hz and falls to the
+fundamental within a few dozen milliseconds. Add `.distort("2:.4")` for weight. The envelope
+controls themselves live in <L to="/tutorial/envelopes">Envelopes</L>.
 </QA>
+
+<Exercise id="synths/kick-challenge" title="Challenge: a kick from a sine"
+  goal="`g1` four to the floor on a sine: pitch envelope 32 semitones, curve 1, pitch decay .08, amplitude decay .2, sustain 0."
+  start={`note("g1*4").s("sine")`}
+  target={`note("g1*4").s("sine").penv(32).pcurve(1).pdec(.08).decay(.2).sustain(0)`}
+  check={{ events: 4, has: { s: 'sine', penv: [16, 48], pdec: [0.02, 0.2], decay: [0.05, 0.4], sustain: 0 } }}
+  hints={[
+    'Pitch envelope controls start with `p`: depth, curve, and how fast it falls.',
+    'Amplitude decay and sustain are the ordinary ADSR controls — sustain 0 means the note never holds.',
+    'Set the pitch depth first and listen to it alone; the rest is shaping.',
+  ]} />
 
 ## Recap
 
 | Control | Purpose |
 | --- | --- |
-| `s("sine/tri/square/saw")` | basic oscillators |
+| `s("sine/tri/square/saw")` | basic oscillators (default: `triangle`) |
 | `s("supersaw")` + `unison` `detune` `spread` | fat stacked saws |
 | `s("pulse")` + `pw` `pwrate` `pwsweep` | pulse width modulation |
-| `s("white/pink/brown")`, `noise`, `crackle` | noise sources |
-| `vib` `vibmod` | vibrato |
-| `fm` `fmh` `fmattack` `fmdecay` `fmenv` | FM synthesis |
+| `s("white/pink/brown")`, `noise`, `crackle` + `density` | noise sources |
+| `vib` `vibmod`, or `vib("rate:depth")` | vibrato |
+| `fm` `fmh` `fmattack` `fmdecay` `fmsustain` `fmenv` | FM synthesis |
 | `partials` `phases` | additive synthesis |
 | `wt_*` samples + `n` | wavetable synthesis |
+| `loop` + `loopEnd` | any sample as an oscillator |
 | `z_*` sounds | the ZZFX engine |

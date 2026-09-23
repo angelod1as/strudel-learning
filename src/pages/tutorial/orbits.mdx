@@ -5,15 +5,16 @@ title: Orbits
 lede: An orbit is a bus. Understanding them is the difference between a pile of sounds and a mix.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
-import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
+
+Everything in this chapter follows from one picture: what happens to a sound between the pattern
+and your speakers. Read the list once, then spend the rest of the chapter proving it by typing.
 
 ## The signal chain
-
-To understand orbits you need to know what happens to a sound between the pattern and your
-speakers. In order:
 
 1. **A sound is triggered** by an event, with a start time and duration.
 2. **The source is produced** — a sample plays, or an oscillator runs. Detune-type effects
@@ -36,56 +37,127 @@ Steps 1–4 happen **per event**. Steps 5–7 happen **per orbit**. That is the 
 between a local and a global effect.
 </Box>
 
-Two consequences follow, and both bite people:
+## Local effects are single-use
+
+Each local effect appears exactly once in that chain. Write it twice and the second value simply
+replaces the first. The next exercise makes that audible.
+
+<Exercise id="orbits/single-use" title="Two filters, one filter"
+  goal="Prove that a second `.lpf()` does not filter again — it overwrites the first one."
+  start={`s("bd*4, hh*8")`}
+  target={`s("bd*4, hh*8").distort(2).lpf(2000)`}>
+  <Step check={{ includes: '.lpf(', has: { lpf: [100, 400] }, events: 12 }}
+        hints={['`lpf` is the lowpass cutoff in Hz; 200 is very low, so almost all of the hats go.']}
+        solution={`s("bd*4, hh*8").lpf(200)`}>
+    Add `.lpf(200)` to the end. Muffled: the hats nearly vanish and the kick loses its click.
+  </Step>
+  <Step check={{ includes: '.distort(', has: { lpf: [100, 400], distort: [1, 4] } }}
+        solution={`s("bd*4, hh*8").lpf(200).distort(2)`}>
+    Add `.distort(2)` after it. Dirty, but still dark — the distortion is running on the filtered
+    signal, which is what the chain order says.
+  </Step>
+  <Step check={{ has: { lpf: [1200, 4000] },
+                 fn: "(h, code) => (code.match(/\\.lpf\\(/g) || []).length === 2 || 'Keep both `.lpf()` calls: the old one and the new one.'" }}
+        hints={['Distortion adds a lot of fizz up top, so a filter after it is a normal thing to want.',
+                'Leave the first `.lpf(200)` exactly where it is and add the new one on the end.']}
+        solution={`s("bd*4, hh*8").lpf(200).distort(2).lpf(2000)`}>
+    Now try to tame the fizz: add a second `.lpf(2000)` at the very end. Listen carefully — it did
+    not get darker, it got **brighter than step 1 ever was**. The `lpf(200)` is gone.
+  </Step>
+  <Step check={{ excludes: 'lpf(200)', has: { lpf: [1200, 4000], distort: [1, 4] },
+                 fn: "(h, code) => (code.match(/\\.lpf\\(/g) || []).length === 1 || 'Exactly one `.lpf()` should be left.'" }}
+        solution={`s("bd*4, hh*8").distort(2).lpf(2000)`}>
+    Delete `.lpf(200)`. Identical. It was never doing anything — there is one lowpass slot per
+    event and `2000` had already taken it.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
-**Local effects are single-use.** Each one appears once in that chain, so writing it twice just
-overwrites the value. `s("bd").lpf(100).distort(2).lpf(800)` does **not** lowpass, distort, then
-lowpass again — it only applies `lpf(800)`. (Use `FX()` if you need a custom order; see below.)
+So `s("bd").lpf(100).distort(2).lpf(800)` does **not** lowpass, distort, then lowpass again. It
+only applies `lpf(800)`. If you genuinely need the same effect twice, you need `FX()`, at the end
+of this chapter.
 </Box>
+
+<Exercise id="orbits/single-use-challenge" title="Challenge: delete what does nothing"
+  goal="Two of these four effects never reach your ears. Remove them without changing the sound."
+  start={`s("bd*4, hh*8").lpf(4000).crush(4).lpf(900).crush(8)`}
+  target={`s("bd*4, hh*8").lpf(900).crush(8)`}
+  check={{ match: { keys: ['s', 'lpf', 'crush'] },
+           fn: "(h, code) => ((code.match(/\\.lpf\\(/g) || []).length === 1 && (code.match(/\\.crush\\(/g) || []).length === 1) || 'Leave exactly one `.lpf()` and one `.crush()`.'" }}
+  hints={[
+    '`crush` is a bit-crusher: a low number is a heavy effect, a high number is a light one.',
+    'Each local effect has one slot. When a chain sets the same slot twice, which of the two values is the one that survives?',
+    'Play it first, then delete a call and play again: if nothing changed, that call was dead.',
+  ]} />
+
+## One delay and one reverb per orbit
+
+Delay and reverb are **not** local. They live on the orbit, so every pattern on that orbit shares
+one delay and one reverb — and one set of knobs.
+
+<Exercise id="orbits/shared-bus" title="Two patterns, one delay"
+  goal="Hear two patterns fight over a single delay, then give one of them its own bus."
+  start={`$: s("hh*8").delay(.5).delaytime(.125)`}
+  target={`$: s("hh*8").delay(.5).delaytime(.125)
+
+$: s("~ cp ~ cp").delay(.5).delaytime(.375).orbit(2)`}>
+  <Step check={{ includes: 'cp', events: 10 }}
+        hints={['Each `$:` line is its own lane. Press enter and write the second one below.']}
+        solution={`$: s("hh*8").delay(.5).delaytime(.125)
+
+$: s("~ cp ~ cp").delay(.5).delaytime(.375)`}>
+    Add a second lane: `$: s("~ cp ~ cp").delay(.5).delaytime(.375)`. You asked for a long echo on
+    the clap and a short one on the hats. Listen to what you actually got.
+  </Step>
+  <Step check={{ includes: 'delaytime(.5)', events: 10 }}
+        solution={`$: s("hh*8").delay(.5).delaytime(.5)
+
+$: s("~ cp ~ cp").delay(.5).delaytime(.375)`}>
+    Change the **hats** line to `.delaytime(.5)`. The clap's echoes move too. Neither pattern owns
+    the delay; they are both writing to the same one, and the last line evaluated wins.
+  </Step>
+  <Step check={{ includes: '.orbit(2)',
+                 fn: "(h) => { const k = h.filter(e => e.value.s === 'cp'); return (k.length > 0 && k.every(e => e.value.orbit === 2)) || 'The clap events need `.orbit(2)`.'; }" }}
+        hints={['`orbit(n)` goes on the end of the lane, like any other control.']}
+        solution={`$: s("hh*8").delay(.5).delaytime(.5)
+
+$: s("~ cp ~ cp").delay(.5).delaytime(.375).orbit(2)`}>
+    Add `.orbit(2)` to the clap lane. Two orbits, so two delays — and the clap's `.375` comes back.
+  </Step>
+  <Step check={{ includes: 'delaytime(.125)', excludes: 'delaytime(.5)',
+                 fn: "(h) => { const k = h.filter(e => e.value.s === 'cp'); return (k.length > 0 && k.every(e => e.value.orbit === 2)) || 'Keep `.orbit(2)` on the clap lane.'; }" }}
+        solution={`$: s("hh*8").delay(.5).delaytime(.125)
+
+$: s("~ cp ~ cp").delay(.5).delaytime(.375).orbit(2)`}>
+    Put the hats back to `.delaytime(.125)`. This time the clap keeps its own. Two lanes, two
+    spaces.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
-**There is exactly one delay and one reverb per orbit.** Two patterns on the same orbit with
-different `roomsize` values are fighting over one knob, and the last one evaluated wins.
-</Box>
-
-## Setting an orbit
-
-<Strudel
-  code={`stack(
-  s("hh*6").delay(.5).delaytime(.25).orbit(1),
-  s("~ sd ~ sd").delay(.5).delaytime(.125).orbit(2)
-)`}
-  label="two delay times, because two orbits"
-/>
-
-The default orbit is `1`. Any number works; they are created on demand.
-
-## The bug this solves
-
-From the previous chapter — a silent kick wrecking a pluck's reverb:
-
-<Strudel
-  code={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor').room(1).roomsize(10)
-$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
-  label="broken: shared orbit"
-/>
-
-<Strudel
-  code={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor').room(1).roomsize(10).orbit(2)
-$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
-  label="fixed: the pluck gets its own orbit"
-/>
-
-<Box kind="try">
 Any time an effect "randomly" changes when you edit an unrelated line, suspect a shared orbit
 first. It is almost always `room`, `roomsize` or `delaytime`.
 </Box>
 
-## How to allocate orbits
+<Exercise id="orbits/shared-bus-challenge" title="Challenge: rescue the reverb"
+  goal="A silent kick is flattening a pluck's huge reverb. Fix it without touching the kick line."
+  start={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor').room(1).roomsize(10)
 
-Orbits are buses, so use them the way you would use buses in a DAW — one per *space*, not one per
-sound:
+$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
+  target={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor').room(1).roomsize(10).orbit(2)
+
+$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
+  check={{ includes: '.orbit(',
+           fn: "(h) => { const k = h.filter(e => e.value.s === 'triangle'); return (k.length > 0 && k.every(e => e.value.orbit === 2)) || 'Put the pluck lane on orbit 2.'; }" }}
+  hints={[
+    'The kick is inaudible (`postgain(0)`) but it is still setting `roomsize` — and `roomsize` belongs to the bus, not the event.',
+    'Both lanes are on the default orbit, which is 1.',
+    'Move the pluck, not the kick, and use orbit 2.',
+  ]} />
+
+## Allocating orbits
+
+Orbits are buses, so use them the way you use buses in a DAW — one per *space*, not one per sound.
 
 | Orbit | Typical use |
 | --- | --- |
@@ -94,50 +166,245 @@ sound:
 | 3 | leads / pads — the big reverb lives here |
 | 4 | a dedicated delay throw |
 
-<Strudel
-  code={`setcpm(126/4)
+<Exercise id="orbits/allocate" title="Four buses, four spaces"
+  goal="Build a four-orbit mix, then break it on purpose to hear why the throw needs its own bus."
+  start={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1)`}
+  target={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
 
-drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
-  .room(.12).rsize(1).orbit(1)
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)
 
-bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4)
-  .decay(.18).sustain(0).orbit(2)
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)
 
-pad: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm")
-  .attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)
+$: s("rim").beat("3,11",16).delay(".7:.1875:.75").gain(.6).orbit(4)`}>
+  <Step check={{ has: { orbit: 1 } }}
+        hints={['Orbit 1 is already the default; writing it makes the intent visible.']}
+        solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)`}>
+    Add `.orbit(1)` to the drum lane. Nothing changes — 1 is the default — but from here on every
+    lane says where it goes.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'sawtooth'); return (k.length > 0 && k.every(e => e.value.orbit === 2)) || 'Add a bass lane ending in `.orbit(2)`.'; }" }}
+        solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
 
-stab: s("rim").beat("3,11",16).delay(".7:.1875:.75").gain(.6).orbit(4)`}
-  label="four orbits, four different spaces"
-/>
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)`}>
+    Add a bass lane on its own bus:
+    `$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)`
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'gm_pad_warm'); return (k.length > 0 && k.every(e => e.value.orbit === 3)) || 'Add a pad lane ending in `.orbit(3)`.'; }" }}
+        hints={['The big reverb goes here and nowhere else — that is the whole reason orbit 3 exists.']}
+        solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
 
-<Box kind="try">
-Change the `stab` line's orbit from 4 to 1 and re-evaluate. The rim's delay time is now imposed on
-the whole drum bus — a good demonstration of why you keep a throw on its own bus.
-</Box>
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)`}>
+    Add the pad, with the big room, on orbit 3:
+    `$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)`
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.orbit === 4)) || 'Add a rim lane ending in `.orbit(4)`.'; }" }}
+        solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
+
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)
+
+$: s("rim").beat("3,11",16).delay(".7:.1875:.75").gain(.6).orbit(4)`}>
+    Add a delay throw on orbit 4: `$: s("rim").beat("3,11",16).delay(".7:.1875:.75").gain(.6).orbit(4)`
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.orbit === 1)) || 'Move the rim lane to `.orbit(1)`.'; }" }}
+        solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
+
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)
+
+$: s("rim").beat("3,11",16).delay(".7:.1875:.75").gain(.6).orbit(1)`}>
+    Break it: change the rim's `.orbit(4)` to `.orbit(1)`. The throw's dotted delay time and heavy
+    feedback are now imposed on the entire drum bus.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.orbit === 4)) || 'Put the rim lane back on `.orbit(4)`.'; }" }}
+        solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
+
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)
+
+$: s("rim").beat("3,11",16).delay(".7:.1875:.75").gain(.6).orbit(4)`}>
+    Put it back to `.orbit(4)`. A throw always gets its own bus, for exactly that reason.
+  </Step>
+</Exercise>
+
+<Exercise id="orbits/allocate-challenge" title="Challenge: assign the buses"
+  goal="Three lanes, all on the default bus. Give each one the orbit its job asks for."
+  start={`$: s("bd*4, [~ hh]*4").bank("RolandTR909")
+
+$: note("c2 eb2 g2 c3").s("sawtooth").decay(.15).sustain(0)
+
+$: n("<0 4>").scale("C4:minor").s("gm_pad_warm").attack(.5).release(1.5).room(.9).rsize(8)`}
+  target={`$: s("bd*4, [~ hh]*4").bank("RolandTR909").orbit(1)
+
+$: note("c2 eb2 g2 c3").s("sawtooth").decay(.15).sustain(0).orbit(2)
+
+$: n("<0 4>").scale("C4:minor").s("gm_pad_warm").attack(.5).release(1.5).room(.9).rsize(8).orbit(3)`}
+  check={{ match: { keys: ['s', 'orbit'] } }}
+  hints={[
+    'Drums, bass, pad — the table above already allocates those three.',
+    'Every lane gets an explicit `.orbit(n)`, including the one that stays where it is.',
+    'The pad is the lane whose huge `rsize(8)` must not leak onto anything else.',
+  ]} />
 
 ## Sending one sound to several orbits
 
-Mini-notation works here, so a sound can be sent to more than one:
+Mini-notation works in `orbit` too, so one sound can go to more than one bus. It is not a send: it
+makes a **copy** per orbit.
 
-<Strudel code={`s("white").orbit("2,3,4").gain(0.2)`} />
+<Exercise id="orbits/several" title="Copies, not sends"
+  goal="Send one noise hit to three orbits and hear it get three times as loud."
+  start={`s("white").gain(.6)`}
+  target={`s("white").orbit("2,3,4").gain(.2)`}>
+  <Step check={{ has: { orbit: 2 }, events: 1 }}
+        solution={`s("white").orbit(2).gain(.6)`}>
+    Add `.orbit(2)`. One hit, one bus, same level as before.
+  </Step>
+  <Step check={{ includes: 'orbit("2,3")', events: 2 }}
+        hints={['A comma inside the quotes is the parallel operator — here it stacks two orbit values.']}
+        solution={`s("white").orbit("2,3").gain(.6)`}>
+    Change it to `.orbit("2,3")`. One event became two, and since both buses reach the same
+    speakers you just doubled the level.
+  </Step>
+  <Step check={{ events: 3, has: { orbit: [2, 4] } }}
+        solution={`s("white").orbit("2,3,4").gain(.6)`}>
+    Go to `.orbit("2,3,4")`. Three copies now, and it is getting genuinely loud.
+  </Step>
+  <Step check={{ events: 3, has: { gain: [0.15, 0.25] } }}
+        solution={`s("white").orbit("2,3,4").gain(.2)`}>
+    Compensate: change `.gain(.6)` to `.gain(.2)`. Back where you started, on three buses.
+  </Step>
+</Exercise>
 
-<Box kind="warn">
-This creates **three copies** of the sound behind the scenes. If they all end up in the same stereo
-output, you have tripled the volume. The gain in that example is deliberately low. The real use for
-this is multi-orbit ducking, in the <L to="/tutorial/ducking">next chapter</L>.
+<Box>
+The real use for this is ducking several buses with one trigger, in
+<L to="/tutorial/ducking">the next chapter</L>. Until then, always adjust the gain when you widen
+an orbit list.
 </Box>
+
+<Exercise id="orbits/several-challenge" title="Challenge: two buses, one level"
+  goal="Send the hi-hat pattern to orbits 3 and 5 at once, at the same perceived level as the single-bus version."
+  start={`s("hh*8").gain(.5)`}
+  target={`s("hh*8").orbit("3,5").gain(.25)`}
+  check={{ events: 16, has: { orbit: [3, 5], gain: [0.2, 0.3] } }}
+  hints={[
+    'Orbit takes mini-notation, and a comma stacks values.',
+    'Count the events before and after you add the orbit list: that number tells you the level correction.',
+    'Two copies of the same sound sum to roughly twice the amplitude.',
+  ]} />
+
+## postgain and dry
+
+`gain` sits near the **start** of the local chain, before the filters and the distortion.
+`postgain` sits at the very **end**, after all of them. That difference is the whole point.
+
+<Exercise id="orbits/postgain" title="Turn it down without cleaning it up"
+  goal="Use `gain` and `postgain` on the same distorted kick and hear why they are not the same knob."
+  start={`s("bd*4").distort(3)`}
+  target={`s("bd*4").gain(2).distort(3).postgain(.3).room(.9).rsize(4).dry(0)`}>
+  <Step check={{ has: { gain: [0.2, 0.4], distort: [2, 4] } }}
+        solution={`s("bd*4").distort(3).gain(.3)`}>
+    Too loud. Add `.gain(.3)`. It is quieter — but also noticeably **cleaner**, because you turned
+    the signal down *before* it hit the distortion.
+  </Step>
+  <Step check={{ excludes: '.gain(', has: { postgain: [0.2, 0.4] } }}
+        hints={['`.postgain(` does not contain `.gain(` — delete the old call, do not just rename it in place.']}
+        solution={`s("bd*4").distort(3).postgain(.3)`}>
+    Delete `.gain(.3)` and write `.postgain(.3)` instead. Same level, all the dirt back: the
+    distortion saw the full-strength signal and you turned down what came out.
+  </Step>
+  <Step check={{ has: { gain: [1.5, 3], postgain: [0.2, 0.4] } }}
+        solution={`s("bd*4").gain(2).distort(3).postgain(.3)`}>
+    Now use both. Add `.gain(2)` before the distortion and keep `.postgain(.3)`. Harder into the
+    distortion, same level out — this is exactly how you drive a saturator in a DAW.
+  </Step>
+  <Step check={{ has: { room: [0.5, 1] } }}
+        solution={`s("bd*4").gain(2).distort(3).postgain(.3).room(.9).rsize(4)`}>
+    Add `.room(.9).rsize(4)`. The kick now leaves the event by two routes at once: straight out,
+    and into the orbit's reverb.
+  </Step>
+  <Step check={{ includes: '.dry(', has: { dry: 0 } }}
+        hints={['`dry` is the level of the untreated signal — step 4 of the chain at the top.']}
+        solution={`s("bd*4").gain(2).distort(3).postgain(.3).room(.9).rsize(4).dry(0)`}>
+    Add `.dry(0)`. The direct kick disappears and only the reverb of it is left. You just muted
+    one of the three routes out of the event.
+  </Step>
+</Exercise>
+
+<Exercise id="orbits/postgain-challenge" title="Challenge: same dirt, half the level"
+  goal="A bit-crushed hat that hits the crusher exactly as hard as it does now, but comes out half as loud."
+  start={`s("hh*8").crush(4)`}
+  target={`s("hh*8").crush(4).postgain(.5)`}
+  check={{ events: 8, has: { crush: 4, postgain: [0.3, 0.7] } }}
+  hints={[
+    'A bit-crusher is level-dependent: feed it less and you get a different, milder effect.',
+    'There is exactly one level control that runs after every local effect.',
+    'Leave `crush(4)` untouched and add one call on the end.',
+  ]} />
+
+## Your own chain, with FX()
+
+`FX()` replaces the fixed order with one you write. It takes effects as arguments, applies them
+left to right, and several `FX()` calls on one pattern **concatenate** into a single chain rather
+than nesting.
+
+<Exercise id="orbits/fx" title="Build the chain yourself"
+  goal="Reorder a chain, then do the thing the fixed chain cannot: distort twice."
+  start={`s("bd*4, hh*8").distort(2).lpf(700)`}
+  target={`s("bd*4, hh*8").FX(lpf(700)).FX(distort(2), distort(1.5))`}>
+  <Step check={{ includes: '.FX(', excludes: '.distort(',
+                 fn: "(h) => { const k = h.filter(e => Array.isArray(e.value.FX) && e.value.FX.length === 2); return (h.length > 0 && k.length === h.length) || 'Every event should carry an `FX` chain of exactly two effects.'; }" }}
+        hints={['Inside `FX()` the effects are written as plain calls, with no leading dot: `FX(distort(2), lpf(700))`.']}
+        solution={`s("bd*4, hh*8").FX(distort(2), lpf(700))`}>
+    Move both effects inside one call: `.FX(distort(2), lpf(700))`. It sounds the same as before —
+    distortion first, then the filter — but now that order is yours, not the chain's.
+  </Step>
+  <Step check={{ fn: "(h) => { const f = h[0] && h[0].value.FX; return (f && f.length === 2 && f[0].cutoff !== undefined && f[1].distort !== undefined) || 'The chain should be `lpf` first, then `distort`.'; }" }}
+        solution={`s("bd*4, hh*8").FX(lpf(700), distort(2))`}>
+    Swap them: `.FX(lpf(700), distort(2))`. Same two effects, audibly different result — filtering
+    first gives a round, fat drive; filtering last shaves the fizz off.
+  </Step>
+  <Step check={{ fn: "(h) => { const f = h[0] && h[0].value.FX; return (f && f.length === 3 && f[1].distort !== undefined && f[2].distort !== undefined) || 'Three effects, ending in two distortions in a row.'; }" }}
+        hints={['Stacking two mild distortions is not the same as one hard one — the second one works on the first one’s harmonics.']}
+        solution={`s("bd*4, hh*8").FX(lpf(700), distort(2), distort(1.5))`}>
+    Add a second distortion at the end: `.FX(lpf(700), distort(2), distort(1.5))`. Two of the same
+    effect in one chain, which the fixed order can never give you.
+  </Step>
+  <Step check={{ fn: "(h, code) => { const f = h[0] && h[0].value.FX; return ((code.match(/\\.FX\\(/g) || []).length === 2 && f && f.length === 3) || 'Two `.FX()` calls that still add up to three effects.'; }" }}
+        hints={['Split after the filter, so the first call holds one effect and the second holds two.']}
+        solution={`s("bd*4, hh*8").FX(lpf(700)).FX(distort(2), distort(1.5))`}>
+    Split it into two calls: `.FX(lpf(700)).FX(distort(2), distort(1.5))`. Identical sound — chains
+    concatenate, they do not nest, so you can build one up across several lines.
+  </Step>
+</Exercise>
+
+<Exercise id="orbits/fx-challenge" title="Challenge: crush, filter, crush"
+  goal="Bit-crush a hat to 6 bits, lowpass it at 1200, then bit-crush it again to 4 — in that order."
+  start={`s("hh*8")`}
+  target={`s("hh*8").FX(crush(6), lpf(1200), crush(4))`}
+  check={{ includes: '.FX(',
+           fn: "(h) => { const f = h[0] && h[0].value.FX; return (f && f.length === 3 && f[0].crush !== undefined && f[1].cutoff !== undefined && f[2].crush !== undefined) || 'The chain should be crush, then lowpass, then crush again.'; }" }}
+  hints={[
+    'The fixed chain has one `crush` slot, so this is impossible without `FX()`.',
+    'One `FX()` call takes as many effects as you like, comma separated, applied left to right.',
+    'Inside `FX()`, effects are written without the leading dot.',
+  ]} />
 
 ## Multichannel output
 
 By default every orbit is summed to channels 1 and 2. Turn on **Multi Channel Orbits** in the
 official REPL's settings and orbit `i` maps to channels `2i-1` and `2i` instead — orbit 1 to
-channels 1 and 2, orbit 2 to 3 and 4, and so on. Each orbit becomes a separate stereo output. With a virtual audio device such as BlackHole 16, you can record
-every orbit as its own stem into a DAW.
+channels 1 and 2, orbit 2 to 3 and 4, and so on. Each orbit becomes a separate stereo output. With
+a virtual audio device such as BlackHole 16, you can record every orbit as its own stem into a DAW.
 
 `channels` and `pan` behave accordingly: in a multichannel setup, `pan` moves once around a circle
 rather than between two speakers.
 
-## Related global controls
+## The global controls
 
 | Control | Meaning |
 | --- | --- |
@@ -147,45 +414,15 @@ rather than between two speakers.
 | `duckorbit(n)` | duck a different orbit — <L to="/tutorial/ducking">next chapter</L> |
 | `channels` | explicit output channel routing |
 
-`postgain` is the one to remember: because it sits at the end of the local chain, it is how you
-turn something down **without** changing how hard it hits a distortion or a compressor earlier in
-the chain.
-
-<Strudel
-  code={`s("bd sd [~ bd] sd,hh*8")
-  .compressor("-20:20:10:.002:.02").postgain(1.5)`}
-/>
-
-## Custom effect order with FX()
-
-If the fixed chain order is not what you want, `FX()` lets you build your own, and it can be
-applied several times:
-
-<Strudel
-  code={`s("[bd <hh [bd | lt | oh]>]*4").dec(.4)
-  .FX(
-    phaser(0.5).gain(2),
-    bpf(800),
-    distort(1.3),
-    room(0.2),
-    delay(0.5).gain(1.25),
-    distort(0.3),
-  ).fxr(1.7)`}
-  label="two distortions in one chain — impossible without FX()"
-/>
-
-<Strudel
-  code={`s("saw").fm(0.5)
-  .delay(0.3)                          // outer effects apply last
-  .FX(coarse(4))                       // first coarse
-  .FX(lpf(500).lpe(4).lpa(1).lpd(2))   // then the filter
-  .FX(distort(1))                      // then distortion`}
-/>
-
 <QA q="Is an orbit the same as a track?">
 Not quite. A track is a *pattern* — one `$:` line. An orbit is a *bus* — a shared output with its
 own delay, reverb and duck. Several tracks can share one orbit (and often should, so they sit in
 the same space), and one track can be sent to several orbits.
+</QA>
+
+<QA q="Why did my reverb get shorter when I added a hi-hat line?">
+Because the hat line set `roomsize` on the orbit they share, and the orbit has only one reverb.
+Give the hats their own orbit, or leave `roomsize` off every lane but one.
 </QA>
 
 ## Recap
@@ -197,5 +434,6 @@ the same space), and one track can be sent to several orbits.
 | `orbit(n)` | choose the bus |
 | Shared orbit | shared reverb/delay settings — last one wins |
 | `orbit("2,3")` | send to several buses (duplicates the sound) |
+| `dry(x)` | level of the untreated route out of the event |
 | `postgain` | level after all local effects |
 | `FX(...)` | build your own effect chain in your own order |

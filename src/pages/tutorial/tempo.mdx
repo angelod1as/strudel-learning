@@ -5,26 +5,52 @@ title: Tempo & Cycles
 lede: Strudel has no bars and no time signature. It has cycles. Here is how to get a BPM out of them.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
 
-## CPS, not BPM
+Strudel's clock runs in **cycles per second**, and the default is `0.5` — one cycle every two
+seconds. That is the whole clock. Everything else you call "tempo" is something you put inside the
+cycle, which you will hear by typing: one change per step, ctrl+enter, listen.
 
-Tempo in Strudel is **cycles per second**, default `0.5` — one cycle every two seconds.
+## The clock is not the tempo
 
-<Strudel code={`s("bd")`} label="0.5 cps: one kick every 2s" />
+<Exercise id="tempo/perceived" title="One clock, three tempos"
+  goal="Hear the same cycle length feel fast, slow and fast again."
+  start={`s("bd")`} target={`s("bd hh*2 bd hh*2")`}>
+  <Step check={{ events: 4, has: { s: 'bd' } }}
+        hints={['Four tokens separated by spaces, all of them `bd`.']}
+        solution={`s("bd bd bd bd")`}>
+    Add three more `bd` inside the quotes. The cycle is still two seconds long — you just put four
+    kicks in it, and it reads as 120 bpm.
+  </Step>
+  <Step check={{ includes: 'hh', events: 4 }}
+        hints={['Slots 2 and 4 become `hh`.', 'A hat on the offbeat makes the kick the beat, so the beat is half as often.']}
+        solution={`s("bd hh bd hh")`}>
+    Replace the second and fourth `bd` with `hh`. Nothing about the clock moved, but it now feels
+    half as fast: the hats read as offbeats, so you count the kicks.
+  </Step>
+  <Step check={{ includes: 'hh*2', events: 6 }}
+        hints={['`hh*2` puts two hats in one slot.']}
+        solution={`s("bd hh*2 bd hh*2")`}>
+    Change both hats to `hh*2`. Fast again — and still exactly 0.5 cycles per second. Perceived
+    tempo is a property of the content, not of the clock.
+  </Step>
+</Exercise>
 
-<Strudel code={`s("bd bd bd bd")`} label="still 0.5 cps — but it feels like 120 bpm" />
-
-Nothing about the tempo changed between those two. All that changed is how many events you packed
-into the cycle. Perceived tempo is a property of the content, not the clock:
-
-<Strudel code={`s("bd hh bd hh")`} label="same cps again — feels slower, because hats read as offbeats" />
+<Exercise id="tempo/perceived-challenge" title="Challenge: double time"
+  goal="Take a slow backbeat and make it feel twice as fast, without touching the tempo: eight slots instead of four, kick and snare alternating."
+  start={`s("bd ~ sd ~")`} target={`s("bd ~ sd ~ bd ~ sd ~")`}
+  check={{ match: { keys: ['s'] } }}
+  hints={['Nothing here is a tempo function. The only tool is how many tokens the cycle holds.',
+          'Twice as fast means twice as many slots in the same cycle.',
+          'Write the four-slot bar out twice inside the same quotes.']} />
 
 ## Setting a tempo you can talk about
 
-`setcpm(x)` sets cycles per **minute**. The useful formula is:
+`setcpm(x)` sets cycles per **minute**, on its own line above the pattern.
 
 <Box>
 `setcpm(bpm / beatsPerCycle)`
@@ -32,138 +58,353 @@ into the cycle. Perceived tempo is a property of the content, not the clock:
 where `beatsPerCycle` is how many beats *you* hear in one cycle.
 </Box>
 
-So a 4-on-the-floor cycle at 128 bpm:
+<Exercise id="tempo/setcpm" title="Put a number on it"
+  goal="Set 128 bpm three different ways and hear what the divisor does."
+  start={`s("bd*4, [~ cp]*2, hh*8").bank("RolandTR909")`}
+  target={`setcps(64/60)
+s("bd sd, hh*4").bank("RolandTR909")`}>
+  <Step check={{ code: "setcpm\\(\\s*(128\\s*/\\s*4|32)\\s*\\)" }}
+        hints={['Four kicks in the cycle means four beats per cycle.', 'The formula is bpm divided by beats per cycle.']}
+        solution={`setcpm(128/4)
+s("bd*4, [~ cp]*2, hh*8").bank("RolandTR909")`}>
+    Add `setcpm(128/4)` on a line of its own above the pattern. Four beats live in one cycle, so
+    the cycle has to go round 32 times a minute for the kick to land at 128 bpm.
+  </Step>
+  <Step check={{ code: "setcpm\\(\\s*128\\s*\\)" }}
+        hints={['Delete the `/4`.']}
+        solution={`setcpm(128)
+s("bd*4, [~ cp]*2, hh*8").bank("RolandTR909")`}>
+    Drop the divisor: `setcpm(128)`. Absurd, and correct — you asked for 128 *cycles* per minute,
+    and every cycle holds four kicks. The divisor is the only thing that ties a cycle to a beat.
+  </Step>
+  <Step check={{ code: "setcpm\\(\\s*(128\\s*/\\s*2|64)\\s*\\)", events: 6 }}
+        hints={['Two beats per cycle now: `bd sd`, and the hats halve too.']}
+        solution={`setcpm(128/2)
+s("bd sd, hh*4").bank("RolandTR909")`}>
+    Same 128 bpm, two beats per cycle instead of four: `setcpm(128/2)` and
+    `s("bd sd, hh*4")`. The music is unchanged; only where you drew the cycle boundary moved.
+  </Step>
+  <Step check={{ includes: 'setcps(', excludes: 'setcpm(' }}
+        hints={['Cycles per second, not per minute.', '64 cycles per minute is 64/60 per second.']}
+        solution={`setcps(64/60)
+s("bd sd, hh*4").bank("RolandTR909")`}>
+    `setcps(x)` is the same knob in cycles per **second**: `setcpm(x)` is `setcps(x/60)`. Replace
+    the first line with `setcps(64/60)`. Identical tempo, uglier number.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`setcpm(128/4)
-s("bd*4, [~ cp]*2, hh*8").bank("RolandTR909")`}
-  label="128 bpm, 4 beats per cycle"
-/>
-
-Two beats per cycle at the same bpm:
-
-<Strudel
-  code={`setcpm(128/2)
-s("bd sd, hh*4").bank("RolandTR909")`}
-/>
-
-`setcps(x)` does the same thing in cycles per second. `setcpm(x)` is `setcps(x/60)`.
-
-<Box kind="try">
-Take the 128 bpm example and change `128/4` to just `128`. It becomes absurdly fast — you asked
-for 128 *cycles* per minute, and each cycle holds four kicks.
-</Box>
+<Exercise id="tempo/setcpm-challenge" title="Challenge: 100 bpm, one cycle per bar"
+  goal="A kick on every beat and hats on every sixteenth, at 100 bpm, with one cycle holding one bar of four."
+  start="" target={`setcpm(100/4)
+s("bd*4, hh*16")`}
+  check={{ code: "setcpm\\(\\s*(100\\s*/\\s*4|25)\\s*\\)", match: { keys: ['s'] } }}
+  hints={['Two lines: the tempo, then the pattern.',
+          'Four beats live in the cycle, so the cycle turns a quarter as often as the beat.',
+          'Sixteen sixteenths fit in a bar of four, and a bar is one cycle here.']} />
 
 ## There are no bars
 
-Strudel does not know what a bar is. If you want four bars of something, you write four things in
-angle brackets:
+Strudel does not know what a bar is. Four bars of something is four cycles, and you write them in
+angle brackets — or, better, you stop writing bars at all.
 
-<Strudel
-  code={`setcpm(110/4)
-s(\`<
-[bd sd bd rim, hh*8]
-[bd sd bd rim*2, hh*8]
->\`)`}
-  label="two 'bars' as two cycles"
-/>
-
-But usually you should not. The same music, expressed as a pattern rather than a list:
-
-<Strudel
-  code={`setcpm(110/2)
-s("bd <sd rim*<1 2>>, hh*4")`}
-  label="the same idea, without redundancy"
-/>
+<Exercise id="tempo/no-bars" title="Two bars, then none"
+  goal="Write a two-bar phrase out longhand, then say the same thing as one pattern."
+  start={`setcpm(110/4)
+s("bd sd bd rim, hh*8")`}
+  target={`setcpm(110/2)
+s("bd <sd rim*<1 2>>, hh*4")`}>
+  <Step check={{ includes: '<', cycles: 2, events: 25 }}
+        hints={['`< >` plays one element per cycle, and an element can be a whole bracketed bar.',
+                'Two bars, the second with `rim*2` instead of `rim`.']}
+        solution={`setcpm(110/4)
+s("<[bd sd bd rim, hh*8] [bd sd bd rim*2, hh*8]>")`}>
+    Make it two bars long: wrap the pattern in `< >` and paste a second copy inside, with `rim*2`
+    in place of the last `rim`. Two cycles, two bars, everything written twice.
+  </Step>
+  <Step check={{ includes: '<sd', cycles: 2, events: 12 }}
+        hints={['The only thing that varied was one slot, so only that slot needs a `< >`.',
+                'Two beats per cycle: `bd`, then the slot that alternates, plus four hats.']}
+        solution={`setcpm(110/4)
+s("bd <sd rim*<1 2>>, hh*4")`}>
+    Now say it once. Replace the whole string with `bd <sd rim*<1 2>>, hh*4`: one alternating slot,
+    with a second `< >` nested inside it, so the rim doubles the second time that slot comes round.
+  </Step>
+  <Step check={{ code: "setcpm\\(\\s*(110\\s*/\\s*2|55)\\s*\\)" }}
+        hints={['Count the beats you hear in one cycle now.']}
+        solution={`setcpm(110/2)
+s("bd <sd rim*<1 2>>, hh*4")`}>
+    The cycle now holds two beats, not four, so it is running at half speed. Fix it with
+    `setcpm(110/2)`.
+  </Step>
+</Exercise>
 
 <Box>
 Writing bars out is transcription. Nesting `< >` inside `< >` is composition. Strudel rewards the
 second: variation comes from nesting alternation at different rates, not from writing more bars.
 </Box>
 
+<Exercise id="tempo/no-bars-challenge" title="Challenge: a crash every four bars"
+  goal="A `bd sd bd sd` beat every cycle, plus a crash (`cr`) that sounds only on the first cycle out of every four."
+  start={`s("bd sd bd sd")`} target={`s("bd sd bd sd, <cr ~ ~ ~>")`}
+  check={{ match: { keys: ['s'] }, cycles: 4 }}
+  hints={['The crash is a second layer, so it needs a comma.',
+          'A four-cycle phrase is four elements in `< >`, one per cycle.',
+          'Three of those four elements are rests.']} />
+
 ## Time signatures
 
-A time signature is just "how many things in the cycle". Seven:
+A time signature is not a setting. It is "how many things go in the cycle" plus a tempo that agrees
+with it.
 
-<Strudel code={`s("bd ~ rim bd bd rim ~")`} />
+<Exercise id="tempo/signatures" title="Seven, five, and a modulation"
+  goal="Count in odd numbers, then change count without changing the pulse — and then with."
+  start={`s("bd hh sd hh")`}
+  target={`setcpm(110/2)
+s("<[bd hh rim] [bd hh rim sd]>")`}>
+  <Step check={{ events: 5 }}
+        hints={['Seven tokens, two of them rests.']}
+        solution={`s("bd ~ rim bd bd rim ~")`}>
+    Seven in the cycle: replace the pattern with `bd ~ rim bd bd rim ~`. That is a bar of seven, and
+    you changed no setting to get it.
+  </Step>
+  <Step check={{ events: 6 }}
+        hints={['Five tokens in the first layer, five in the second.']}
+        solution={`s("bd hh hh bd hh, rim ~ ~ ~ ~")`}>
+    Five: `bd hh hh bd hh, rim ~ ~ ~ ~`. The second layer has five slots too, so the rim marks the
+    downbeat.
+  </Step>
+  <Step check={{ includes: '@3', cycles: 7, events: 7 }}
+        hints={['Each group is a bar in its own brackets, inside one `< >`.',
+                'Inside `< >`, `@n` makes an element last n cycles — so one cycle becomes one beat.']}
+        solution={`s("<[bd hh rim]@3 [bd hh rim sd]@4>")`}>
+    Now alternate a bar of three with a bar of four, weighting each by its number of beats:
+    `<[bd hh rim]@3 [bd hh rim sd]@4>`. One cycle is now one beat, and seven cycles go by before it
+    repeats.
+  </Step>
+  <Step check={{ code: "setcpm\\(\\s*(110\\s*\\*\\s*2|220)\\s*\\)" }}
+        hints={['One cycle is one beat now, so the divisor is 1.', 'The beat should run at 220 per minute.']}
+        solution={`setcpm(110*2)
+s("<[bd hh rim]@3 [bd hh rim sd]@4>")`}>
+    Give it a tempo: `setcpm(110*2)`. Listen to the beat — it does not flinch when the bar changes
+    from three to four. That is a meter change.
+  </Step>
+  <Step check={{ excludes: '@', cycles: 2, events: 7 }}
+        hints={['Delete both weights and nothing else.']}
+        solution={`setcpm(110*2)
+s("<[bd hh rim] [bd hh rim sd]>")`}>
+    Delete `@3` and `@4`. Three and four now share the same cycle length, so the beat itself
+    stretches and squashes. That is **metric modulation**.
+  </Step>
+  <Step check={{ code: "setcpm\\(\\s*(110\\s*/\\s*2|55)\\s*\\)" }}
+        hints={['A cycle is a whole bar again, roughly two beats wide.']}
+        solution={`setcpm(110/2)
+s("<[bd hh rim] [bd hh rim sd]>")`}>
+    A cycle is a whole bar again, so bring the clock back down: `setcpm(110/2)`.
+  </Step>
+</Exercise>
 
-Five:
+<Box>
+`@` weights place; they do not divide. That difference — and odd meters grouped 2+2+3, tuplets,
+swing written by hand — is the subject of <L to="/tutorial/time">Writing in Time</L>.
+</Box>
 
-<Strudel code={`s("bd hh hh bd hh, rim ~ ~ ~ ~")`} />
-
-To switch signatures while keeping the pulse steady, weight the cycles with `@`:
-
-<Strudel
-  code={`setcpm(110*2)
-s(\`<
-[bd hh rim]@3
-[bd hh rim sd]@4
->\`)`}
-  label="3/4 then 4/4, constant beat length"
-/>
-
-Drop the `@` weights and the beat itself stretches — this is **metric modulation**:
-
-<Strudel
-  code={`setcpm(110/2)
-s(\`<
-[bd hh rim]
-[bd hh rim sd]
->\`)`}
-  label="three and four share the same cycle: the pulse changes"
-/>
+<Exercise id="tempo/signatures-challenge" title="Challenge: three then five, one beat per cycle"
+  goal="At 200 beats per minute with one cycle per beat: a bar of three (`bd hh rim`), then a bar of five (`bd hh rim hh sd`), with the beat the same length in both."
+  start="" target={`setcpm(200)
+s("<[bd hh rim]@3 [bd hh rim hh sd]@5>")`}
+  check={{ code: "setcpm\\(\\s*200\\s*\\)", match: { keys: ['s'] }, cycles: 8 }}
+  hints={['One cycle per beat means the divisor is 1.',
+          'Each bar is one bracketed element inside a single `< >`.',
+          'A group has to last as many cycles as it has beats.']} />
 
 ## Changing speed after the fact
 
 `fast` and `slow` scale the time of a whole pattern. They are the function twins of `*` and `/`.
 
-<Strudel code={`s("bd*4, ~ rim ~ cp").slow(2)`} />
-
-Because arguments are patterns, the speed can itself be patterned:
-
-<Strudel code={`s("bd*4, ~ rim ~ cp").fast("<1 [2 4]>")`} />
-
-Stacking several speeds at once gives you phasing for free:
-
-<Strudel code={`note("c2, eb3 g3 [bb3 c4]").s("piano").slow("0.5,1,1.5")`} label="three tempos of one pattern" />
-
-## Nudging: early and late
-
-Move a pattern in time without changing its speed. Values are in cycles.
-
-<Strudel code={`$: s("bd*4")
-$: s("hh*4").late(0.02).gain(.7)`} label="hats dragging just behind the kick" />
-
-Tiny values are a groove tool; large values reorder the music.
-
-## Swing
-
-`swingBy(amount, subdivisions)` splits the cycle into `n` slices and pushes the second half of each
-slice late. `swing(n)` is `swingBy(1/3, n)`.
-
-<Strudel code={`s("hh*8").swingBy(1/3, 4)`} />
-
-<Strudel code={`$: s("hh*8").swing(4)
-$: s("bd ~ sd ~")`} label="swung hats over a straight beat" />
-
-## Looping a slice of time: ribbon
-
-`ribbon(offset, cycles)` takes `cycles` cycles starting at `offset` and loops just that. It turns
-an evolving or random pattern into a fixed, repeatable riff:
-
-<Strudel code={`n(irand(8).segment(4)).scale("c:pentatonic").ribbon(1337, 2)`} label="freeze 2 cycles of randomness" />
-
-<Strudel code={`s("bd!16?").ribbon(29,.5)`} label="a rhythm generator: keep re-rolling the offset" />
-
-<Box kind="try">
-Change `1337` to any other number and re-evaluate. You are browsing an infinite library of
-two-cycle riffs. When you find one you like, the number is the name of the riff.
-</Box>
+<Exercise id="tempo/fast-slow" title="Stretch, squeeze, and leave a gap"
+  goal="Scale a pattern, pattern the scaling, then see what fastGap does differently."
+  start={`s("bd*4, ~ rim ~ cp")`}
+  target={`s("bd*4, ~ rim ~ cp").fastGap(2)`}>
+  <Step check={{ includes: '.slow(', cycles: 2, events: 6 }}
+        hints={['Chain it on the end, after the closing parenthesis of `s(...)`.']}
+        solution={`s("bd*4, ~ rim ~ cp").slow(2)`}>
+    Add `.slow(2)`. The whole bar now takes two cycles: half of it in one, half in the next.
+  </Step>
+  <Step check={{ includes: '.fast(', events: 12 }}
+        hints={['Only the function name and nothing else.']}
+        solution={`s("bd*4, ~ rim ~ cp").fast(2)`}>
+    Change `.slow(2)` to `.fast(2)`. Twice round per cycle.
+  </Step>
+  <Step check={{ includes: '<1 [2 4]>', cycles: 2, match: { keys: ['s'] } }}
+        target={`s("bd*4, ~ rim ~ cp").fast("<1 [2 4]>")`}
+        hints={['Arguments are patterns, so the speed can be written in mini-notation.',
+                'One cycle at normal speed, then a cycle that speeds up halfway through.']}
+        solution={`s("bd*4, ~ rim ~ cp").fast("<1 [2 4]>")`}>
+    The argument is a pattern like any other. Change it to `.fast("<1 [2 4]>")`: normal, then a
+    cycle that runs at 2 and then at 4.
+  </Step>
+  <Step check={{ includes: 'fastGap(', events: 6 }}
+        hints={['`fastGap` takes a plain number here.']}
+        solution={`s("bd*4, ~ rim ~ cp").fastGap(2)`}>
+    Replace it with `.fastGap(2)`. Same compression, but the pattern plays **once**, squeezed into
+    the first half of the cycle, and the second half is silence.
+  </Step>
+</Exercise>
 
 <QA q="What is the difference between fast(2) and fastGap(2)?">
 `fast(2)` plays the pattern twice per cycle. `fastGap(2)` plays it once, compressed into the first
 half, leaving the rest silent. Compare `s("bd sd").fast(2)` with `s("bd sd").fastGap(2)`.
 </QA>
+
+Because the argument is a pattern, a comma in it stacks several speeds at once — which is phasing,
+for free.
+
+<Exercise id="tempo/phasing" title="Three tempos of one pattern"
+  goal="Stack the same phrase at three speeds and let it drift out of and back into alignment."
+  start={`note("c2, eb3 g3 [bb3 c4]").s("piano")`}
+  target={`note("c2, eb3 g3 [bb3 c4]").s("piano").slow("0.5,1,1.5")`}>
+  <Step check={{ includes: '.slow(1.5)', cycles: 3, events: 10 }}
+        hints={['Decimals are fine in `slow`.']}
+        solution={`note("c2, eb3 g3 [bb3 c4]").s("piano").slow(1.5)`}>
+    Add `.slow(1.5)`. The phrase now takes a cycle and a half, so it starts in a different place
+    every time round.
+  </Step>
+  <Step check={{ includes: '"0.5,1,1.5"', cycles: 3, match: { keys: ['note', 's'] } }}
+        hints={['Three values, commas between them, the whole thing in quotes.',
+                'A comma inside a pattern means "at the same time", here at three different speeds.']}
+        solution={`note("c2, eb3 g3 [bb3 c4]").s("piano").slow("0.5,1,1.5")`}>
+    Change it to `.slow("0.5,1,1.5")`. Three copies of the pattern at three speeds, all running at
+    once, sliding past each other and realigning every three cycles.
+  </Step>
+</Exercise>
+
+<Exercise id="tempo/fast-slow-challenge" title="Challenge: half time over straight hats"
+  goal="Two lanes: a `bd ~ sd ~` bar stretched over two cycles, and hats that stay at four per cycle."
+  start="" target={`$: s("bd ~ sd ~").slow(2)
+$: s("hh*4")`}
+  check={{ match: { keys: ['s'] }, cycles: 2 }}
+  hints={['Each `$:` line is its own lane with its own chain.',
+          'Only one of the two lanes gets a speed function.',
+          'Stretching over two cycles is a factor of 2.']} />
+
+## Nudging: early and late
+
+`early` and `late` move a pattern in time without changing its speed. Values are in cycles, so
+`0.02` is a fiftieth of a cycle.
+
+<Exercise id="tempo/nudge" title="Behind the beat, then ahead of it"
+  goal="Move a hat lane by a lot, then by a little, then the other way."
+  start={`$: s("bd*4")
+$: s("hh*4").gain(.7)`}
+  target={`$: s("bd*4")
+$: s("hh*4").gain(.7).early(0.02)`}>
+  <Step check={{ includes: '.late(', match: { keys: ['s', 'gain'] } }}
+        target={`$: s("bd*4")
+$: s("hh*4").gain(.7).late(0.125)`}
+        hints={['Chain it on the hat lane only.', 'An eighth of a cycle is 0.125.']}
+        solution={`$: s("bd*4")
+$: s("hh*4").gain(.7).late(0.125)`}>
+    Add `.late(0.125)` to the hat lane. An eighth of a cycle is a big move: the hats are not late
+    any more, they are on the offbeat. Large values rewrite the music.
+  </Step>
+  <Step check={{ match: { keys: ['s', 'gain'] } }}
+        target={`$: s("bd*4")
+$: s("hh*4").gain(.7).late(0.02)`}
+        hints={['A fiftieth of a cycle.', 'Small enough that you hear a feel, not a new position.']}
+        solution={`$: s("bd*4")
+$: s("hh*4").gain(.7).late(0.02)`}>
+    Shrink it to `.late(0.02)`. Now the hats are not on a different beat, they are dragging behind
+    the same one. That is groove, not arrangement.
+  </Step>
+  <Step check={{ includes: '.early(', match: { keys: ['s', 'gain'] } }}
+        hints={['The opposite function, same amount.']}
+        solution={`$: s("bd*4")
+$: s("hh*4").gain(.7).early(0.02)`}>
+    Change `.late` to `.early`. The hats now lean into the beat instead of leaning off it. Two
+    hundredths of a cycle in each direction is most of what "feel" is.
+  </Step>
+</Exercise>
+
+<Exercise id="tempo/nudge-challenge" title="Challenge: a snare that rushes"
+  goal="A straight four-on-the-floor kick, plus a snare on beats 2 and 4 pulled a hundredth of a cycle ahead of the grid."
+  start="" target={`$: s("bd*4")
+$: s("~ sd ~ sd").early(.01)`}
+  check={{ match: { keys: ['s'] } }}
+  hints={['Two lanes, and only the snare lane is nudged.',
+          'Ahead of the beat is `early`, behind it is `late`.',
+          'A hundredth of a cycle is `.01`.']} />
+
+## Swing
+
+`swingBy(amount, subdivisions)` cuts the cycle into `n` slices and pushes whatever lands in the
+second half of each slice later. `swing(n)` is `swingBy(1/3, n)`.
+
+<Exercise id="tempo/swing" title="Swing the hats"
+  goal="Shuffle eighth notes with swingBy, then with its shorthand, over a straight beat."
+  start={`s("hh*8")`}
+  target={`$: s("hh*8").swing(4)
+$: s("bd ~ sd ~")`}>
+  <Step check={{ includes: 'swingBy(', fn: "(h) => { const x = h.map(e => +(e.t * 12).toFixed(3)).join(' '); return x === '0 2 3 5 6 8 9 11' || 'Expected each offbeat hat on the last third of its beat, got twelfths ' + x + '.' }" }}
+        hints={['Eight hats make four beats, so four slices.', 'A third of the way into the second half of each slice.']}
+        solution={`s("hh*8").swingBy(1/3, 4)`}>
+    Add `.swingBy(1/3, 4)`. Four slices — one per beat — and every second hat moves onto the last
+    triplet of its beat.
+  </Step>
+  <Step check={{ includes: '.swing(', excludes: 'swingBy', fn: "(h) => { const x = h.map(e => +(e.t * 12).toFixed(3)).join(' '); return x === '0 2 3 5 6 8 9 11' || 'Expected the same swung eighths as before, got twelfths ' + x + '.' }" }}
+        hints={['The shorthand takes only the slice count.']}
+        solution={`s("hh*8").swing(4)`}>
+    Replace it with `.swing(4)`. Identical: `swing(n)` is just `swingBy(1/3, n)`.
+  </Step>
+  <Step check={{ match: { keys: ['s'] } }}
+        hints={['Two `$:` lanes, and the beat is not swung.']}
+        solution={`$: s("hh*8").swing(4)
+$: s("bd ~ sd ~")`}>
+    Put a straight beat under it: make the hats a `$:` lane and add `$: s("bd ~ sd ~")` below.
+    Swung hats over a square kick is most of what swing sounds like.
+  </Step>
+</Exercise>
+
+<Box>
+The slice count is half the number of notes you want swung. Swing by hand with `@`, MPC swing
+percentages, and patterning the amount are all in <L to="/tutorial/time">Writing in Time</L>.
+</Box>
+
+## Looping a slice of time: ribbon
+
+`ribbon(offset, cycles)` takes `cycles` cycles starting at `offset` and loops just that. It turns an
+evolving or random pattern into a fixed, repeatable riff.
+
+<Exercise id="tempo/ribbon" title="Freeze a window of time"
+  goal="Take two cycles out of an endless random melody and loop them forever."
+  start={`n(irand(8).segment(4)).scale("c:pentatonic")`}
+  target={`s("bd!16?").ribbon(29, .5)`}>
+  <Step check={{ includes: 'ribbon(', cycles: 4, fn: "(h) => { const k = (a) => h.filter(e => e.t >= a && e.t < a + 2).map(e => +(e.t - a).toFixed(4) + ':' + e.value.note).join(' '); return k(0) === k(2) || 'Cycles 3 and 4 should repeat cycles 1 and 2 exactly.' }" }}
+        hints={['Chain it on the end.', 'The first argument is where the window starts, the second is how long it is.']}
+        solution={`n(irand(8).segment(4)).scale("c:pentatonic").ribbon(1337, 2)`}>
+    That melody never repeats. Add `.ribbon(1337, 2)`: two cycles starting at cycle 1337, on a loop.
+    A random generator just became a riff.
+  </Step>
+  <Step check={{ includes: 'ribbon(29', events: [1, 16] }}
+        hints={['A whole new pattern: sixteen kicks, each with a `?` coin flip.',
+                'Half a cycle is `.5`.']}
+        solution={`s("bd!16?").ribbon(29, .5)`}>
+    Replace the whole line with `s("bd!16?").ribbon(29, .5)`: sixteen kicks, each with a 50% chance
+    of surviving, and only half a cycle of the result kept. A rhythm generator.
+  </Step>
+</Exercise>
+
+<Box kind="try">
+Change `29` to any other number and re-evaluate. You are browsing an infinite library of riffs.
+When you find one you like, the number is the name of the riff.
+</Box>
+
+<Exercise id="tempo/ribbon-challenge" title="Challenge: pin down the randomness"
+  goal="Eight hats a cycle, each with a 50% chance of dropping out — but frozen, so every cycle is identical."
+  start={`s("hh*8?")`} target={`s("hh*8?").ribbon(7, 1)`}
+  check={{ includes: 'ribbon(', cycles: 2, fn: "(h) => { const k = (a) => h.filter(e => e.t >= a && e.t < a + 1).map(e => +(e.t - a).toFixed(4)).join(' '); return k(0) === k(1) || 'The second cycle should be an exact repeat of the first.' }" }}
+  hints={['The randomness stays; you only need to stop time moving on.',
+          'The window is one cycle long.',
+          'Any offset will do — it just picks which cycle you keep.']} />
 
 ## Recap
 

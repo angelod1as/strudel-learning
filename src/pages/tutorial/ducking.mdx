@@ -5,50 +5,79 @@ title: Ducking (Sidechain)
 lede: Making one sound push another one out of the way. In Strudel this is a first-class effect, and it works on orbits.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
-import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
 
-## What ducking is
-
-In a DAW you would put a compressor on the bass and feed the kick into its sidechain input, so that
-every kick squashes the bass for a moment. The result is the pumping you hear in house, techno and
-most modern pop.
-
-Strudel skips the compressor entirely. **A pattern can directly duck an orbit.** The kick pattern
-says "whenever I hit, turn orbit 2 down", and that is the whole mechanism.
+In a DAW you put a compressor on the bass and feed the kick into its sidechain input. Strudel skips
+the compressor entirely: **a pattern directly ducks an orbit.** The kick says "whenever I hit, turn
+orbit 2 down", and that is the whole mechanism.
 
 <Box>
-Because ducking targets an **orbit**, <L to="/tutorial/orbits">the orbit chapter</L> is a prerequisite. The
-thing you duck is a bus, not a pattern.
+The thing you duck is a **bus**, not a pattern, so <L to="/tutorial/orbits">Orbits</L> is a
+prerequisite. If a sound is not on its own orbit, you cannot duck it on its own.
 </Box>
 
-## The minimal example
+## Build one
 
-Two patterns. The bass is put on orbit 2; the kick ducks orbit 2.
+<Exercise id="ducking/first-duck" title="Your first sidechain"
+  goal="Take a bass that swallows the kick and make the kick cut a hole in it instead."
+  start={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7)`}
+  target={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
 
-<Strudel
-  code={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckdepth(1).duckattack(0.2)`}>
+  <Step check={{ includes: 'bd', events: 21 }}
+        hints={['Each `$:` line is its own lane; write the kick on a new line below the bass.']}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(1)`}
-  label="the canonical ducking patch"
-/>
+$: s("bd:4!4").beat("0,4,8,11,14",16)`}>
+    Add a kick lane: `$: s("bd:4!4").beat("0,4,8,11,14",16)`. Both are playing, but the bass is
+    sitting right on top of the kick and you can barely feel the low end.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'sawtooth'); return (k.length > 0 && k.every(e => e.value.orbit === 2)) || 'The bass lane needs `.orbit(2)`.'; }" }}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
 
-<Box kind="try">
-Delete `.duckorbit(2)` and re-evaluate. The two patterns still play, but they now sit on top of
-each other and the bass masks the kick. Put it back. That is the entire point of the effect.
-</Box>
+$: s("bd:4!4").beat("0,4,8,11,14",16)`}>
+    Add `.orbit(2)` to the bass lane. Nothing changes yet — this only gives the bass an address the
+    kick can aim at.
+  </Step>
+  <Step check={{ includes: '.duckorbit(',
+                 fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckorbit === 2)) || 'Every kick needs `.duckorbit(2)`.'; }" }}
+        hints={['`duckorbit(n)` goes on the lane that does the ducking, not on the lane being ducked.']}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
 
-Note what the ducking pattern is: a normal, audible kick. It does two jobs at once — you hear it,
-*and* it ducks. If you only want the ducking and not the sound, silence it with `postgain(0)`:
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2)`}>
+    Add `.duckorbit(2)` to the kick lane. Every kick now punches a hole in the bass, and suddenly
+    you can hear both.
+  </Step>
+  <Step check={{ excludes: '.duckorbit(', events: 21 }}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
 
-<Strudel
-  code={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+$: s("bd:4!4").beat("0,4,8,11,14",16)`}>
+    Delete `.duckorbit(2)` again and listen to it collapse back into mush. That gap is the entire
+    point of the effect — worth hearing disappear once.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckorbit === 2 && e.value.duckdepth === 1)) || 'The kick lane needs `.duckorbit(2).duckdepth(1)`.'; }" }}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
 
-$: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0.01).postgain(0)`}
-  label="an inaudible ducker — a pure sidechain trigger"
-/>
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckdepth(1)`}>
+    Write it back and add `.duckdepth(1)` after it. Deeper holes — and note that even at 1 the bass
+    does not go completely silent.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckorbit === 2 && e.value.duckattack >= 0.1 && e.value.duckattack <= 0.3)) || 'Add `.duckattack(0.2)` to the kick lane.'; }" }}
+        hints={['`duckattack` is the time the orbit takes to come *back*, in seconds — a compressor would call this release.']}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckdepth(1).duckattack(0.2)`}>
+    Add `.duckattack(0.2)`. The bass now swells back over a fifth of a second instead of snapping
+    back. That swell is the pump.
+  </Step>
+</Exercise>
+
+Note what that ducking lane is: a normal, audible kick doing two jobs at once. You hear it, *and*
+it ducks.
 
 ## The four controls
 
@@ -57,7 +86,7 @@ $: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0.01).postgain(0)`}
 | `duckorbit` | `duck` | orbit number(s) | which orbit(s) to duck |
 | `duckdepth` | — | 0…1 | how far down it goes (non-linear, see below) |
 | `duckonset` | `duckons` | seconds | time to **reach** the lowest volume |
-| `duckattack` | `duckatt`, `datt` | seconds | time to **return** to normal volume |
+| `duckattack` | `duckatt` | seconds | time to **return** to normal volume |
 
 <Box kind="warn">
 The names are counter-intuitive if you come from compressors. `duckonset` is the *downward* ramp
@@ -65,18 +94,69 @@ The names are counter-intuitive if you come from compressors. `duckonset` is the
 release). Read them as: onset = going down, attack = coming back.
 </Box>
 
-### duckdepth — how much
+<Exercise id="ducking/first-duck-challenge" title="Challenge: duck a pad with a clap"
+  goal="Put the pad on orbit 3, then add a clap on 2 and 4 that ducks it by 0.8 with a 0.25 s recovery."
+  start={`$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.5)`}
+  target={`$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.5).orbit(3)
 
-<Strudel
-  code={`stack(
-  n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2),
-  s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth("<1 .9 .6 0>")
-)`}
-  label="full duck, then less, then off"
-/>
+$: s("~ cp ~ cp").duckorbit(3).duckdepth(.8).duckattack(.25)`}
+  check={{ fn: "(h) => { const p = h.filter(e => e.value.s === 'gm_pad_warm'); const c = h.filter(e => e.value.s === 'cp'); if (!p.length || !p.every(e => e.value.orbit === 3)) return 'The pad lane needs to be on orbit 3.'; if (c.length !== 2) return 'Add a clap lane with a clap on beats 2 and 4.'; return c.every(e => e.value.duckorbit === 3 && e.value.duckdepth >= 0.7 && e.value.duckdepth <= 0.9 && e.value.duckattack >= 0.2 && e.value.duckattack <= 0.3) || 'The claps need duckorbit 3, duckdepth 0.8 and duckattack 0.25.'; }" }}
+  hints={[
+    'Two lanes: the pad gets an address, the clap gets the three duck controls.',
+    'Beats 2 and 4 out of four slots is `"~ cp ~ cp"`.',
+    'Nothing goes on the pad lane except the orbit — the pad never mentions ducking.',
+  ]} />
 
-Depth 0.3–0.6 is what most records actually use — enough to feel the pump, not enough to notice
-the gap.
+## duckdepth is not a fader
+
+<Exercise id="ducking/depth" title="Walk up the depth knob"
+  goal="Hear 0.1, 0.5 and 1, then compare them back to back in one line."
+  start={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2)`}
+  target={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(0.4)`}>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckdepth === 0.1)) || 'Add `.duckdepth(0.1)` to the kick lane.'; }" }}
+        solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(0.1)`}>
+    Add `.duckdepth(0.1)`. Barely there — about 3 dB, which is the smallest move you can reliably
+    hear.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckdepth === 0.5)) || 'Change it to `.duckdepth(0.5)`.'; }" }}
+        solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(0.5)`}>
+    Change it to `0.5`. That is roughly 11 dB — halfway along the knob, but nothing like halfway in
+    loudness.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckdepth === 1)) || 'Change it to `.duckdepth(1)`.'; }" }}
+        solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(1)`}>
+    Change it to `1`. About 40 dB down — a very deep duck, but listen closely and the bass is still
+    faintly there. Depth 1 is not silence.
+  </Step>
+  <Step check={{ includes: 'duckdepth("<', cycles: 4,
+                 fn: "(h) => { const v = [...new Set(h.filter(e => e.value.s === 'bd').map(e => e.value.duckdepth))].sort((a, b) => a - b); return (v.length === 4 && v[0] === 0 && v[3] === 1) || 'Four different depths across four cycles: 1, .9, .6 and 0.'; }" }}
+        hints={['Angle brackets step through one value per cycle.']}
+        solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth("<1 .9 .6 0>")`}>
+    Compare them in one go: make it `.duckdepth("<1 .9 .6 0>")`. Four bars — full, slightly less,
+    moderate, off. Hear how little difference there is between 1 and .9, and how much between .6
+    and 0.
+  </Step>
+  <Step check={{ excludes: '<',
+                 fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckdepth === 0.4)) || 'Set `.duckdepth(0.4)`.'; }" }}
+        solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(0.4)`}>
+    Settle on `.duckdepth(0.4)`. Somewhere in 0.3–0.6 is what most records actually use: enough to
+    feel the pump, not enough to notice the gap.
+  </Step>
+</Exercise>
 
 The scale is not linear. Internally the orbit's gain drops to `1 - √depth`, floored at `0.01`:
 
@@ -88,152 +168,412 @@ The scale is not linear. Internally the orbit's gain drops to `1 - √depth`, fl
 | `0.6` | 0.22 | −13 dB |
 | `1` | 0.01 | −40 dB |
 
-So the first half of the knob does most of the audible work, and depth 1 is a very deep duck
-rather than true silence. A duck can only ever lower the level, never raise it.
+So the first half of the knob does most of the audible work, and depth 1 is a very deep duck rather
+than true silence. A duck can only ever lower the level, never raise it.
 
-### duckattack — how fast it comes back
+<Exercise id="ducking/depth-challenge" title="Challenge: eleven decibels"
+  goal="Drop the bass to about a third of its level on every kick, and have it back within 150 ms."
+  start={`$: note("<c2 eb2>*4").s("sawtooth").decay(.2).sustain(0).lpf(600).orbit(2)
 
-This is the control that decides the *genre*.
+$: s("bd*4").duckorbit(2)`}
+  target={`$: note("<c2 eb2>*4").s("sawtooth").decay(.2).sustain(0).lpf(600).orbit(2)
 
-<Strudel
-  code={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
+$: s("bd*4").duckorbit(2).duckdepth(.5).duckattack(.15)`}
+  check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); if (!k.length) return 'No kick lane.'; if (!k.every(e => e.value.duckdepth >= 0.45 && e.value.duckdepth <= 0.55)) return 'The depth is not right yet — work it out from the gain formula.'; return k.every(e => e.value.duckattack >= 0.12 && e.value.duckattack <= 0.18) || 'The recovery time is not 150 ms yet.'; }" }}
+  hints={[
+    '`duckdepth` is not a fader: the orbit gain becomes `1 − √depth`.',
+    'A third of full level is a gain of about 0.3. Solve `1 − √d = 0.3` for `d`.',
+    '150 ms is the *recovery*, which is the control whose name sounds like the opposite.',
+  ]} />
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2)
-   .duckattack("<0.2 0 0.4>").duckdepth(1)`}
-  label="0.2 = normal pump, 0 = instant (barely audible), 0.4 = long swell"
-/>
+## duckonset: the ramp down, and the click
 
-Short recovery (0.05–0.1) reads as tightness. Long recovery (0.3–0.5) reads as a breathing,
-building pad. At 0 the duck is over before you perceive it.
+<Exercise id="ducking/onset" title="Kill the click, then abuse it"
+  goal="Silence the ducker, hear the click at onset 0, remove it, then stretch the onset into a rhythm."
+  start={`$: freq("63.2388").s("sine").orbit(2).gain(4)
 
-### duckonset — how fast it goes down, and clicks
+$: s("bd*4").duckorbit(2).duckattack(0.3)`}
+  target={`$: freq("63.2388").s("sine").orbit(2).gain(4)
 
-Setting the onset to exactly 0 means an instantaneous volume jump, which is a click:
+$: s("bd*4").duckorbit(2).duckattack(0.05).duckonset(0.25).postgain(0)`}>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.postgain === 0)) || 'Add `.postgain(0)` to the kick lane.'; }" }}
+        hints={['`postgain` is the level at the very end of the local chain — it silences the sound without removing the event.']}
+        solution={`$: freq("63.2388").s("sine").orbit(2).gain(4)
 
-<Strudel
-  code={`$: freq("63.2388").s("sine").orbit(2).gain(4)
+$: s("bd*4").duckorbit(2).duckattack(0.3).postgain(0)`}>
+    Add `.postgain(0)` to the kick lane. The kick vanishes but the ducking carries on: a pure
+    sidechain trigger, and now you hear nothing but a steady tone being pushed down four times a bar.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckonset === 0)) || 'Add `.duckonset(0)` to the kick lane.'; }" }}
+        solution={`$: freq("63.2388").s("sine").orbit(2).gain(4)
 
-$: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0).postgain(0)`}
-  label="listen for the click at the start of each duck"
-/>
+$: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0).postgain(0)`}>
+    Add `.duckonset(0)`. Listen at the start of each duck: an instantaneous volume jump is a step
+    in the waveform, and a step in the waveform is a click.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckonset >= 0.005 && e.value.duckonset <= 0.02)) || 'Change it to `.duckonset(0.01)`.'; }" }}
+        solution={`$: freq("63.2388").s("sine").orbit(2).gain(4)
 
-A tiny onset removes it:
+$: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0.01).postgain(0)`}>
+    Change it to `.duckonset(0.01)`. Ten milliseconds — too short to hear as a ramp, long enough
+    for the click to disappear completely. This is the safe default.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckonset >= 0.2 && e.value.duckonset <= 0.3)) || 'Change it to `.duckonset(0.25)`.'; }" }}
+        hints={['A long onset is not a mistake to avoid: it is a shape, and the shape is musical.']}
+        solution={`$: freq("63.2388").s("sine").orbit(2).gain(4)
 
-<Strudel
-  code={`$: freq("63.2388").s("sine").orbit(2).gain(4)
+$: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0.25).postgain(0)`}>
+    Now go the other way: `.duckonset(0.25)`. The tone slides down over a quarter of a second
+    instead of dropping. It stops sounding like a sidechain and starts sounding like a swell.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckonset >= 0.2 && e.value.duckattack <= 0.08)) || 'Keep the long onset and shorten `.duckattack` to 0.05.'; }" }}
+        solution={`$: freq("63.2388").s("sine").orbit(2).gain(4)
 
-$: s("bd*4").duckorbit(2).duckattack(0.3).duckonset(0.01).postgain(0)`}
-  label="0.01s onset — no click"
-/>
+$: s("bd*4").duckorbit(2).duckattack(0.05).duckonset(0.25).postgain(0)`}>
+    Keep the long onset and change `.duckattack(0.3)` to `.duckattack(0.05)`. The envelope is now
+    reversed: a slow fall and an instant jump back. Proof that the two controls are independent,
+    and a good reminder of which is which.
+  </Step>
+</Exercise>
 
 <Box>
-Rule: `duckonset(0.01)` or thereabouts is the safe default. Set it to 0 only if you want the click
-as a percussive artefact.
+Rule: `duckonset(0.01)` or thereabouts is the safe default. Set it to 0 only when you want the
+click as a percussive artefact.
 </Box>
 
-A **long** onset is not a mistake to avoid — it is a rhythmic effect in its own right. The volume
-slides down slowly rather than dropping:
+<Exercise id="ducking/onset-challenge" title="Challenge: slow down, snap back"
+  goal="Make the ducker silent, and give each duck a quarter of a second to fall and 50 ms to return."
+  start={`$: note("c2").s("sawtooth").sustain(1).lpf(800).orbit(2)
 
-<Strudel
-  code={`$: s("pink").distort("2:1").orbit(4)
-$: s("hh*16").orbit(7)
-$: s("bd*4").bank("tr909").duckorbit("4:7").duckonset("0.3:0.003").duckattack(0.25)`}
-  label="noise swells down slowly; hats duck instantly"
-/>
+$: s("bd*4").duckorbit(2).duckdepth(1)`}
+  target={`$: note("c2").s("sawtooth").sustain(1).lpf(800).orbit(2)
+
+$: s("bd*4").duckorbit(2).duckdepth(1).duckonset(.25).duckattack(.05).postgain(0)`}
+  check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); if (!k.length) return 'No kick lane.'; if (!k.every(e => e.value.postgain === 0)) return 'The ducker should be inaudible.'; if (!k.every(e => e.value.duckonset >= 0.2 && e.value.duckonset <= 0.3)) return 'The fall should take about a quarter of a second.'; return k.every(e => e.value.duckattack >= 0.03 && e.value.duckattack <= 0.07) || 'The return should take about 50 ms.'; }" }}
+  hints={[
+    'Three calls go on the kick lane, and nothing changes on the bass lane.',
+    'Onset is the ramp down; attack is the ramp back up. The slow one here is the fall.',
+    'A level of 0 at the very end of the local chain makes a lane silent without removing it.',
+  ]} />
 
 ## Ducking several orbits at once
 
-`duckorbit` accepts a colon-separated list, and every other duck control can then take a matching
-list — one value per orbit.
+`duckorbit` takes a colon-separated list, and every other duck control can then take a matching
+list — one value per orbit, in the same order.
 
-<Strudel
-  code={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+<Exercise id="ducking/multi" title="One kick, two buses, two settings"
+  goal="Duck a bass and a hat line from one kick, with a different depth and recovery for each."
+  start={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(1)`}
+  target={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+
 $: s("hh*16").orbit(3)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit("2:3").duckattack(0.2).duckdepth(1)`}
-  label="one kick ducking both the bass and the hats"
-/>
+$: s("bd:4!4").beat("0,4,8,11,14",16).duck("2:3").duckattack("0.4:0.1").duckdepth("1:0.5")`}>
+  <Step check={{ includes: 'hh', events: 37 }}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
 
-Different amounts per orbit — duck the bass hard, the hats lightly:
-
-<Strudel
-  code={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
 $: s("hh*16").orbit(3)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit("2:3").duckattack(0.2).duckdepth("1:0.5")`}
-  label="depth 1 on orbit 2, depth 0.5 on orbit 3"
-/>
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(1)`}>
+    Add a hat lane on its own bus: `$: s("hh*16").orbit(3)`. Untouched by the duck so far — it
+    rides straight over every kick.
+  </Step>
+  <Step check={{ includes: 'duckorbit("2:3")',
+                 fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => JSON.stringify(e.value.duckorbit) === '[2,3]')) || 'The kick should target orbits 2 and 3 together.'; }" }}
+        hints={['The separator inside a multi-orbit list is a colon, not a comma.']}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
 
-Different recovery times per orbit:
+$: s("hh*16").orbit(3)
 
-<Strudel
-  code={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
-$: s("hh*16").orbit(5)
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit("2:3").duckattack(0.2).duckdepth(1)`}>
+    Change `.duckorbit(2)` to `.duckorbit("2:3")`. The hats now duck too, just as hard as the bass
+    — which is too much.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => JSON.stringify(e.value.duckdepth) === '[1,0.5]')) || 'Give the two orbits different depths: `duckdepth(\"1:0.5\")`.'; }" }}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit("2:5").duckattack("0.4:0.1")`}
-  label="the bass breathes slowly, the hats snap back"
-/>
+$: s("hh*16").orbit(3)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit("2:3").duckattack(0.2).duckdepth("1:0.5")`}>
+    Change `.duckdepth(1)` to `.duckdepth("1:0.5")` — full depth on orbit 2, half on orbit 3. The
+    values line up with the orbit list, in order.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => JSON.stringify(e.value.duckattack) === '[0.4,0.1]')) || 'Give the two orbits different recovery times: `duckattack(\"0.4:0.1\")`.'; }" }}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+
+$: s("hh*16").orbit(3)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit("2:3").duckattack("0.4:0.1").duckdepth("1:0.5")`}>
+    Now `.duckattack("0.4:0.1")`. The bass breathes back slowly while the hats snap straight back —
+    two completely different sidechains from one trigger.
+  </Step>
+  <Step check={{ includes: '.duck("2:3")', excludes: '.duckorbit(',
+                 fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => JSON.stringify(e.value.duckorbit) === '[2,3]')) || 'Still duck orbits 2 and 3.'; }" }}
+        solution={`$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)
+
+$: s("hh*16").orbit(3)
+
+$: s("bd:4!4").beat("0,4,8,11,14",16).duck("2:3").duckattack("0.4:0.1").duckdepth("1:0.5")`}>
+    Shorten `.duckorbit(` to its alias `.duck(`. Identical, and it is what you will see in most
+    people's patches.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
-The per-orbit list syntax only works if you targeted multiple orbits in the first place. Writing
-`duckdepth("1:0.5")` with a single `duckorbit(2)` will not do anything useful.
+The per-orbit list only works if you targeted several orbits in the first place. Writing
+`duckdepth("1:0.5")` next to a single `duckorbit(2)` does nothing useful.
 </Box>
 
-## Ducking is continuous
+<Exercise id="ducking/multi-challenge" title="Challenge: hard and fast, gentle and slow"
+  goal="One kick that ducks orbit 2 fully with an 80 ms recovery, and orbit 4 by 0.4 with a 450 ms one."
+  start={`$: note("<c2 eb2>*4").s("sawtooth").decay(.2).sustain(0).lpf(500).orbit(2)
 
-Ducking is one of the few effects that genuinely varies **during** a sounding note — along with the
-ADSR envelopes, `tremolo`, `phaser`, `vib`, and anything driven by `lfo()` or `env()`. That is why it works on a long held pad, where a
-pattern-level `gain` would not:
+$: n("<0 4>").scale("C4:minor").s("gm_pad_warm").attack(.5).release(1.5).room(.8).gain(.45).orbit(4)
 
-<Strudel
-  code={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
+$: s("bd*4").bank("RolandTR909")`}
+  target={`$: note("<c2 eb2>*4").s("sawtooth").decay(.2).sustain(0).lpf(500).orbit(2)
 
-$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)`}
-  label="one note per two cycles, pumping four times a cycle"
-/>
+$: n("<0 4>").scale("C4:minor").s("gm_pad_warm").attack(.5).release(1.5).room(.8).gain(.45).orbit(4)
 
-## Recipes
+$: s("bd*4").bank("RolandTR909").duckorbit("2:4").duckdepth("1:0.4").duckattack("0.08:0.45")`}
+  check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); if (!k.length) return 'No kick lane.'; const ok = (v, a, b) => Array.isArray(v) && v.length === 2 && v[0] >= a[0] && v[0] <= a[1] && v[1] >= b[0] && v[1] <= b[1]; if (!k.every(e => JSON.stringify(e.value.duckorbit) === '[2,4]')) return 'Target orbits 2 and 4, in that order.'; if (!k.every(e => ok(e.value.duckdepth, [0.9, 1], [0.35, 0.45]))) return 'Depths: full on the first orbit, 0.4 on the second.'; return k.every(e => ok(e.value.duckattack, [0.05, 0.1], [0.4, 0.5])) || 'Recovery times: about 80 ms and about 450 ms.'; }" }}
+  hints={[
+    'Everything goes on the kick lane; the bass and the pad already have their addresses.',
+    'The orbit list sets the order, and every other list must be written in the same order.',
+    'Colons separate per-orbit values inside the quotes, e.g. `"a:b"`.',
+  ]} />
 
-### The house / techno pump
+## Ducking moves during a note
 
-<Strudel
-  code={`setcpm(126/4)
+Ducking is one of the few things that genuinely varies **while** a note is sounding — along with
+the ADSR envelopes, `tremolo`, `phaser`, `vib`, and anything driven by `lfo()` or `env()`. A
+pattern-level `gain` cannot do this, and the difference is easiest to hear on a long held note.
 
-bass: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4)
-  .decay(.2).sustain(0).orbit(2)
+<Exercise id="ducking/held-note" title="A fader cannot do this"
+  goal="Try to make room for a kick with `gain`, fail, then do it with a duck."
+  start={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)`}
+  target={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
-pad: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm")
-  .attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
+$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)`}>
+  <Step check={{ includes: 'bd', events: 5 }}
+        solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
-drums: s("bd*4").bank("RolandTR909")
-  .duckorbit("2:3").duckdepth("1:0.6").duckattack("0.18:0.3").duckonset(0.01)
+$: s("bd*4").bank("RolandTR909")`}>
+    Add `$: s("bd*4").bank("RolandTR909")`. One note held across two whole cycles, with four kicks
+    a bar trying to get through it.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'supersaw'); return (k.length > 0 && k.every(e => e.value.gain === 0.4)) || 'Add `.gain(.4)` to the pad lane.'; }" }}
+        solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).gain(.4).orbit(2)
 
-top: s("[~ hh]*4, ~ cp").bank("RolandTR909").gain(.6).orbit(4)`}
-  label="kick ducks bass hard and pad gently; hats and clap untouched"
-/>
+$: s("bd*4").bank("RolandTR909")`}>
+    Try the obvious fix first: add `.gain(.4)` to the pad lane. The kick gets through, but the pad
+    is now quiet for its entire length. There is no movement — the level is set once, when the note
+    starts.
+  </Step>
+  <Step check={{ excludes: '.gain(',
+                 fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckorbit === 2 && e.value.duckdepth === 0.8)) || 'Duck orbit 2 from the kick lane, with depth 0.8.'; }" }}
+        hints={['Four controls go on the kick lane: the orbit, the depth, the recovery and a small onset.']}
+        solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
-### Ducking without a kick on the beat
+$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)`}>
+    Delete `.gain(.4)` and put `.duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)` on the
+    kick lane instead. Same note, same length, but the level now moves four times inside it.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckattack >= 0.5)) || 'Stretch `.duckattack` to 0.6.'; }" }}
+        solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
-The ducker does not have to be a kick, or even on the downbeat. Any pattern can be the trigger:
+$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.6).duckonset(.01)`}>
+    Stretch `.duckattack` to `.6`. At 126-ish BPM the swell barely finishes before the next kick
+    starts the next one, so the pad never quite reaches full level. That is the classic
+    over-pumped sound.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckattack >= 0.2 && e.value.duckattack <= 0.3)) || 'Put `.duckattack` back to .25.'; }" }}
+        solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
-<Strudel
-  code={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
+$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)`}>
+    Back to `.duckattack(.25)`. Somewhere around a quarter of a second is where the swell finishes
+    just in time — that is what people mean by "it breathes".
+  </Step>
+</Exercise>
 
-$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7)
-   .duckattack(.1).duckonset(.005).postgain(0)`}
-  label="an offbeat, silent ducker — a rhythm made of absence"
-/>
-
-### Tremolo via ducking
-
-Put a fast silent ducker on an orbit and you have a gate:
-
-<Strudel
-  code={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(800).orbit(2)
+<Exercise id="ducking/held-note-challenge" title="Challenge: gate it"
+  goal="Chop a held note into sixteenths with a silent ducker: full depth, 3 ms down, 30 ms back."
+  start={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(800).orbit(2)`}
+  target={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(800).orbit(2)
 
 $: s("bd*16").duckorbit(2).duckdepth(1).duckattack(.03).duckonset(.003).postgain(0)`}
-  label="16th-note gating"
-/>
+  check={{ events: 17,
+           fn: "(h) => { const k = h.filter(e => e.value.duckorbit === 2); if (k.length !== 16) return 'There should be sixteen duck triggers per cycle.'; if (!k.every(e => e.value.postgain === 0)) return 'The trigger lane should be silent.'; return k.every(e => e.value.duckdepth === 1 && e.value.duckattack <= 0.05 && e.value.duckonset <= 0.01) || 'Full depth, a very short onset and a very short recovery.'; }" }}
+  hints={[
+    'A gate is just a duck that happens very often and recovers very fast.',
+    'The trigger can be any sound at all, because you are going to silence it anyway.',
+    'Sixteen triggers a bar, and every duck has to finish before the next one starts.',
+  ]} />
+
+## Recipe: the house / techno pump
+
+<Exercise id="ducking/pump" title="Build the pump"
+  goal="A kick, a bass on orbit 2, a pad on orbit 3, ducked with different settings, and a top layer that is left alone."
+  start={`setcpm(126/4)
+
+$: s("bd*4").bank("RolandTR909")`}
+  target={`setcpm(126/4)
+
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
+
+$: s("bd*4").bank("RolandTR909").duckorbit("2:3").duckdepth("1:0.6").duckattack("0.18:0.3").duckonset(0.01)
+
+$: s("[~ hh]*4, ~ cp").bank("RolandTR909").gain(.6).orbit(4)`}>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'sawtooth'); return (k.length > 0 && k.every(e => e.value.orbit === 2)) || 'Add a bass lane on `.orbit(2)`.'; }" }}
+        solution={`setcpm(126/4)
+
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: s("bd*4").bank("RolandTR909")`}>
+    Add the bass, on its own bus:
+    `$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)`
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'gm_pad_warm'); return (k.length > 0 && k.every(e => e.value.orbit === 3)) || 'Add a pad lane on `.orbit(3)`.'; }" }}
+        solution={`setcpm(126/4)
+
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
+
+$: s("bd*4").bank("RolandTR909")`}>
+    Add the pad on a third bus:
+    `$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)`
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => JSON.stringify(e.value.duckorbit) === '[2,3]')) || 'The kick should duck orbits 2 and 3.'; }" }}
+        solution={`setcpm(126/4)
+
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
+
+$: s("bd*4").bank("RolandTR909").duckorbit("2:3")`}>
+    Add `.duckorbit("2:3")` to the kick lane. Everything melodic now gets out of the kick's way.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => JSON.stringify(e.value.duckdepth) === '[1,0.6]')) || 'Add `.duckdepth(\"1:0.6\")`.'; }" }}
+        solution={`setcpm(126/4)
+
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
+
+$: s("bd*4").bank("RolandTR909").duckorbit("2:3").duckdepth("1:0.6")`}>
+    Add `.duckdepth("1:0.6")`. The bass is ducked hard because it competes with the kick; the pad
+    is ducked gently because it only needs to breathe.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => JSON.stringify(e.value.duckattack) === '[0.18,0.3]' && e.value.duckonset === 0.01)) || 'Add `.duckattack(\"0.18:0.3\").duckonset(0.01)`.'; }" }}
+        hints={['The bass wants to be back before the next eighth; the pad can take longer.']}
+        solution={`setcpm(126/4)
+
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
+
+$: s("bd*4").bank("RolandTR909").duckorbit("2:3").duckdepth("1:0.6").duckattack("0.18:0.3").duckonset(0.01)`}>
+    Add `.duckattack("0.18:0.3").duckonset(0.01)`. Fast recovery on the bass, slow on the pad, and
+    a small onset on both so nothing clicks.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'hh' || e.value.s === 'cp'); return (k.length > 0 && k.every(e => e.value.orbit === 4)) || 'Add a hats-and-clap lane on `.orbit(4)`.'; }" }}
+        solution={`setcpm(126/4)
+
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
+
+$: s("bd*4").bank("RolandTR909").duckorbit("2:3").duckdepth("1:0.6").duckattack("0.18:0.3").duckonset(0.01)
+
+$: s("[~ hh]*4, ~ cp").bank("RolandTR909").gain(.6).orbit(4)`}>
+    Add the top layer on a fourth bus: `$: s("[~ hh]*4, ~ cp").bank("RolandTR909").gain(.6).orbit(4)`.
+    It is not in the duck list, so it stays rock steady while everything under it pumps.
+  </Step>
+</Exercise>
+
+<Exercise id="ducking/pump-challenge" title="Challenge: split the trigger from the sound"
+  goal="Move the audible kick onto orbit 4 and let a separate, silent `bd*4` lane do the ducking."
+  start={`setcpm(126/4)
+
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(1).duckattack(.18).duckonset(.01)`}
+  target={`setcpm(126/4)
+
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: s("bd*4").bank("RolandTR909").orbit(4)
+
+$: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.18).duckonset(.01).postgain(0)`}
+  check={{ fn: "(h) => { const d = h.filter(e => e.value.duckorbit !== undefined); const a = h.filter(e => e.value.s === 'bd' && e.value.duckorbit === undefined); if (!d.length) return 'Nothing is ducking any more.'; if (!d.every(e => e.value.postgain === 0)) return 'The ducking lane should be silent.'; if (a.length !== 4) return 'There should still be an audible kick lane.'; return a.every(e => e.value.orbit === 4) || 'Put the audible kick on orbit 4.'; }" }}
+  hints={[
+    'A duck trigger does not have to be the sound you hear; separating them is how you keep control of both.',
+    'Three lanes: the bass, an audible kick, and a duck trigger.',
+    'A lane with a level of 0 at the end of its local chain still produces events, and events are what duck.',
+  ]} />
+
+## Recipe: a rhythm made of absence
+
+The ducker does not have to be a kick, or on the downbeat. Once it is silent, the only thing left
+of it is the holes it makes.
+
+<Exercise id="ducking/offbeat" title="Offbeat holes"
+  goal="A rim on the offbeat sixteenths that you never hear, ducking a busy bass line."
+  start={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)`}
+  target={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
+
+$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7).duckattack(.4).duckonset(.005).postgain(0)`}>
+  <Step check={{ includes: 'rim', events: 20 }}
+        hints={['`beat(steps, n)` places hits on numbered steps of an n-step grid, counting from 0.']}
+        solution={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
+
+$: s("rim").beat("2,6,10,14",16)`}>
+    Add `$: s("rim").beat("2,6,10,14",16)`. Four rims, all landing between the beats.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.duckorbit === 2 && e.value.duckdepth === 0.7)) || 'Add `.duckorbit(2).duckdepth(.7).duckattack(.1).duckonset(.005)` to the rim lane.'; }" }}
+        solution={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
+
+$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7).duckattack(.1).duckonset(.005)`}>
+    Make it duck: add `.duckorbit(2).duckdepth(.7).duckattack(.1).duckonset(.005)`. The bass now
+    flinches four times a bar, off the beat.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.postgain === 0)) || 'Add `.postgain(0)` to the rim lane.'; }" }}
+        solution={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
+
+$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7).duckattack(.1).duckonset(.005).postgain(0)`}>
+    Add `.postgain(0)`. The rim is gone and the groove is unchanged — you are hearing a percussion
+    part made entirely of silence.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.duckattack >= 0.3)) || 'Stretch `.duckattack` to .4.'; }" }}
+        solution={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
+
+$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7).duckattack(.4).duckonset(.005).postgain(0)`}>
+    Stretch `.duckattack` to `.4`. The holes stop being punches and become long swells, and the
+    whole bass line starts to sound like it is being played through a volume pedal.
+  </Step>
+</Exercise>
+
+<Exercise id="ducking/capstone" title="Challenge: your own pump"
+  goal="Give the bass its own bus and duck it from the kick: at least half depth, 0.1–0.3 s recovery, and an onset that does not click."
+  start={`$: s("bd*4, [~ hh]*4").bank("RolandTR909")
+
+$: note("c2 eb2 g2 eb2").s("sawtooth").lpf(600).decay(.2).sustain(0)`}
+  target={`$: s("bd*4, [~ hh]*4").bank("RolandTR909")
+
+$: note("c2 eb2 g2 eb2").s("sawtooth").lpf(600).decay(.2).sustain(0).orbit(2)
+
+$: s("bd*4").duckorbit(2).duckdepth(.8).duckattack(.2).duckonset(.01).postgain(0)`}
+  check={{ fn: "(h) => { const b = h.filter(e => e.value.s === 'sawtooth'); const d = h.filter(e => e.value.duckorbit === 2); if (!b.length || !b.every(e => e.value.orbit === 2)) return 'The bass lane needs to be on orbit 2.'; if (!d.length) return 'Nothing is ducking orbit 2 yet.'; if (!d.every(e => e.value.duckdepth >= 0.5)) return 'Duck it by at least half depth.'; if (!d.every(e => e.value.duckattack >= 0.1 && e.value.duckattack <= 0.3)) return 'The recovery should be between 0.1 and 0.3 seconds.'; return d.every(e => e.value.duckonset > 0 && e.value.duckonset <= 0.05) || 'Give it a small non-zero onset so it does not click.'; }" }}
+  hints={[
+    'Two things have to happen: the bass needs an address, and something has to aim at it.',
+    'If you put the duck controls on the existing drum lane, the hats will trigger ducks too — a separate trigger lane avoids that.',
+    'The onset only has to be long enough to stop the step in the waveform; ten milliseconds is plenty.',
+  ]} />
 
 <QA q="duckorbit, tremolo, or an lfo on gain — which gate should I use?">
 `duckorbit` when the gate should follow a **rhythm**, and especially when the trigger is a real
@@ -243,8 +583,13 @@ need an unusual shape, skew or curve. For sidechain, always `duckorbit`.
 </QA>
 
 <QA q="Can a pattern duck its own orbit?">
-Yes, and it will duck itself — usually not what you want. Keep the ducker on a different orbit
-from its target.
+Yes, and it will duck itself — usually not what you want. Keep the ducker on a different orbit from
+its target.
+</QA>
+
+<QA q="My per-orbit list is being ignored.">
+Check that `duckorbit` itself is a list. `duckdepth("1:0.5")` only means anything next to something
+like `duckorbit("2:3")`; with a single orbit there is nothing for the second value to apply to.
 </QA>
 
 ## Recap
@@ -253,7 +598,7 @@ from its target.
 | --- | --- |
 | `duckorbit(n)` / `duck` | which orbit(s) this pattern ducks |
 | `duckorbit("2:3")` | duck several orbits |
-| `duckdepth(0…1)` | how far down — 1 is a full gate |
+| `duckdepth(0…1)` | how far down — gain becomes `1 − √depth`, floored at 0.01 |
 | `duckonset(s)` | time to go down; ~0.01 avoids clicks |
 | `duckattack(s)` | time to come back — this sets the feel |
 | `"a:b"` on any of them | per-orbit values, in the same order |

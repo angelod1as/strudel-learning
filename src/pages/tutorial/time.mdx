@@ -58,7 +58,12 @@ whenever you are thinking "on step 11".
   goal="Kick on 1 and on the “and” of 3, snare on 2 and 4, eighth-note hats. Any spelling."
   start={``}
   target={`s("bd ~ sd ~ ~ bd sd ~, hh*8")`}
-  check={{ match: { keys: ['s'] } }} />
+  check={{ match: { keys: ['s'] } }}
+  hints={[
+      "The and of 3 is the second half of beat 3, so eight slots gives you every eighth note.",
+      "Write one row of eight slots for the drums, then add the hats as a second layer after a comma.",
+      "In eight slots, slot 1 is beat 1, slot 3 is beat 2, slot 5 is beat 3.",
+    ]} />
 
 ## Make one cycle one bar
 
@@ -127,7 +132,12 @@ it. This chapter uses one cycle = one bar throughout.
 $: s("bd*4")
 $: s("hh*12")
 $: s("cr/2")`}
-  check={{ match: { keys: ['s'] }, cycles: 2, code: "setcpm\\(\\s*(120\\s*/\\s*4|30)\\s*\\)" }} />
+  check={{ match: { keys: ['s'] }, cycles: 2, code: "setcpm\\(\\s*(120\\s*/\\s*4|30)\\s*\\)" }}
+  hints={[
+      "`setcpm(bpm / beatsPerCycle)`, and here one cycle holds four beats.",
+      "Eighth-note triplets means three per beat, across four beats.",
+      "A crash every two cycles is a slow-down, so it needs `/`, not `*`.",
+    ]} />
 
 ## Writing on a grid
 
@@ -345,7 +355,12 @@ $: s("hh").struct(binaryN("<55532 43690>", 16))`}>
   target={`$: s("bd").beat("0,3,8,11", 16)
 $: s("sd").beat("4,12", 16)
 $: s("hh*8")`}
-  check={{ match: { keys: ['s'] } }} />
+  check={{ match: { keys: ['s'] } }}
+  hints={[
+      "`beat(positions, steps)` places hits by step number, counting from 0.",
+      "One `$:` lane per instrument keeps the step numbers readable.",
+      "Hats on every other step of 16 is just eight evenly spaced hits.",
+    ]} />
 
 ## Position vs duration
 
@@ -418,7 +433,11 @@ So `"bd@3 sd"` is a 4-step grid, not a 2-step one. More on length in
   goal="A bass bar: `c2` held through beats 1 and 2, then `eb2` on beat 3 and `g2` on beat 4. Use `@` or `_`."
   start={`note("c2 eb2 g2").s("sawtooth")`}
   target={`note("c2@2 eb2 g2").s("sawtooth")`}
-  check={{ match: { keys: ['note'] }, code: "@|_" }} />
+  check={{ match: { keys: ['note'] }, code: "@|_" }}
+  hints={[
+      "`@n` widens one slot; the slots around it keep their own size.",
+      "Three notes in the bar, but the first is worth two beats.",
+    ]} />
 
 ## Tuplets
 
@@ -462,7 +481,11 @@ To stretch a triplet across **two** beats (quarter-note triplets), give the grou
   goal="`c4 eb4 g4` as quarter-note triplets across beats 1 and 2, then `bb4` on beat 3 and `g4` on beat 4."
   start={`note("c4 eb4 g4 bb4 g4").s("triangle")`}
   target={`note("[c4 eb4 g4]@2 bb4 g4").s("triangle")`}
-  check={{ match: { keys: ['note'] } }} />
+  check={{ match: { keys: ['note'] } }}
+  hints={[
+      "Three notes spread over two beats = a group of three that is two slots wide.",
+      "Build the triplet in brackets first, then widen the whole group.",
+    ]} />
 
 Fill a whole bar with a multiple of 3 and you get the 12/8 feel under a lot of blues and gospel.
 
@@ -566,7 +589,12 @@ $: s("bd ~ ~ bd ~ ~ sd ~ ~ bd ~ ~ ~ ~ sd ~")`}
   target={`setcpm(92/4)
 $: s("hh*16").swingBy(1/3, 8)
 $: s("bd ~ ~ bd ~ ~ sd ~ ~ bd ~ ~ ~ ~ sd ~")`}
-  check={{ match: { keys: ['s'] } }} />
+  check={{ match: { keys: ['s'] } }}
+  hints={[
+      "`swingBy(amount, n)` cuts the cycle into n slices and delays the second half of each one.",
+      "`1/3` is exact triplet swing.",
+      "To swing sixteenths, each slice has to hold two of them, so n is 8, not 16.",
+    ]} />
 
 ## Time signatures
 
@@ -732,7 +760,12 @@ The <L to="/tutorial/tempo">Tempo</L> chapter does the same with **one cycle = o
   goal="One cycle = a 3/4 bar followed by a 4/4 bar, constant quarter-note pulse. `bd` on each downbeat, `hh` on every other beat."
   start={``}
   target={`s("[bd hh hh]@3 [bd hh hh hh]@4")`}
-  check={{ match: { keys: ['s'] } }} />
+  check={{ match: { keys: ['s'] } }}
+  hints={[
+      "A 3/4 bar plus a 4/4 bar is seven quarter notes in one cycle.",
+      "`@n` weights a group, so the cycle can split 3 to 4 instead of in half.",
+      "Write each bar as its own bracketed group, then weight the two groups.",
+    ]} />
 
 ### Changing meter, letting the pulse change
 
@@ -826,7 +859,12 @@ $: note("{c3 eb3 g3 bb3 d4}%8").s("triangle")`}>
   start={``}
   target={`$: s("bd*4")
 $: note("{c2 eb2 g2}%16").s("sawtooth")`}
-  check={{ match: { keys: ['s', 'note'] }, cycles: 3 }} />
+  check={{ match: { keys: ['s', 'note'] }, cycles: 3 }}
+  hints={[
+      "Curly braces with `%n` set steps per cycle, whatever number of notes are inside.",
+      "Sixteen steps per cycle over three notes means the loop takes three cycles to line up again.",
+      "Keep the kick in its own `$:` lane, untouched.",
+    ]} />
 
 ## Groove and micro-timing
 
@@ -940,7 +978,12 @@ count at least as fine as the rhythm, and keep the nudge shorter than one step. 
   start={``}
   target={`$: s("bd*4")
 $: s("~ sd ~ sd").late(.02)`}
-  check={{ match: { keys: ['s'] } }} />
+  check={{ match: { keys: ['s'] } }}
+  hints={[
+      "`late(x)` nudges a pattern later in time, measured in fractions of a cycle.",
+      "A fiftieth of a cycle is `1/50`.",
+      "Only the snare lane moves; the kick stays exactly on the grid.",
+    ]} />
 
 ## Long-form time
 

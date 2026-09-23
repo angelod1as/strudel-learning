@@ -5,26 +5,45 @@ title: Getting Started
 lede: What a Strudel program is, how to run it, and how to stack several patterns at once.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
-import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
 
 Strudel is a live coding language for music. You write a little JavaScript, press a key, and it
 starts making sound. You keep editing while it plays; nothing ever stops unless you tell it to.
 
+Every box on this site is a real editor you type into. `ctrl+enter` runs the code **and** checks the
+current step, so playing it and answering it are the same keystroke. That is the last time this is
+mentioned — from here on, just type.
+
 ## Your first pattern
 
-<Strudel code={`sound("bd hh sd hh")`} label="click in, then ctrl+enter" />
+<Exercise id="getting-started/first-pattern" title="Evaluate, edit, stop"
+  goal="Start a beat, change it while it runs, stop it, bring it back."
+  start={`s("bd hh sd hh")`} target={`s("bd hh cp hh cr")`}>
+  <Step solution={`s("bd hh sd hh")`}>
+    Click into the editor and press `ctrl+enter`. Kick, hat, snare, hat — and the word that is
+    sounding right now lights up as the loop goes past it. (`s` is short for `sound`; both work.)
+  </Step>
+  <Step check={{ includes: 'cp', excludes: 'sd', events: 4 }}
+        hints={['`cp` is a clap, `sd` a snare.']}
+        solution={`s("bd hh cp hh")`}>
+    Leave it playing. Replace `sd` with `cp` and press `ctrl+enter` again. The snare turns into a
+    clap **without the loop stopping**. Nothing restarts, nothing re-triggers: that is the whole
+    point of live coding.
+  </Step>
+  <Step check={{ includes: 'cr', events: 5 }}
+        hints={['A fifth name, separated by a space, before the closing quote.']}
+        solution={`s("bd hh cp hh cr")`}>
+    Press `ctrl+.` — instant silence. Now add `cr` (a crash cymbal) as a fifth sound inside the
+    quotes, and `ctrl+enter` to bring it back. Five sounds, same loop length: everything got a
+    little faster to make room.
+  </Step>
+</Exercise>
 
-<Box kind="try">
-1. Click into the text above.
-2. Press `ctrl+enter` — the pattern starts and the currently playing word lights up.
-3. Change `sd` to `cp` and press `ctrl+enter` again. It swaps **without stopping**.
-4. Press `ctrl+.` to stop.
-</Box>
-
-Those three shortcuts are the whole interface:
+Those three shortcuts are the whole interface.
 
 | Key | Does |
 | --- | --- |
@@ -32,108 +51,244 @@ Those three shortcuts are the whole interface:
 | `ctrl+.` | stop everything |
 | `ctrl+/` | comment / uncomment the current line |
 
-## Reading the syntax
+<Exercise id="getting-started/first-pattern-challenge" title="Challenge: four sounds"
+  goal="One cycle, four sounds, in this order: kick, clap, open hihat, clap."
+  start={`s("bd hh sd hh")`} target={`s("bd cp oh cp")`}
+  hints={['`bd` is the bass drum, `cp` a clap, `oh` an open hihat.',
+          'Four names inside the double quotes, separated by spaces. Nothing outside the quotes changes.',
+          'Only three of the four tokens need editing.']}
+  check={{ match: { keys: ['s'] } }} />
 
-Strudel code is JavaScript, but you only need a sliver of it. Look at this:
+## `//` is the mute button
 
-<Strudel code={`note("c a f e").s("piano")`} />
+`note` and `s` are functions; the `.` chains one onto the result of the last, left to right, like
+guitar pedals in a row. Chains get long, newlines are free, and a `//` switches a line off without
+deleting it.
 
-- `note` and `s` are **functions**. They take an argument in parentheses.
-- The `.` before `s` makes it a **chained** call: do `note`, then apply `s` to the result.
-- The order of chaining is left to right, like guitar pedals in a row.
-
-Chains get long, and that is normal. Newlines are free:
-
-<Strudel
-  code={`note("a3 c#4 e4 a4")
+<Exercise id="getting-started/comments" title="Take the chain apart"
+  goal="Hear each effect in the chain by switching the others off."
+  start={`note("a3 c#4 e4 a4")
+  .s("sawtooth")
+  .lpf(500)
+  .delay(0.5)
+  .room(0.5)`}
+  target={`note("a3 c#4 e4 a4")
+  .s("sawtooth")
+  .lpf(500)
+  .delay(0.5)
+  .room(0.5)`}>
+  <Step check={{ code: '//\\s*\\.delay', fn: "(h) => h.every((e) => e.value.delay === undefined) || 'The delay is still on. The // has to be at the start of the .delay line.'" }}
+        hints={['`ctrl+/` toggles the comment on whichever line the cursor is in.']}
+        solution={`note("a3 c#4 e4 a4")
   .s("sawtooth")
   .lpf(500)
   //.delay(0.5)
-  .room(0.5)`}
-/>
+  .room(0.5)`}>
+    Put `//` in front of `.delay(0.5)`. The echoes vanish and the reverb tail stays — that is what
+    `delay` was doing.
+  </Step>
+  <Step check={{ code: '//\\s*\\.room', fn: "(h) => (h.every((e) => e.value.delay !== undefined) && h.every((e) => e.value.room === undefined)) || 'Exactly one line should be commented: delay back on, room off.'" }}
+        hints={['Move the `//`: one line down, one line up.']}
+        solution={`note("a3 c#4 e4 a4")
+  .s("sawtooth")
+  .lpf(500)
+  .delay(0.5)
+  //.room(0.5)`}>
+    Now the other way round: uncomment `.delay(0.5)` and comment `.room(0.5)` instead. Repeats, but
+    dry — no space around the sound at all.
+  </Step>
+  <Step check={{ excludes: '//', has: { delay: 0.5, room: 0.5 } }}
+        solution={`note("a3 c#4 e4 a4")
+  .s("sawtooth")
+  .lpf(500)
+  .delay(0.5)
+  .room(0.5)`}>
+    Remove both comments. This is how you mix while performing: nothing is ever deleted, it is
+    commented.
+  </Step>
+</Exercise>
 
-<Box kind="try">
-Delete the `//` in front of `.delay(0.5)` and re-evaluate. `//` is a line comment — the fastest
-mute button in live coding. `ctrl+/` toggles it.
-</Box>
+<Exercise id="getting-started/comments-challenge" title="Challenge: filter only"
+  goal="Only the filter audible — no delay, no reverb — without deleting a single character."
+  start={`note("a3 c#4 e4 a4")
+  .s("sawtooth")
+  .lpf(500)
+  .delay(0.5)
+  .room(0.5)`}
+  target={`note("a3 c#4 e4 a4")
+  .s("sawtooth")
+  .lpf(500)
+  //.delay(0.5)
+  //.room(0.5)`}
+  hints={['A commented line still has to be a whole line — that is why the chain was written one call per line.',
+          'Two lines need switching off.']}
+  check={{ includes: ['.delay(0.5)', '.room(0.5)'], fn: "(h) => (h.length === 4 && h.every((e) => e.value.delay === undefined && e.value.room === undefined)) || 'Both delay and reverb must be silent, and both lines must still be in the file.'" }} />
 
 ## Double quotes are special
 
-This is the single most important syntax rule in Strudel:
+This is the single most important syntax rule in Strudel: `"double quotes"` are parsed as
+**mini-notation**, a little pattern language. `'single quotes'` are a plain string. Backticks are
+mini-notation too, and can span lines.
 
-<Box>
-- `"double quotes"` are parsed as **mini-notation** — a pattern.
-- `'single quotes'` are a plain string — **not** a pattern.
-- Backticks `` ` `` are mini-notation too, and can span several lines.
-</Box>
+<Exercise id="getting-started/quotes" title="Break a quote on purpose"
+  goal="Find out what the quotes actually do by using the wrong ones."
+  start={`s("bd sd bd sd")`}
+  target={`n("0 2 4 6").scale("C:major C:minor").s("piano")`}>
+  <Step check={{ excludes: '"', events: 1 }}
+        hints={['Change both of them, opening and closing.']}
+        solution={`s('bd sd bd sd')`}>
+    Change the double quotes to single quotes. Four hits became **one** event, asking for a sound
+    literally called `bd sd bd sd` — which does not exist, so you hear nothing.
+  </Step>
+  <Step check={{ includes: '"', events: 4 }}
+        solution={`s("bd sd bd sd")`}>
+    Put the double quotes back. Four events again. The quote character is doing the parsing, not
+    the function.
+  </Step>
+  <Step check={{ includes: "scale('", match: { keys: ['note', 's'] } }}
+        target={`n("0 2 4 6").scale('C major').s("piano")`}
+        hints={['`n` picks degrees of a scale; `scale` says which scale.',
+                'The scale name is the one thing here that must **not** be a pattern.']}
+        solution={`n("0 2 4 6").scale('C major').s("piano")`}>
+    Sometimes single quotes are the right answer. Replace the whole line with
+    `n("0 2 4 6").scale('C major').s("piano")`. `C major` contains a space, so in double quotes it
+    would parse as two separate scales named `C` and `major`.
+  </Step>
+  <Step check={{ includes: 'C:major', match: { keys: ['note', 's'] } }}
+        hints={['A colon joins the two words into one token, so the space no longer splits them.']}
+        solution={`n("0 2 4 6").scale("C:major C:minor").s("piano")`}>
+    Now make it a pattern on purpose: `scale("C:major C:minor")`. The first half of the cycle is
+    major, the second half minor. Same function, completely different musical result.
+  </Step>
+</Exercise>
 
-So `"bd sd"` is a two-event sequence, while `'bd sd'` is just some text. This is why a scale name
-with a space has to be single-quoted or colon-joined:
-
-<Strudel code={`n("0 2 4 6").scale('C major').s("piano")`} label="single quotes: one scale name" />
-
-<Strudel code={`n("0 2 4 6").scale("C:major C:minor").s("piano")`} label="double quotes: a pattern of two scales" />
-
-The second version alternates scales across the cycle, because double quotes turned it into a
-pattern. Same function, completely different musical result.
+<Exercise id="getting-started/quotes-challenge" title="Challenge: a scale per bar"
+  goal="The same four degrees, but the whole of bar one is `C:minor` and the whole of bar two is `C:major`."
+  start={`n("0 2 4 6").scale('C major').s("piano")`}
+  target={`n("0 2 4 6").scale("<C:minor C:major>").s("piano")`}
+  hints={['You need double quotes: this is a pattern of scales, not one scale name.',
+          'In mini-notation, `< >` means "one of these per cycle" instead of "all of these per cycle".',
+          'Two tokens, colon-joined, inside angle brackets.']}
+  check={{ match: { keys: ['note', 's'] }, cycles: 2 }} />
 
 ## Playing several patterns at once
 
-Prefix each pattern with `$:` and they all run in parallel:
+Prefix a line with `$:` and it becomes its own parallel track. An underscore in front of the prefix
+mutes that track.
 
-<Strudel
-  code={`$: s("bd*4").bank("RolandTR909")
-
-$: s("~ cp").bank("RolandTR909")
-
-$: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600)`}
-  label="three voices"
-/>
-
-<Box kind="try">
-Change one `$` to `_$` and re-evaluate. That mutes just that line — the underscore is your
-per-track mute. Change it back to unmute.
-</Box>
-
-You can also name them, which makes a long patch readable and gives you labelled mutes:
-
-<Strudel
-  code={`drums: s("bd*4, ~ cp").bank("RolandTR909")
-
-bass: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600).decay(.2).sustain(0)
-
-hats: s("hh*8").gain("[.3 .8]*4")`}
-  label="named tracks"
-/>
+<Exercise id="getting-started/lanes" title="Build a patch out of lanes"
+  goal="Three voices running in parallel, and two ways to drop one out."
+  start={`$: s("bd*4")`}
+  target={`drums: s("bd*4")
+claps: s("~ cp ~ cp").hush()
+bass: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600)`}>
+  <Step check={{ includes: 'cp', events: 6 }}
+        hints={['A second line, starting with its own `$:`. `~` is a rest.']}
+        solution={`$: s("bd*4")
+$: s("~ cp ~ cp")`}>
+    Add a second line below: `$: s("~ cp ~ cp")`. Both lines now run at once, each looping on its
+    own.
+  </Step>
+  <Step check={{ includes: 'sawtooth', events: 7 }}
+        solution={`$: s("bd*4")
+$: s("~ cp ~ cp")
+$: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600)`}>
+    Add a bass: `$: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600)`. One note per bar, four bars,
+    then it comes round again.
+  </Step>
+  <Step check={{ includes: '_$:', events: 6 }}
+        hints={['One character, in front of the `$` on the bass line.']}
+        solution={`$: s("bd*4")
+$: s("~ cp ~ cp")
+_$: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600)`}>
+    Change the bass line's `$` to `_$`. The bass drops out and the code stays exactly where it is.
+    That underscore is your per-track mute.
+  </Step>
+  <Step check={{ excludes: '$:', match: { keys: ['s', 'note'] } }}
+        target={`drums: s("bd*4")
+claps: s("~ cp ~ cp")
+bass: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600)`}
+        hints={['Any `name:` at the start of a line behaves exactly like `$:`.',
+                'Three names, and the bass comes back on at the same time.']}
+        solution={`drums: s("bd*4")
+claps: s("~ cp ~ cp")
+bass: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600)`}>
+    Give the lanes names. Replace the three prefixes with `drums:`, `claps:` and `bass:` — the
+    underscore goes too, so the bass returns. A patch of eight lanes is unreadable otherwise.
+  </Step>
+  <Step check={{ includes: '.hush()', events: 5 }}
+        hints={['It chains onto the end of the line, like any other function.']}
+        solution={`drums: s("bd*4")
+claps: s("~ cp ~ cp").hush()
+bass: note("<c2 eb2 g1 bb1>").s("sawtooth").lpf(600)`}>
+    Add `.hush()` to the end of the `claps` line. It silences the pattern it is chained to — the
+    other way to kill a voice while keeping its code.
+  </Step>
+</Exercise>
 
 <Box>
-Any `name:` at the start of a line works the same way as `$:`. Prefix it with `_` (`_drums:`) to
-mute it.
+`_claps:` and `.hush()` do the same job from opposite ends: the underscore belongs to the lane, and
+`hush` belongs to the pattern. While performing you want the underscore, because it is one
+character and it never moves.
 </Box>
 
-## Stopping one voice from inside the code
-
-`hush()` silences the pattern it is chained to. Useful when you want to kill a voice but keep the
-code around:
-
-<Strudel
-  code={`$: s("bd*4").bank("RolandTR909")
-$: s("hh*8").gain(.6).hush()`}
-/>
+<Exercise id="getting-started/lanes-challenge" title="Challenge: one lane armed but silent"
+  goal="Three named lanes — `kick` on `bd*4`, `snare` on `~ sd ~ sd`, and `hats` on `hh*8` but muted, ready to drop in."
+  start=""
+  target={`kick: s("bd*4")
+snare: s("~ sd ~ sd")
+_hats: s("hh*8")`}
+  hints={['Every lane is its own line, and the name goes before the colon.',
+          'Muting is a prefix on the lane name, not a change to the pattern.',
+          'The hats line should be typed in full, exactly as it would sound, and then switched off.']}
+  check={{ includes: ['kick:', 'snare:', '_hats:'], match: { keys: ['s'] } }} />
 
 ## What a "cycle" is
 
-Everything in Strudel is measured in **cycles**, not bars. A cycle is one loop of the pattern, and
-by default it lasts 2 seconds. Whatever you put in a sequence gets squeezed into one cycle:
+Everything in Strudel is measured in **cycles**, not bars. A cycle is one loop of the pattern, two
+seconds long by default, and whatever you write gets squeezed into it.
 
-<Strudel code={`sound("bd hh sd hh")`} label="4 events in one cycle" />
-
-<Strudel code={`sound("bd hh sd hh bd hh sd hh")`} label="8 events in the same cycle — twice as fast" />
+<Exercise id="getting-started/cycle" title="The loop never gets longer"
+  goal="Add and remove sounds and hear the loop length refuse to change."
+  start={`s("bd hh sd hh")`}
+  target={`$: s("bd hh sd")
+$: s("cp cp cp cp")`}>
+  <Step check={{ events: 8 }}
+        hints={['Type the same four names again, after the existing four, inside the same quotes.']}
+        solution={`s("bd hh sd hh bd hh sd hh")`}>
+    Write the four sounds a second time, so the string reads `bd hh sd hh bd hh sd hh`. Twice as
+    many hits, exactly the same loop length: the pattern is now playing twice as fast.
+  </Step>
+  <Step check={{ events: 3 }}
+        solution={`s("bd hh sd")`}>
+    Cut it down to three: `bd hh sd`. Each sound gets a third of the cycle. Fewer notes means
+    slower, not shorter.
+  </Step>
+  <Step check={{ includes: '$:', events: 7 }}
+        hints={['Two lanes, one of three sounds and one of four.',
+                'They are different lengths on paper but the same length in time — that is the point.']}
+        solution={`$: s("bd hh sd")
+$: s("cp cp cp cp")`}>
+    Put `$: ` in front of it and add a second lane, `$: s("cp cp cp cp")`. Three against four, both
+    stretched over the same cycle. Only the downbeat lines up.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
 This trips up everyone coming from a DAW. Adding notes does **not** make the pattern longer, it
-makes each note shorter. <L to="/tutorial/tempo">Tempo &amp; Cycles</L> is all about bending this to your will.
+makes each note shorter. <L to="/tutorial/tempo">Tempo &amp; Cycles</L> is all about bending this to
+your will, and <L to="/tutorial/mini-notation">Mini-Notation</L> is the whole language for dividing
+a cycle up.
 </Box>
+
+<Exercise id="getting-started/cycle-challenge" title="Challenge: five against two"
+  goal="Two lanes in one cycle: five hihats spread evenly, and two kicks."
+  start=""
+  target={`$: s("hh hh hh hh hh")
+$: s("bd bd")`}
+  hints={['Neither lane has an equivalent in bars — they only share the cycle.',
+          'Five tokens on one line, two on the other, each line its own `$:`.']}
+  check={{ match: { keys: ['s'] } }} />
 
 <QA q="Why did my pattern get quieter / not play at all the first time?">
 Samples are lazy-loaded: the audio file is only fetched when you first trigger it. The first hit of

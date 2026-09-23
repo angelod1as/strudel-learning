@@ -5,24 +5,21 @@ title: Delay & Reverb
 lede: The two send effects — and the first place where you need to know what an orbit is.
 ---
 
-import Strudel from '../../components/Strudel.astro';
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
 import Box from '../../components/Box.astro';
-import L from '../../components/L.astro';
 import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
 
 Nearly every effect in Strudel is **local**: a fresh chain of nodes is built for each event, used,
 and thrown away. Delay and reverb are different. They are **global**: one delay unit and one reverb
 unit exist per *orbit*, and every event in that orbit is sent into the same one.
 
 That is what makes them sound like a room instead of a hundred separate rooms — and it is also the
-source of the most common confusing bug in Strudel, which the <L to="/tutorial/orbits">next chapter</L>
-is about.
+source of the most common confusing bug in Strudel. The last exercise in this chapter is that bug;
+<L to="/tutorial/orbits">Orbits</L> is the chapter that follows it up.
 
 ## Delay
-
-<Strudel code={`s("bd bd").delay("<0 .25 .5 1>")`} label="delay level: how much goes into the delay" />
-
-Three parameters:
 
 | Control | Aliases | Meaning |
 | --- | --- | --- |
@@ -30,53 +27,131 @@ Three parameters:
 | `delaytime` | `delayt`, `dt` | time between repeats, in **seconds** |
 | `delayfeedback` | `delayfb`, `dfb` | how much of the output goes back in, 0…1 |
 
-<Strudel
-  code={`$: note("[~ [<[d3,a3,f4]!2 [d3,bb3,g4]!2> ~]]*2")
-  .s("gm_electric_guitar_muted").delay(.5)
-
-$: s("bd rim").bank("RolandTR707").delay(.5)`}
-  label="a dub guitar"
-/>
-
-All three can go in one string, separated by colons — `delay("level:time:feedback")`:
-
-<Strudel code={`s("bd bd").delay("0.65:0.25:0.9 0.65:0.125:0.7")`} />
-
-<Box kind="try">
-Start from `s("bd rim").delay(.5)` and work up:
-- `.delay(".8:.125")` — tighter repeats
-- `.delay(".8:.06:.8")` — a slapback that lingers
-- `delayfeedback(1)` — runaway. Keep a finger on `ctrl+.`
-</Box>
+<Exercise id="space/delay" title="Three knobs, then one string"
+  goal="Build a slapback by hand, then write the same thing in one colon-separated string."
+  start={`s("bd rim").bank("RolandTR707")`}
+  target={`s("bd rim").bank("RolandTR707").delay("0.8:0.06:0.8")`}>
+  <Step check={{ includes: '.delay(', has: { delay: [0.3, 0.8] } }}
+        hints={['`delay` is a send level, like an aux send in Live — 0 is dry, 1 is everything.']}
+        solution={`s("bd rim").bank("RolandTR707").delay(.5)`}>
+    Add `.delay(.5)`. Half the signal is now going into the delay unit, and you hear repeats
+    trailing off behind each hit.
+  </Step>
+  <Step check={{ includes: '.delaytime(', has: { delaytime: [0.1, 0.15] } }}
+        hints={['The argument is a number of **seconds**, not a fraction of a bar.']}
+        solution={`s("bd rim").bank("RolandTR707").delay(.5).delaytime(.125)`}>
+    Pin down how far apart the repeats are: add `.delaytime(.125)` — an eighth of a second between
+    each one.
+  </Step>
+  <Step check={{ includes: '.delayfeedback(', has: { delayfeedback: [0.6, 0.95] } }}
+        hints={['How much of the delay output is fed back into its own input, 0 to 1.']}
+        solution={`s("bd rim").bank("RolandTR707").delay(.5).delaytime(.125).delayfeedback(.8)`}>
+    Add `.delayfeedback(.8)`. Each repeat is now 80% of the one before, so the tail goes on much
+    longer.
+  </Step>
+  <Step check={{ excludes: ['.delaytime(', '.delayfeedback('], has: { delay: [0.3, 0.8], delaytime: [0.1, 0.15], delayfeedback: [0.6, 0.95] } }}
+        hints={['`delay("level:time:feedback")` — three numbers, two colons, one string.']}
+        solution={`s("bd rim").bank("RolandTR707").delay("0.5:0.125:0.8")`}>
+    All three fit in one string. Replace the whole chain with `.delay("0.5:0.125:0.8")`. Identical
+    sound, one call.
+  </Step>
+  <Step check={{ has: { delay: [0.7, 0.9], delaytime: [0.04, 0.08], delayfeedback: [0.6, 0.95] } }}
+        hints={['Only the middle number changes — and it gets much smaller.']}
+        solution={`s("bd rim").bank("RolandTR707").delay("0.8:0.06:0.8")`}>
+    Shrink the time to `0.06` and push the level to `0.8`: `.delay("0.8:0.06:0.8")`. Short enough
+    that you stop hearing repeats and start hearing a slapback smear on the drum itself.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
 `delayfeedback` at or above 1 means the delay gets louder forever. It will not stop when the
-pattern does.
+pattern does. Keep a finger on `ctrl+.`
 </Box>
 
-Since `delaytime` is in seconds, it does not follow the tempo. To lock it to the grid, compute it:
-at `setcps(0.5)` a cycle is 2 seconds, so an eighth of a cycle is `2/8`.
+### delaytime is in seconds
 
-<Strudel
-  code={`setcps(0.5)
+Which means it does **not** follow the tempo. If you want repeats on the grid, you have to work
+out the number yourself.
+
+<Exercise id="space/delay-grid" title="Lock the delay to the cycle"
+  goal="Compute a delay time from the cycle length, and watch it break when the tempo moves."
+  start={`setcps(0.5)
 note("c3 eb3 g3 bb3").s("sawtooth").decay(.1).sustain(0)
-  .delay(.6).delaytime(2/8).delayfeedback(.7)`}
-  label="delay locked to the cycle"
-/>
+  .delay(.6).delayfeedback(.7)`}
+  target={`setcps(0.75)
+note("c3 eb3 g3 bb3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.6).delayfeedback(.7).delaytime((1/0.75)/8)`}>
+  <Step check={{ includes: '.delaytime(', has: { delaytime: [0.24, 0.26] } }}
+        hints={['`setcps(0.5)` means half a cycle per second, so one cycle takes 2 seconds.', 'An eighth of 2 seconds.']}
+        solution={`setcps(0.5)
+note("c3 eb3 g3 bb3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.6).delayfeedback(.7).delaytime(2/8)`}>
+    At `setcps(0.5)` a cycle takes 2 seconds, so an eighth note is `2/8` of a second. Add
+    `.delaytime(2/8)`. The repeats now land exactly between the notes.
+  </Step>
+  <Step check={{ code: "setcps\\(\\s*0?\\.75\\s*\\)", has: { delaytime: [0.24, 0.26] } }}
+        hints={['Only the first line changes.']}
+        solution={`setcps(0.75)
+note("c3 eb3 g3 bb3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.6).delayfeedback(.7).delaytime(2/8)`}>
+    Change the tempo to `setcps(0.75)` and listen. The notes sped up, the repeats did not: they are
+    off the grid now, because `delaytime` is a number of seconds and knows nothing about the clock.
+  </Step>
+  <Step check={{ has: { delaytime: [0.16, 0.17] } }}
+        hints={['A cycle now takes `1/0.75` seconds.', 'Divide that by 8 for an eighth note. Let the editor do the arithmetic.']}
+        solution={`setcps(0.75)
+note("c3 eb3 g3 bb3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.6).delayfeedback(.7).delaytime((1/0.75)/8)`}>
+    Recompute it instead of typing a constant: one cycle is `1/0.75` seconds, so an eighth is
+    `(1/0.75)/8`. Replace `2/8` with that. Back on the grid.
+  </Step>
+</Exercise>
 
-`delayspeed` modulates the delay line's playback rate, giving tape-style pitch artefacts:
+### delayspeed
 
-<Strudel
-  code={`note("d d a# a".fast(2))
-  .s("sawtooth")
-  .delay(.8)
-  .delaytime(1/2)
-  .delayspeed("<2 .5 -1 -2>")`}
-/>
+`delayspeed` changes the playback rate of the delay line itself, which is the tape-machine trick:
+pitched, smeared, or backwards repeats.
+
+<Exercise id="space/delayspeed" title="Tape artefacts"
+  goal="Pitch the repeats up, run them backwards, then pattern the two."
+  start={`note("d3 d3 a3 g3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.8).delaytime(1/2).delayfeedback(.8)`}
+  target={`note("d3 d3 a3 g3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.8).delaytime(1/2).delayfeedback(.8).delayspeed("<2 .5 -1 -2>")`}>
+  <Step check={{ includes: '.delayspeed(', has: { delayspeed: [1.5, 3] } }}
+        hints={['2 is double rate, which is an octave up.']}
+        solution={`note("d3 d3 a3 g3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.8).delaytime(1/2).delayfeedback(.8).delayspeed(2)`}>
+    Add `.delayspeed(2)`. Each repeat comes back an octave higher and shorter than the last — the
+    tail climbs away from you.
+  </Step>
+  <Step check={{ has: { delayspeed: [-3, -0.5] } }}
+        hints={['A negative rate plays the delay line backwards.']}
+        solution={`note("d3 d3 a3 g3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.8).delaytime(1/2).delayfeedback(.8).delayspeed(-1)`}>
+    Change it to `-1`. Same rate, opposite direction: the repeats are reversed.
+  </Step>
+  <Step check={{ includes: 'delayspeed("<', cycles: 4, fn: "(h) => { const v = [...new Set(h.map(e => e.value.delayspeed))]; return v.length === 4 || 'Expected four different delay speeds, one per bar.' }" }}
+        hints={['`< >` gives one value per cycle.']}
+        solution={`note("d3 d3 a3 g3").s("sawtooth").decay(.1).sustain(0)
+  .delay(.8).delaytime(1/2).delayfeedback(.8).delayspeed("<2 .5 -1 -2>")`}>
+    Like nearly everything, it takes a pattern. Change it to `"<2 .5 -1 -2>"`: four bars, four
+    different tape speeds.
+  </Step>
+</Exercise>
+
+<Exercise id="space/delay-challenge" title="Challenge: one string, three numbers"
+  goal="A rim shot twice a bar, with repeats at level .65, an eighth of a second apart, feeding back at .9 — written as a single `delay` call."
+  start={`s("rim*2").bank("RolandTR707")`}
+  target={`s("rim*2").bank("RolandTR707").delay("0.65:0.125:0.9")`}
+  check={{ excludes: ['.delaytime(', '.delayfeedback('], has: { delay: [0.6, 0.7], delaytime: [0.12, 0.13], delayfeedback: [0.85, 0.95] } }}
+  hints={[
+    'Level, then time, then feedback.',
+    'An eighth of a second is 0.125 — the number is in seconds, not in bars.',
+    'The whole thing goes inside the quotes, separated by colons.',
+  ]} />
 
 ## Reverb
-
-<Strudel code={`s("bd sd [~ bd] sd").room("<0 .2 .4 .6 .8 1>")`} label="room: send level into the reverb" />
 
 | Control | Aliases | Meaning |
 | --- | --- | --- |
@@ -85,90 +160,179 @@ note("c3 eb3 g3 bb3").s("sawtooth").decay(.1).sustain(0)
 | `roomfade` | `rfade` | decay time |
 | `roomlp` | `rlp` | lowpass cutoff the tail *starts* at, in Hz |
 | `roomdim` | `rdim` | lowpass cutoff the tail glides *to*, by the time it is 60 dB down |
-| `iresponse` | `ir` | use an impulse response sample instead |
+| `iresponse` | `ir` | use an impulse response sample instead of the built-in reverb |
 
-<Strudel code={`s("bd sd [~ bd] sd").room(.8).rsize("<1 4 8>")`} label="from a booth to a cathedral" />
+<Exercise id="space/room" title="From a booth to a cathedral"
+  goal="Set a reverb send, then grow the room, then write level and size as one string."
+  start={`s("bd sd [~ bd] sd").bank("RolandTR909")`}
+  target={`s("bd sd [~ bd] sd").bank("RolandTR909").room("0.6:8")`}>
+  <Step check={{ includes: '.room(', has: { room: [0.4, 0.8] } }}
+        hints={['Like `delay`, this is a send level and not a wet/dry knob.']}
+        solution={`s("bd sd [~ bd] sd").bank("RolandTR909").room(.6)`}>
+    Add `.room(.6)`. The kit is suddenly standing in a space instead of against a wall.
+  </Step>
+  <Step check={{ has: { roomsize: [0.5, 2] } }}
+        hints={['`rsize` is the short name for `roomsize`.']}
+        solution={`s("bd sd [~ bd] sd").bank("RolandTR909").room(.6).rsize(1)`}>
+    Add `.rsize(1)`. A small room: the tail is short and it sits close behind the drums.
+  </Step>
+  <Step check={{ has: { roomsize: [6, 10] } }}
+        hints={['The range goes up to 10.']}
+        solution={`s("bd sd [~ bd] sd").bank("RolandTR909").room(.6).rsize(8)`}>
+    Change it to `.rsize(8)`. Same send level, but now the drums are in a cathedral and the snare
+    rings into the next bar.
+  </Step>
+  <Step check={{ excludes: '.rsize(', fn: "(h) => h.length === 4 && h.every(e => e.value.room >= 0.4 && e.value.room <= 0.8 && (e.value.size === 8 || e.value.roomsize === 8)) || 'Expected all four hits with a send level around .6 and a size of 8, written as one string.'" }}
+        hints={['`room("level:size")` — two numbers, one colon.']}
+        solution={`s("bd sd [~ bd] sd").bank("RolandTR909").room("0.6:8")`}>
+    Level and size also fit in one string. Replace both calls with `.room("0.6:8")`.
+  </Step>
+</Exercise>
 
-<Strudel
-  code={`$: s("bd sd [~ bd] sd").room(0.5).rlp(10000)
-$: s("hh*8").gain(.5)`}
-  label="rlp high: bright tail"
-/>
+### The tone of the tail
 
-<Strudel
-  code={`$: s("bd sd [~ bd] sd").room(0.5).rlp(3000).rdim(400)
-$: s("hh*8").gain(.5)`}
-  label="rlp low + rdim low: dark, distant tail"
-/>
+A reverb tail is not just long or short. `roomlp` sets the cutoff it **starts** at, `roomdim` the
+cutoff it has glided down to once the tail is 60 dB down, and `roomfade` how long that takes.
 
-Level and size also fit in one string:
-
-<Strudel code={`s("bd sd [~ bd] sd").room("<0.9:1 0.9:4>")`} />
+<Exercise id="space/room-tone" title="Shape the tail"
+  goal="Take a bright tail, darken it, make it fall away into the dark, then hold it longer."
+  start={`s("~ sd ~ sd").bank("RolandTR909").room(.7).rsize(6)`}
+  target={`s("~ sd ~ sd").bank("RolandTR909").room(.7).rsize(6).rlp(3000).rdim(400).rfade(4)`}>
+  <Step check={{ includes: '.rlp(', has: { roomlp: [8000, 20000] } }}
+        hints={['`rlp` is the short name for `roomlp`, and it is a cutoff in Hz.']}
+        solution={`s("~ sd ~ sd").bank("RolandTR909").room(.7).rsize(6).rlp(10000)`}>
+    Add `.rlp(10000)`. Almost nothing is filtered out, so the tail is as bright as the snare —
+    splashy, and it fights the hats you are not even playing yet.
+  </Step>
+  <Step check={{ has: { roomlp: [1500, 4000] } }}
+        hints={['Drop it by more than you think. 3000 Hz is roughly "a room with soft furniture".']}
+        solution={`s("~ sd ~ sd").bank("RolandTR909").room(.7).rsize(6).rlp(3000)`}>
+    Change it to `.rlp(3000)`. The tail loses its top end from the first moment, which is what a
+    real room does to a snare.
+  </Step>
+  <Step check={{ includes: '.rdim(', has: { roomdim: [200, 700] } }}
+        hints={['This is the cutoff the tail arrives at, not the one it starts from.']}
+        solution={`s("~ sd ~ sd").bank("RolandTR909").room(.7).rsize(6).rlp(3000).rdim(400)`}>
+    Add `.rdim(400)`. Now the tail doesn't just start dark, it gets darker as it fades — the sound
+    moves away from you instead of just getting quieter.
+  </Step>
+  <Step check={{ includes: '.rfade(', has: { roomfade: [2, 8] } }}
+        hints={['`rfade` is the short name for `roomfade`.']}
+        solution={`s("~ sd ~ sd").bank("RolandTR909").room(.7).rsize(6).rlp(3000).rdim(400).rfade(4)`}>
+    Add `.rfade(4)` to stretch the decay out. The glide from 3000 down to 400 now takes long enough
+    that you can follow it.
+  </Step>
+</Exercise>
 
 <Box kind="warn">
 `roomsize`, `roomlp`, `roomdim` and `roomfade` **rebuild the reverb** when they change. Patterning
-them fast is expensive and will glitch. Pattern `room` (the send level) freely; change the shape of
-the room sparingly.
+them fast is expensive and will glitch. Pattern `room` — the send level — freely; change the shape
+of the room sparingly, once every few bars at most.
 </Box>
 
-## Using them musically
+<Exercise id="space/room-challenge" title="Challenge: a big dark room"
+  goal="A backbeat snare with a send level of .8, a size of 6, a tail starting at 2000 Hz and gliding to 300 Hz."
+  start={`s("~ sd ~ sd").bank("RolandTR909")`}
+  target={`s("~ sd ~ sd").bank("RolandTR909").room(.8).rsize(6).rlp(2000).rdim(300)`}
+  check={{ has: { room: [0.75, 0.85], roomsize: [5.5, 6.5], roomlp: [1800, 2200], roomdim: [250, 350] } }}
+  hints={[
+    'Four controls, chained one after the other.',
+    'Two of them are cutoffs in Hz: the one the tail starts at, and the one it ends at.',
+    '`rsize`, `rlp` and `rdim` are the short names.',
+  ]} />
 
-Reverb and delay are how you place sounds at different distances. A useful default:
+## Placing things at different distances
 
-<Strudel
-  code={`$: s("bd*4").bank("RolandTR909")                      // dry, up front
-$: s("~ cp").bank("RolandTR909").room(.2).rsize(1)     // just behind
-$: n("<4 [3@3 4] [<2 0> ~@16] ~>").scale("D4:minor")
-   .s("gm_accordion:2").room(2).gain(.4)               // far away
-$: note("[~ [<[d3,a3,f4]!2 [d3,bb3,g4]!2> ~]]*2")
-   .s("gm_electric_guitar_muted").delay(.5)`}
-  label="a little dub tune"
-/>
+This is what the two sends are actually for: dry means close, wet means far.
+
+<Exercise id="space/distance" title="Build a stage"
+  goal="Put three parts at three distances, and add a delayed guitar behind all of them."
+  start={`$: s("bd*4").bank("RolandTR909")
+$: s("~ cp").bank("RolandTR909")
+$: n("<4 [3@3 4] [<2 0> ~@16] ~>").scale("D4:minor").s("gm_accordion:2").gain(.4)`}
+  target={`$: s("bd*4").bank("RolandTR909")
+$: s("~ cp").bank("RolandTR909").room(.2).rsize(1)
+$: n("<4 [3@3 4] [<2 0> ~@16] ~>").scale("D4:minor").s("gm_accordion:2").gain(.4).room(2)
+$: note("[~ [<[d3,a3,f4]!2 [d3,bb3,g4]!2> ~]]*2").s("gm_electric_guitar_muted").delay(.5)`}>
+  <Step check={{ fn: "(h) => { const cp = h.filter(e => e.value.s === 'cp'); const bd = h.filter(e => e.value.s === 'bd'); return (cp.length > 0 && cp.every(e => e.value.room >= 0.1 && e.value.room <= 0.4 && e.value.roomsize <= 2) && bd.every(e => e.value.room === undefined)) || 'Expected a small amount of room on the clap only — the kick stays completely dry.' }" }}
+        hints={['A small send and a small room put something just behind the front of the stage.']}
+        solution={`$: s("bd*4").bank("RolandTR909")
+$: s("~ cp").bank("RolandTR909").room(.2).rsize(1)
+$: n("<4 [3@3 4] [<2 0> ~@16] ~>").scale("D4:minor").s("gm_accordion:2").gain(.4)`}>
+    The kick stays dry, right at the front. Put the clap one step back: add `.room(.2).rsize(1)` to
+    the clap lane only.
+  </Step>
+  <Step check={{ fn: "(h) => { const ac = h.filter(e => e.value.s === 'gm_accordion'); return (ac.length > 0 && ac.every(e => e.value.room >= 1)) || 'Expected the accordion on a big send — 1 or more — and nothing else changed.' }" }}
+        hints={['`room` is a send level, so it is not capped at 1 — push it past 1 to drown something.']}
+        solution={`$: s("bd*4").bank("RolandTR909")
+$: s("~ cp").bank("RolandTR909").room(.2).rsize(1)
+$: n("<4 [3@3 4] [<2 0> ~@16] ~>").scale("D4:minor").s("gm_accordion:2").gain(.4).room(2)`}>
+    Now push the accordion right to the back: add `.room(2)` to its lane. It is quieter *and*
+    further away, which is a different thing from just lower gain.
+  </Step>
+  <Step check={{ fn: "(h) => { const g = h.filter(e => e.value.s === 'gm_electric_guitar_muted'); return (g.length > 0 && g.every(e => e.value.delay >= 0.3 && e.value.room === undefined)) || 'Expected a guitar lane with a delay send and no room.' }" }}
+        hints={['A fourth `$:` lane.', 'Delay puts something in a space the way reverb does, but with a rhythm attached.']}
+        solution={`$: s("bd*4").bank("RolandTR909")
+$: s("~ cp").bank("RolandTR909").room(.2).rsize(1)
+$: n("<4 [3@3 4] [<2 0> ~@16] ~>").scale("D4:minor").s("gm_accordion:2").gain(.4).room(2)
+$: note("[~ [<[d3,a3,f4]!2 [d3,bb3,g4]!2> ~]]*2").s("gm_electric_guitar_muted").delay(.5)`}>
+    Add a fourth lane, an offbeat guitar chord with no reverb at all but a `.delay(.5)`:
+    `$: note("[~ [<[d3,a3,f4]!2 [d3,bb3,g4]!2> ~]]*2").s("gm_electric_guitar_muted").delay(.5)`.
+  </Step>
+</Exercise>
 
 <Box kind="try">
-Add `.hush()` to the end of any one of those lines and re-evaluate to hear how much each layer was
-contributing. Then remove the `room` from the accordion — the whole thing collapses to the front of
-the stage.
+Add `.hush()` to the end of any one of those lines and re-evaluate, to hear how much that layer was
+contributing. Then remove the accordion's `room` — the whole thing collapses to the front of the
+stage.
 </Box>
 
 ## The catch
 
-Watch what happens when two patterns with different reverb settings play at once:
+One reverb per orbit, remember. So what happens when two patterns on the same orbit ask for
+different rooms?
 
-<Strudel
-  code={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor')
-  .room(1).roomsize(10)
-
-$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
-  label="the muted kick destroys the pluck's reverb"
-/>
-
-The second pattern is silent (`postgain(0)`) and yet it changed the first one's sound. Both are on
-the default orbit `1`, so they share one reverb — and the last setting wins.
-
-The fix is one word:
-
-<Strudel
-  code={`$: s("triangle*4").decay(0.5).n(irand(12)).scale('C:minor')
-  .room(1).roomsize(10).orbit(2)
-
-$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}
-  label="separate orbits, separate reverbs"
-/>
+<Exercise id="space/orbit" title="The kick that wrecks the reverb"
+  goal="Watch a silent pattern destroy another pattern's reverb, then fix it with one word."
+  start={`$: s("triangle*4").decay(.5).n(irand(12)).scale("C:minor").room(1).roomsize(10)`}
+  target={`$: s("triangle*4").decay(.5).n(irand(12)).scale("C:minor").room(1).roomsize(10).orbit(2)
+$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}>
+  <Step solution={`$: s("triangle*4").decay(.5).n(irand(12)).scale("C:minor").room(1).roomsize(10)`}>
+    Play it as it stands and listen to the size of that room: `room(1)` into `roomsize(10)` is
+    about as big as it gets. Keep it running.
+  </Step>
+  <Step check={{ includes: '.postgain(0)', fn: "(h) => { const bd = h.filter(e => e.value.s === 'bd'); return (bd.length === 4 && bd.every(e => e.value.postgain === 0 && e.value.roomsize <= 0.1)) || 'Expected four silent kicks with a tiny roomsize.' }" }}
+        hints={['A second `$:` lane. `postgain(0)` multiplies its output by zero, so you will not hear it at all.']}
+        solution={`$: s("triangle*4").decay(.5).n(irand(12)).scale("C:minor").room(1).roomsize(10)
+$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}>
+    Add a second lane: `$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`. It is completely
+    silent — and the cathedral is gone. A pattern you cannot hear just changed the sound of one you
+    can.
+  </Step>
+  <Step check={{ includes: '.orbit(', fn: "(h) => { const orb = (e) => e.value.orbit ?? 1; const tr = h.filter(e => e.value.s === 'triangle'); const bd = h.filter(e => e.value.s === 'bd'); return (tr.length > 0 && bd.length > 0 && new Set(tr.map(orb)).size === 1 && new Set(bd.map(orb)).size === 1 && orb(tr[0]) !== orb(bd[0])) || 'The two lanes are still sharing an orbit, so they still share one reverb.' }" }}
+        hints={['Both lanes are on the default orbit, `1`, so they share one reverb and the last setting wins.', 'Move the plucks to an orbit of their own.']}
+        solution={`$: s("triangle*4").decay(.5).n(irand(12)).scale("C:minor").room(1).roomsize(10).orbit(2)
+$: s("bd*4").room(0.01).roomsize(0.01).postgain(0)`}>
+    Both lanes are on the default orbit `1`, so there is one reverb between them and the last
+    setting wins. Add `.orbit(2)` to the pluck lane. Two orbits, two reverbs, cathedral restored.
+  </Step>
+</Exercise>
 
 <QA q="So should I just put every pattern on its own orbit?">
-No — and the next chapter explains why. Orbits are not free, and sharing one is often exactly what
-you want (it is how several instruments end up sounding like they are in the same room). You want
-a *deliberate* handful of them.
+No — and <L to="/tutorial/orbits">Orbits</L> explains why. Orbits are not free, and sharing one is
+often exactly what you want: it is how several instruments end up sounding like they are in the
+same room. You want a *deliberate* handful of them.
 </QA>
 
 ## Recap
 
 | Control | Purpose |
 | --- | --- |
-| `delay` `delaytime` `delayfeedback` | the delay send |
+| `delay` `delaytime` `delayfeedback` | the delay send — and `delaytime` is in seconds |
 | `delay("lvl:time:fb")` | all three at once |
 | `delayspeed` | tape-style pitch on the repeats |
 | `room` `roomsize` | the reverb send |
+| `room("lvl:size")` | both at once |
 | `roomlp` `roomdim` `roomfade` | tone and decay of the tail |
-| `iresponse` | convolution with your own impulse |
+| `iresponse` | convolution with your own impulse response |
+| `orbit(n)` | which shared delay and reverb this pattern is sent to |

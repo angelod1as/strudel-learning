@@ -45,7 +45,12 @@ length never changes. Spaces separate events, and `~` or `-` is a rest.
 <Exercise id="mini/sequence-challenge" title="Challenge: eight slots"
   goal="Eight equal slots: kick on 1 and 4, snare on 5, clap on 8, rests everywhere else."
   start="" target={`s("bd - - bd sd - - cp")`}
-  check={{ match: { keys: ['s'] } }} />
+  check={{ match: { keys: ['s'] } }}
+  hints={[
+      "`bd` is the bass drum, `sd` the snare, `cp` a clap.",
+      "Eight equal slots means eight tokens separated by spaces. `-` is a rest, and it takes up a slot like anything else.",
+      "Count tokens as you type: slot 1 is the first one, so the clap is the eighth and last.",
+    ]} />
 
 ## `[ ]` — subdivide
 
@@ -81,7 +86,12 @@ rhythm is a tree of divisions. (The grid way of thinking has its own chapter:
 <Exercise id="mini/subdivide-challenge" title="Challenge: a beat from a description"
   goal="Four beats. 1: kick. 2: snare. 3: two kicks. 4: a snare, then a rim on the last sixteenth."
   start="" target={`s("bd sd [bd bd] [sd - - rim]")`}
-  check={{ match: { keys: ['s'] } }} />
+  check={{ match: { keys: ['s'] } }}
+  hints={[
+      "Four beats means four top-level tokens. Anything happening inside one beat goes in brackets.",
+      "`[bd bd]` splits a single beat into two halves.",
+      "Beat 4 needs four equal slots with only two of them sounding: one bracket holding four tokens.",
+    ]} />
 
 ## `*` — speed up, `/` — slow down
 
@@ -120,7 +130,12 @@ takes decimals: `[hh rim]*1.5`.
 <Exercise id="mini/speed-challenge" title="Challenge: trap hat roll"
   goal="One bar of hats only: two on beat 1, two on beat 2, a triplet on beat 3, eight on beat 4."
   start="" target={`s("hh*2 hh*2 hh*3 hh*8")`}
-  check={{ match: { keys: ['s'] } }} />
+  check={{ match: { keys: ['s'] } }}
+  hints={[
+      "`*n` repeats a sound n times inside its own slot, so the rest of the bar is unaffected.",
+      "Four beats, four tokens, each with its own multiplier.",
+      "The last beat is a roll: one token with a big multiplier.",
+    ]} />
 
 ## `< >` — one per cycle
 
@@ -190,7 +205,12 @@ cycle.
   goal="A C minor triad (`c3`, `eb3`, `g3`) as one chord on beats 1 and 3, silence on 2 and 4. Commas work inside brackets too."
   start={`note("c3").s("piano")`}
   target={`note("[c3,eb3,g3] - [c3,eb3,g3] -").s("piano")`}
-  check={{ match: { keys: ['note'] } }} />
+  check={{ match: { keys: ['note'] } }}
+  hints={[
+      "A comma stacks things so they sound at the same time. Inside brackets, that is a chord.",
+      "Four slots across the bar: chord, rest, chord, rest.",
+      "Put the three note names separated by commas inside one `[ ]`, then repeat that group on beat 3.",
+    ]} />
 
 ## `@` `_` `!` — longer, and again
 
@@ -231,7 +251,12 @@ mini-notation fluency.
   goal="A shuffle on `c2`: two notes per beat, the first twice as long as the second, on all four beats."
   start={`note("c2*4").s("gm_acoustic_bass")`}
   target={`note("[c2@2 c2]*4").s("gm_acoustic_bass")`}
-  check={{ match: { keys: ['note'] } }} />
+  check={{ match: { keys: ['note'] } }}
+  hints={[
+      "`@n` makes an element n slots long inside its group; `*n` would subdivide instead.",
+      "Two notes per beat where the first is twice as long = a group of two, weighted 2 and 1.",
+      "Build one beat inside brackets, then apply `*4` to the whole group.",
+    ]} />
 
 That long-short split is swing written by hand. <L to="/tutorial/time">Writing in Time</L> covers
 swing, tuplets and groove properly.
@@ -270,7 +295,12 @@ else and adds a stray event. And put `|` inside brackets when a pattern also has
   goal="Twice per cycle, play one of three chords at random: `[g3,b3,e4]`, `[a3,c4,e4]` or `[b3,d4,f#4]`."
   start={`note("[g3,b3,e4]*2").s("piano")`}
   target={`note("[[g3,b3,e4] | [a3,c4,e4] | [b3,d4,f#4]]*2").s("piano")`}
-  check={{ includes: '|', cycles: 4, events: 24 }} />
+  check={{ includes: '|', cycles: 4, events: 24 }}
+  hints={[
+      "`|` chooses one of the alternatives, freshly each cycle.",
+      "Wrap all three chords in one outer bracket so `|` has something to choose between.",
+      "Then make the whole choice happen twice per cycle with `*2`.",
+    ]} />
 
 ## `( )` — euclidean rhythms
 
@@ -311,7 +341,12 @@ and it usually sounds like real music.
 <Exercise id="mini/euclid-challenge" title="Challenge: compress it"
   goal="Keep the exact rhythm, but write the kick as one euclid. Count the kicks and the steps."
   start={`s("bd - bd bd - bd bd -, hh*8")`} target={`s("bd(5,8), hh*8")`}
-  check={{ includes: 'bd(', match: { keys: ['s'] } }} />
+  check={{ includes: 'bd(', match: { keys: ['s'] } }}
+  hints={[
+      "`x(pulses,steps)` spreads pulses as evenly as it can over steps.",
+      "Count the kicks in the written-out version, then count the slots they are spread over.",
+      "The hat layer does not change: only the kick becomes a euclid.",
+    ]} />
 
 ## `{ }%` — polymeter
 
@@ -347,7 +382,12 @@ so layers of different lengths drift against each other. `%n` sets how many step
   goal="Five notes, `c3 eb3 g3 bb3 d4`, played four per cycle, so the phrase starts on a different beat each bar."
   start={`note("c3 eb3 g3 bb3 d4").s("piano")`}
   target={`note("{c3 eb3 g3 bb3 d4}%4").s("piano")`}
-  check={{ match: { keys: ['note'] }, cycles: 5 }} />
+  check={{ match: { keys: ['note'] }, cycles: 5 }}
+  hints={[
+      "Curly braces play their contents at a step rate, and `%n` says how many steps fit in a cycle.",
+      "Five notes at four steps per cycle means the phrase needs five cycles to come back around.",
+      "Wrap the five notes in `{ }` and put the step rate straight after the closing brace.",
+    ]} />
 
 ## `:` and `..` — numbers in the string
 
@@ -429,7 +469,12 @@ instrument, joined by commas.
 [-  - - -] [sd - -  -] [- - -  -] [sd - - -],
 [hh - hh -] [hh - hh -] [hh - hh -] [hh - hh -]
 \`)`}
-  check={{ match: { keys: ['s'] } }} />
+  check={{ match: { keys: ['s'] } }}
+  hints={[
+      "Backticks let a pattern span several lines, and a comma at the end of a row stacks it with the next.",
+      "Sixteen steps read best as four groups of four: `[- - - -] [- - - -] ...`",
+      "One row per instrument. Counting in groups of four makes steps 7 and 11 easy to find.",
+    ]} />
 
 Grids go much further (`struct`, `mask`, one cycle per bar, odd meters): see
 <L to="/tutorial/time">Writing in Time</L>.
