@@ -84,6 +84,48 @@ narrowing in this order:
 
 Never paste the solution into a hint.
 
+## Non-negotiables, from real learner reports
+
+Every rule below exists because a learner hit the failure and reported it. The QA harness proves
+checks are *well formed*; none of this is machine-checkable on its own.
+
+1. **A step changes the editor; it never retypes it.** "Replace it all with `<long chain>`" is
+   transcription, not teaching. The learner must be able to see what moved and hear what that did.
+   If a step's solution shares little with the previous one, it is not a step — it is a new
+   exercise. `node tools/audit-pedagogy.mjs` flags these.
+2. **Never make them type something you have not taught.** Not a function, not a syntax. `off()`
+   belongs to Pattern Functions; using it in Notes means Notes has to teach it first, or not use
+   it. Same for packed-colon arguments like `adsr("a:d:s:r")` — a hint does not count as teaching,
+   because hints are opt-in. The audit flags functions; syntax is on you.
+3. **Verify every claim about what something sounds like.** The chapter said adding `.decay(.1)`
+   changes nothing, on the strength of Strudel's own doc line "decay is only audible if sustain is
+   lower than 1". The default sustain is not 1, so the note became a pluck and the text was simply
+   wrong. If you write "listen: X happens", measure X first — hook the gain automation or count
+   voices, do not reason from the pattern. See the measuring recipes below.
+4. **A silent failure is worse than an error.** `"<Dm7>".dict('lefthand').voicing()` yields zero
+   events and logs nothing the learner will see, because `dict()` wraps the value and the chord
+   symbol is lost — it needs `chord("<Dm7>")` first. Where a chain has a trap like this, teach the
+   trap; do not step around it and leave them to find it.
+5. **Teach the rule, not the incantation.** If two exercises use different spellings of the same
+   idea, say which is which and when each applies. A learner who generalises from your example and
+   gets zero events was failed by the chapter, not by themselves.
+
+### Measuring what a change actually does
+
+In the browser console, with a pattern playing:
+
+```js
+// what pitches actually sound (a chord should show several distinct rates)
+window.__v = [];
+const P = AudioBufferSourceNode.prototype, o = P.start;
+P.start = function (...a) { window.__v.push(this.playbackRate?.value); return o.apply(this, a); };
+
+// the amplitude envelope actually scheduled
+window.__e = [];
+const A = AudioParam.prototype, r = A.linearRampToValueAtTime;
+A.linearRampToValueAtTime = function (v, t) { window.__e.push([+v, +t]); return r.call(this, v, t); };
+```
+
 ## Checks
 
 `src/exercise/types.ts` is the full reference (`includes`, `excludes`, `code`, `match`, `events`,
