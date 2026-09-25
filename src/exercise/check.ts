@@ -65,6 +65,28 @@ export function eventsOf(pattern: PatternLike | null, cycles: number): Ev[] {
     .map(({ e }) => e);
 }
 
+/**
+ * Controls that must carry a primitive. A nested object here means a value was
+ * wrapped twice — e.g. `.voicing().note()`, where `voicing()` already emits
+ * `{note}`, giving `{note: {note: "C3"}}`. That still evaluates and still
+ * matches an equally-wrapped target, so checks cannot see it, but the engine
+ * can no longer read the pitch and every note plays at the sample's base pitch.
+ * Arrays are fine: `duckorbit("2:3")` legitimately gives `[2, 3]`.
+ */
+const PRIMITIVE_CONTROLS = ['note', 'n', 'freq', 's', 'sound'];
+
+export function malformedValues(pattern: PatternLike | null, cycles = 2): string | null {
+  for (const e of eventsOf(pattern, cycles)) {
+    for (const key of PRIMITIVE_CONTROLS) {
+      const v = e.value[key];
+      if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+        return `\`${key}\` is an object (${JSON.stringify(v)}), not a value — something in the chain wrapped it twice`;
+      }
+    }
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------- time, musically
 
 /** Best small fraction for x in [0, 1): "1/3", "5/12". */

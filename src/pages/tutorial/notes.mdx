@@ -391,15 +391,15 @@ The same chord symbols can feed a bassline at the same time.
 
 <Exercise id="notes/rootnotes" title="A comp and a bass from one source"
   goal="Give a chord progression a rhythm, then split it into two instruments that agree by construction."
-  start={`"<C^7 A7b13 Dm7 G7>*2".voicing().note().s("gm_electric_piano_1").room(.4)`}
+  start={`"<C^7 A7b13 Dm7 G7>*2".voicing().s("gm_electric_piano_1").room(.4)`}
   target={`"<C^7 A7b13 Dm7 G7>*2".layer(
-  x => x.voicing().struct("[~ x]*2").note().s("gm_electric_piano_1").room(.4),
+  x => x.voicing().struct("[~ x]*2").s("gm_electric_piano_1").room(.4),
   x => x.rootNotes(2).note().s("sawtooth").lpf(800).decay(.2).sustain(0)
 )`}>
   <Step check={{ includes: 'struct(', fn: "(h) => { const x = [...new Set(h.map(e => +(e.t * 4).toFixed(3)))].join(' '); return x === '1 3' || 'Chords should land on the second half of each half-cycle, i.e. quarters 1 and 3, got ' + x + '.' }" }}
         hints={['`struct` replaces the rhythm with a grid: `x` is a hit, `~` a rest.',
                 'Two slots, the second one sounding, twice a cycle.']}
-        solution={`"<C^7 A7b13 Dm7 G7>*2".voicing().struct("[~ x]*2").note().s("gm_electric_piano_1").room(.4)`}>
+        solution={`"<C^7 A7b13 Dm7 G7>*2".voicing().struct("[~ x]*2").s("gm_electric_piano_1").room(.4)`}>
     Add `.struct("[~ x]*2")` after `.voicing()`. The chords stop being held and start being
     played: two offbeat stabs per cycle.
   </Step>
@@ -407,9 +407,9 @@ The same chord symbols can feed a bassline at the same time.
         hints={['`layer` takes functions of the source pattern; each one becomes a lane.',
                 'The whole chain after the string moves inside an arrow function.']}
         solution={`"<C^7 A7b13 Dm7 G7>*2".layer(
-  x => x.voicing().struct("[~ x]*2").note().s("gm_electric_piano_1").room(.4)
+  x => x.voicing().struct("[~ x]*2").s("gm_electric_piano_1").room(.4)
 )`}>
-    Wrap the chain in `layer`: `"<C^7 A7b13 Dm7 G7>*2".layer(x => x.voicing().struct("[~ x]*2").note().s("gm_electric_piano_1").room(.4))`.
+    Wrap the chain in `layer`: `"<C^7 A7b13 Dm7 G7>*2".layer(x => x.voicing().struct("[~ x]*2").s("gm_electric_piano_1").room(.4))`.
     It sounds identical — but now the chord symbols are a source that more than one voice can read.
   </Step>
   <Step check={{ includes: 'rootNotes(', match: { keys: ['note', 's'] } }}
@@ -417,7 +417,7 @@ The same chord symbols can feed a bassline at the same time.
                 '`rootNotes(octave)` turns a chord symbol into its root note — the bass player’s job.',
                 'It needs its own `.note()` and its own sound.']}
         solution={`"<C^7 A7b13 Dm7 G7>*2".layer(
-  x => x.voicing().struct("[~ x]*2").note().s("gm_electric_piano_1").room(.4),
+  x => x.voicing().struct("[~ x]*2").s("gm_electric_piano_1").room(.4),
   x => x.rootNotes(2).note().s("sawtooth").lpf(800).decay(.2).sustain(0)
 )`}>
     Add a second lane: `x => x.rootNotes(2).note().s("sawtooth").lpf(800).decay(.2).sustain(0)`.

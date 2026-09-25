@@ -1,7 +1,7 @@
 // Client runtime for <Exercise>/<Step>. The contract is src/exercise/types.ts;
 // the check engine is src/exercise/check.ts (shared with the QA harness).
 import type { Check } from '../exercise/types';
-import { passed, runCheck, type PatternLike, type Result } from '../exercise/check';
+import { passed, runCheck, type PatternLike, type Result, malformedValues } from '../exercise/check';
 
 // ---------------------------------------------------------------- strudel glue
 
@@ -653,13 +653,18 @@ if (import.meta.env.DEV) {
 
         const start = await evalCode(ui.start);
         if (start.error !== undefined) add('start', `start fails to evaluate: ${start.error}`);
+        else {
+          const bad = malformedValues(start.pattern);
+          if (bad) add('start', bad);
+        }
 
         const targets = new Map<string, string>();
         if (ui.targetCode) targets.set(ui.targetCode, 'target');
         ui.steps.forEach((s, i) => s.target && !targets.has(s.target) && targets.set(s.target, `step ${i + 1} target`));
         for (const [code, where] of targets) {
           try {
-            await ui.targetPattern(code);
+            const bad = malformedValues(await ui.targetPattern(code));
+            if (bad) add(where, bad);
           } catch (e) {
             add(where, `${where} fails to evaluate: ${errText(e)}`);
           }
@@ -695,6 +700,10 @@ if (import.meta.env.DEV) {
           const sol = await evalCode(s.solution);
           if (!s.solution.trim()) add(where, 'empty data-solution');
           if (sol.error !== undefined) add(where, `solution fails to evaluate: ${sol.error}`);
+          else {
+            const bad = malformedValues(sol.pattern);
+            if (bad) add(where, bad);
+          }
           if (s.check && sol.error === undefined) {
             const res = await ui.results(s.check, s.solution, sol.pattern, s);
             entry.passOnSolution = passed(res);

@@ -102,6 +102,12 @@ Never paste the solution into a hint.
    you; a raw `fn` sees the canonical names.
 5. **Rhythm comes from the left:** `note("c e g").s("sawtooth")` has three events;
    `s("sawtooth").note("c e g")` has one.
+6. **Don't wrap a value twice.** `voicing()` already emits note events, so
+   `.voicing().note()` gives `{note: {note: "C3"}}` — it still evaluates, and it still *matches* an
+   equally broken target, so a check cannot see it, but the engine can't read the pitch and every
+   note plays at the sample's base pitch. Write `.voicing().s(...)`. The opposite holds for
+   `rootNotes()`, which emits a plain value and does need `.note()`. `__exerciseQA()` now fails on
+   any `note`/`n`/`freq`/`s` that arrives as an object.
 6. Randomness (`?`, `|`, `degradeBy`, `rand`) can't be matched exactly — use `includes` plus an
    `events` range.
 7. Tempo (`setcpm`) doesn't change event positions within a cycle. Check it with `includes`/`code`.
