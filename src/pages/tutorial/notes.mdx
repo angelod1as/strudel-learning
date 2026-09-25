@@ -314,9 +314,9 @@ Two more precise tools come from the tonal package.
 Write the symbol and let Strudel choose the notes.
 
 <Exercise id="notes/voicing" title="Chord symbols to actual notes"
-  goal="Replace sixteen hand-written notes with four chord symbols, then steer how they are voiced."
+  goal="Replace sixteen hand-written notes with four chord symbols, then change the shapes they are built from."
   start={`note("<[c3,e3,g3,b3] [a2,c3,e3,g3] [d3,f3,a3,c4] [g2,b2,d3,f3]>").s("piano")`}
-  target={`chord("<C^7 Am7 Dm7 G7>").dict('lefthand').mode("root:g2").voicing().s("piano")`}>
+  target={`chord("<C^7 Am7 Dm7 G7>").dict('lefthand').voicing().s("piano")`}>
   <Step check={{ includes: 'voicing(', cycles: 4, events: [8, 20] }}
         hints={['`chord()` takes the symbols; `voicing()` turns them into notes.',
                 'Four symbols, one per cycle, so they go in `< >`.',
@@ -331,25 +331,19 @@ Write the symbol and let Strudel choose the notes.
                 'The default dictionary is `ireal`; the others are `lefthand`, `triads` and `guidetones`.']}
         solution={`chord("<C^7 Am7 Dm7 G7>").dict('lefthand').voicing().s("piano")`}>
     Swap the voicing dictionary: add `.dict('lefthand')` before `.voicing()`. Same chords, a jazz
-    pianist's left hand instead of the default `ireal` shapes. A dictionary only knows the
-    qualities it was written for, so `lefthand` wants sevenths, not bare triads.
-  </Step>
-  <Step check={{ includes: 'anchor(', cycles: 4, match: { keys: ['note', 's'] } }}
-        target={`chord("<C^7 Am7 Dm7 G7>").dict('lefthand').anchor("c5").mode("below").voicing().s("piano")`}
-        hints={['Two controls: one names the reference note, the other says which side of it to sit on.',
-                'They both go before `voicing()`.']}
-        solution={`chord("<C^7 Am7 Dm7 G7>").dict('lefthand').anchor("c5").mode("below").voicing().s("piano")`}>
-    Pin it to a register: add `.anchor("c5").mode("below")`. The anchor is the reference note and
-    `below` means the **top** note lands at or under it. `mode("above")` does the mirror image.
-  </Step>
-  <Step check={{ includes: 'root:g2', excludes: 'anchor(', cycles: 4, match: { keys: ['note', 's'] } }}
-        hints={['`mode` can carry its own reference note after a colon, so the anchor is not needed.',
-                'Delete `.anchor("c5")` and change what `mode` is given.']}
-        solution={`chord("<C^7 Am7 Dm7 G7>").dict('lefthand').mode("root:g2").voicing().s("piano")`}>
-    Replace `.anchor("c5").mode("below")` with `.mode("root:g2")`: the bottom note is now the
-    chord's own root, placed above g2. The voicing has a bass in it.
+    pianist's left hand instead of the default `ireal` shapes — rootless, so the bass is somebody
+    else's job. A dictionary only knows the qualities it was written for, so `lefthand` wants
+    sevenths, not bare triads.
   </Step>
 </Exercise>
+
+<Box>
+Anything a voicing control does — which register it sits in, which inversion you get, writing your
+own dictionary — belongs to <L to="/tutorial/harmony">Harmony &amp; Voicings</L>. One rule is worth
+carrying with you now: `voicing()` accepts a bare string of symbols, but the moment you add
+`dict`, `mode`, `anchor` or `offset`, the symbols must go through `chord(...)` first. Without it
+those controls throw the symbol away and you get silence, not an error.
+</Box>
 
 | Control | Effect |
 | --- | --- |
@@ -376,8 +370,10 @@ Write the symbol and let Strudel choose the notes.
         target={`n("0 1 2 3").chord("<C Am F G>").mode("above:c3").voicing().s("gm_electric_guitar_clean")`}
         hints={['`mode` can take its reference note after a colon, so no separate anchor is needed.']}
         solution={`n("0 1 2 3").chord("<C Am F G>").mode("above:c3").voicing().s("gm_electric_guitar_clean")`}>
-    Add `.mode("above:c3")` before `.voicing()`, so every arpeggio starts at or above c3 instead of
-    wandering between registers.
+    Add `.mode("above:c3")` before `.voicing()`. Without it the four arpeggios start all over the
+    place — E3, A3, F3, G3; with it they line up around c3 instead. Treat the note after the colon
+    as the register you are aiming at, not a floor: the G here still begins a semitone under it.
+    <L to="/tutorial/harmony">Harmony &amp; Voicings</L> works through what each mode really does.
   </Step>
   <Step check={{ includes: '.clip(', has: { clip: 2 } }}
         hints={['One chained control at the very end, with a number bigger than 1.']}
@@ -437,52 +433,14 @@ $: "<Dm7 G7 C^7>".rootNotes(2).note().s("gm_acoustic_bass")`}
 
 ## Arpeggios
 
+Picking a chord apart one note at a time — by hand, by scale degree, with `arp`, or out of delays —
+is its own chapter: <L to="/tutorial/arpeggios">Arpeggios &amp; Melody</L>.
+
 Four ways to do the same thing, each suggesting different music.
 
-<Exercise id="notes/arp" title="Four ways up a chord"
-  goal="Write one arpeggio by hand, by degree, out of a stack, and out of delays."
-  start={`note("c eb g c4").s("gm_electric_guitar_clean")`}
-  target={`"0".off(1/3, add(2)).off(1/2, add(4))
-  .n().scale("C:minor").s("gm_electric_guitar_clean")`}>
-  <Step check={{ includes: '.clip(', has: { clip: 2 } }}
-        hints={['One control at the end, letting each note outlast its slot.']}
-        solution={`note("c eb g c4").clip(2).s("gm_electric_guitar_clean")`}>
-    **By hand.** Add `.clip(2)` so the notes overlap into a chord rather than four separate stabs.
-  </Step>
-  <Step check={{ includes: 'scale(', match: { keys: ['note', 's'] } }}
-        target={`n("0 2 4 7").scale("C:minor").clip(2).s("gm_electric_guitar_clean")`}
-        hints={['Root, third, fifth, octave are degrees 0, 2, 4 and 7 of a seven-note scale.']}
-        solution={`n("0 2 4 7").scale("C:minor").clip(2).s("gm_electric_guitar_clean")`}>
-    **By scale degree.** Replace the notes with `n("0 2 4 7").scale("C:minor")`. Same arpeggio, and
-    now the shape survives a change of key.
-  </Step>
-  <Step check={{ includes: '.arp(', cycles: 4, events: 24 }}
-        hints={['The chords are stacks in `< >`, and `arp` reads indices out of whatever is stacked.',
-                'An index can itself be a stack, so `[0,2]` plays two of them at once.']}
-        solution={`note("<[c,eb,g]!2 [c,f,ab] [d,f,ab]>").arp("0 [0,2] 1 [0,2]").s("piano")`}>
-    **Out of a stack.** Replace it all with
-    `note("<[c,eb,g]!2 [c,f,ab] [d,f,ab]>").arp("0 [0,2] 1 [0,2]").s("piano")`. `arp` takes a
-    chord that is already stacked and picks it apart by index.
-  </Step>
-  <Step check={{ includes: '.off(', match: { keys: ['note', 's'] } }}
-        hints={['`off(time, fn)` copies the pattern, moves the copy later, and applies the function to it.',
-                'Two copies, a third and a half of a cycle late, each transposed further up the scale.']}
-        solution={`"0".off(1/3, add(2)).off(1/2, add(4))
-  .n().scale("C:minor").s("gm_electric_guitar_clean")`}>
-    **Out of delays.** Replace it with
-    `"0".off(1/3, add(2)).off(1/2, add(4)).n().scale("C:minor").s("gm_electric_guitar_clean")`.
-    One note, echoed twice at different offsets and different degrees: an arpeggio made of delays.
-  </Step>
-</Exercise>
 
-<Exercise id="notes/arp-challenge" title="Challenge: bottom, top, middle, top"
-  goal="Two minor seventh chords, Cm7 then Fm7, one per cycle, arpeggiated on piano as index 0, 3, 1, 3 of the voicing."
-  start={`chord("<Cm7 Fm7>").voicing().s("piano")`}
-  target={`chord("<Cm7 Fm7>").voicing().arp("0 3 1 3").s("piano")`}
-  check={{ match: { keys: ['note', 's'] }, cycles: 2 }}
-  hints={['The voicing already gives you a stack, so you need the tool that picks stacks apart.',
-          'The index pattern is ordinary mini-notation: four slots in a cycle.',
-          'Index 0 is the bottom note of the voicing.']} />
+
+
 
 <QA q="When should I use note, n+scale, or chord+voicing?">
 `note` when you know exactly which pitches you want. `n`+`scale` when you want to improvise shapes

@@ -1,0 +1,612 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: harmony
+title: Harmony & Voicings
+lede: Chord symbols in, piano voicings out, and every decision in between. Which notes, which inversion, which register, which rhythm.
+---
+
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
+
+<L to="/tutorial/notes">Notes, Scales &amp; Chords</L> got a chord symbol to make a sound. This
+chapter is for a keyboard player: what is actually in each voicing, why `voicing()` chose that
+inversion, how to steer the register and the top note, and how to turn held chords into comping.
+
+## Chord symbols
+
+`chord()` takes a pattern of symbols: a capital root with an optional `b` or `#`, then a quality.
+`voicing()` looks the quality up in a dictionary, and a quality it does not know is **silence**.
+
+<Exercise id="harmony/symbols" title="Spell it the way the dictionary does"
+  goal="Break a chord by spelling it the lead-sheet way, fix it, then colour the other three."
+  start={`chord("<C^7 A7 Dm7 G7>").voicing().s("piano")`}
+  target={`chord("<CM7 A7b9 Dm9 G7alt>").voicing().s("piano")`}>
+  <Step check={{ includes: 'Cmaj7', events: 15, cycles: 4 }}
+        hints={['Only the first symbol changes.']}
+        solution={`chord("<Cmaj7 A7 Dm7 G7>").voicing().s("piano")`}>
+    Play it once, then change `C^7` to `Cmaj7`. The first bar goes silent, and nothing in the
+    editor tells you why: `maj7` is not in the dictionary, so that chord produces no notes.
+  </Step>
+  <Step check={{ excludes: 'maj7', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`chord("<CM7 A7 Dm7 G7>").voicing().s("piano")`}
+        hints={['`^7` and `M7` both mean major seventh.']}
+        solution={`chord("<CM7 A7 Dm7 G7>").voicing().s("piano")`}>
+    Change `Cmaj7` to `CM7`. The bar is back, with exactly the notes `C^7` gave: `M7` and `^7`
+    are the same entry.
+  </Step>
+  <Step check={{ includes: 'A7b9', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`chord("<CM7 A7b9 Dm7 G7>").voicing().s("piano")`}
+        hints={['Alterations go straight after the `7`, no brackets.']}
+        solution={`chord("<CM7 A7b9 Dm7 G7>").voicing().s("piano")`}>
+    Change `A7` to `A7b9`. The voicing now has a B flat in it, and the A7 pulls much harder
+    towards the Dm7.
+  </Step>
+  <Step check={{ includes: 'Dm9', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`chord("<CM7 A7b9 Dm9 G7>").voicing().s("piano")`}
+        hints={['Ninths are written like sevenths, with a 9.']}
+        solution={`chord("<CM7 A7b9 Dm9 G7>").voicing().s("piano")`}>
+    Change `Dm7` to `Dm9`. Listen for the E4 sitting right next to the F4: a semitone cluster in
+    the middle of the chord.
+  </Step>
+  <Step check={{ includes: 'G7alt', match: { keys: ['note', 's'] }, cycles: 4 }}
+        hints={['The altered dominant is one word after the `7`.']}
+        solution={`chord("<CM7 A7b9 Dm9 G7alt>").voicing().s("piano")`}>
+    Change `G7` to `G7alt`. This voicing has B and F (the tritone), plus D flat and B flat: the
+    flat five and the sharp nine. It resolves back to the CM7 at the top of the loop.
+  </Step>
+</Exercise>
+
+What the default dictionary (`ireal`) knows, checked one symbol at a time:
+
+| Kind | Symbols that work (on C) |
+| --- | --- |
+| triads | `C` `CM` `C^` · `Cm` `C-` · `Co` · `Caug` · `Csus` · `C5` |
+| sixths, added notes | `C6` `Cm6` `C69` `Cm69` `Cadd9` `C2` |
+| sevenths | `C^7` = `CM7` · `C7` · `Cm7` = `C-7` · `Ch7` = `Cm7b5` · `Co7` · `Cm^7` · `C7sus` |
+| extensions | `C9` `C^9` `Cm9` `C11` `Cm11` `C13` `C9sus` |
+| altered dominants | `C7b9` `C7#9` `C7#11` `C7b13` `C7b5` `C7#5` `C7alt` `C13b9` `C9#11` `C7b9sus` |
+| roots | any of `C D E F G A B`, with `b` or `#`: `Bb7`, `F#m7`, `Ebm7`, `Db^7` |
+
+<Box kind="warn">
+These are **silent**, not errors: `Cmaj7`, `Cmin7`, `Cdim`, `Cdim7`, `CmM7`, and a lowercase root
+like `c7`. These are **errors**, because mini-notation reserves the character: `C+` and slash
+chords like `C/E` (`/` means "slow down"). There is no slash-chord syntax; put the bass note in its
+own lane, as in the section on bass below.
+</Box>
+
+<Exercise id="harmony/symbols-challenge" title="Challenge: fix the lead sheet"
+  goal="A minor ii–V–i in A: B half-diminished, E7 flat nine, A minor sixth, one per cycle on piano. Two of the three bars are silent because of how they are spelled."
+  start={`chord("<Bmin7b5 E7b9 Amin6>").voicing().s("piano")`}
+  target={`chord("<Bm7b5 E7b9 Am6>").voicing().s("piano")`}
+  check={{ match: { keys: ['note', 's'] }, cycles: 3 }}
+  hints={['`min` is not a word the dictionary knows. Minor is `m` or `-`.',
+          'Half-diminished has two spellings in the table, and both work.',
+          'Only the letters after the B and the A change. The E7b9 already plays.']} />
+
+## chord() or a bare string
+
+The notes chapter wrote both `"<C^7 Am7>".voicing()` and `chord("<C^7 Am7>").voicing()`. They are
+not the same thing, and the difference only shows once you add a control.
+
+<Exercise id="harmony/bare-string" title="The lane that went silent"
+  goal="Reproduce the silent-voicing trap, fix it, and then fix the bass lane the same way."
+  start={`$: "<Dm7 G7 C^7>".voicing().s("piano")
+$: "<Dm7 G7 C^7>".rootNotes(2).note().s("gm_acoustic_bass")`}
+  target={`$: chord("<Dm7 G7 C^7>").dict('lefthand').voicing().s("piano")
+$: chord("<Dm7 G7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}>
+  <Step check={{ includes: 'lefthand', events: 3, cycles: 3 }}
+        hints={['It goes on the first line only, between the string and `.voicing()`.']}
+        solution={`$: "<Dm7 G7 C^7>".dict('lefthand').voicing().s("piano")
+$: "<Dm7 G7 C^7>".rootNotes(2).note().s("gm_acoustic_bass")`}>
+    In the first lane, add `.dict('lefthand')` before `.voicing()`. The piano disappears and the
+    bass carries on. No error: the piano lane simply has zero notes in it now.
+  </Step>
+  <Step check={{ includes: 'chord(', match: { keys: ['note', 's'] }, cycles: 3 }}
+        target={`$: chord("<Dm7 G7 C^7>").dict('lefthand').voicing().s("piano")
+$: "<Dm7 G7 C^7>".rootNotes(2).note().s("gm_acoustic_bass")`}
+        hints={['The string moves inside `chord(...)`; nothing else on the line changes.']}
+        solution={`$: chord("<Dm7 G7 C^7>").dict('lefthand').voicing().s("piano")
+$: "<Dm7 G7 C^7>".rootNotes(2).note().s("gm_acoustic_bass")`}>
+    Wrap the first lane's string in `chord(...)`: `chord("<Dm7 G7 C^7>").dict('lefthand')`. The
+    piano is back, now playing four-note left-hand voicings.
+  </Step>
+  <Step check={{ code: 'chord\\([^)]*\\)\\s*\\.rootNotes', excludes: '.note()', match: { keys: ['note', 's'] }, cycles: 3 }}
+        hints={['Two edits on the second line: the string goes inside `chord(...)`, and `.note()` goes away.',
+                '`rootNotes` hands back the same kind of thing it was given.']}
+        solution={`$: chord("<Dm7 G7 C^7>").dict('lefthand').voicing().s("piano")
+$: chord("<Dm7 G7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}>
+    Do the same to the bass lane, and delete its `.note()`:
+    `chord("<Dm7 G7 C^7>").rootNotes(2).s("gm_acoustic_bass")`. It sounds the same. From a bare
+    string, `rootNotes` returns a bare note name that still needs `.note()`; from `chord()`, it
+    already returns a note, and a second `.note()` would wrap it twice and lose the pitch.
+  </Step>
+</Exercise>
+
+<Box>
+**The rule.** A bare string that reaches `voicing()` untouched is read as the chord. Chain
+anything onto it first (`dict`, `anchor`, `mode`, `offset`, even `s`) and the event becomes a set
+of controls: the string is dropped, and `voicing()` receives no chord at all. `chord()` makes the
+symbol a control like the others, so it survives. **As soon as there is one control before
+`voicing()`, start with `chord()`.** And `rootNotes` after `chord()` needs no `.note()`.
+</Box>
+
+<Exercise id="harmony/bare-string-challenge" title="Challenge: make the comp speak"
+  goal="The epiano lane is silent. Make it play Am7, D7 and G^7 with the top note at or under g4, without touching the bass lane."
+  start={`$: "<Am7 D7 G^7>".anchor("g4").voicing().s("gm_epiano1")
+$: "<Am7 D7 G^7>".rootNotes(2).note().s("gm_acoustic_bass")`}
+  target={`$: chord("<Am7 D7 G^7>").anchor("g4").voicing().s("gm_epiano1")
+$: "<Am7 D7 G^7>".rootNotes(2).note().s("gm_acoustic_bass")`}
+  check={{ match: { keys: ['note', 's'] }, cycles: 3 }}
+  hints={['The first lane chains a control onto a bare string.',
+          'The chord symbol has to travel as a control, the same way the anchor does.',
+          'Only the start of the first line changes.']} />
+
+## Why that inversion
+
+`voicing()` does not remember the previous chord. For each chord it tries every shape the
+dictionary has and keeps the one whose **top note** lands closest to a reference note, the
+**anchor**, without going over it. The default anchor is `c5`. Every chord hugs the same ceiling,
+so the top voice barely moves: the smooth voice leading comes from that, not from looking back.
+
+<Exercise id="harmony/anchor" title="Move the ceiling"
+  goal="Make the default anchor explicit, lower it, then anchor the bottom of the chord instead of the top."
+  start={`chord("<Dm7 G7 C^7 A7>").dict('lefthand').voicing().s("piano")`}
+  target={`chord("<Dm7 G7 C^7 A7>").dict('lefthand').anchor("f4").mode("above").voicing().s("piano")`}>
+  <Step check={{ includes: 'anchor(', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`chord("<Dm7 G7 C^7 A7>").dict('lefthand').voicing().s("piano")`}
+        hints={['It is a control, so it goes before `.voicing()`.']}
+        solution={`chord("<Dm7 G7 C^7 A7>").dict('lefthand').anchor("c5").voicing().s("piano")`}>
+    Add `.anchor("c5")` before `.voicing()`. Nothing changes, because that is the default. The
+    top notes are A4, A4, G4, B4: all at or just under c5.
+  </Step>
+  <Step check={{ includes: 'f4', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`chord("<Dm7 G7 C^7 A7>").dict('lefthand').anchor("f4").voicing().s("piano")`}
+        hints={['Only the note name inside `anchor` changes.']}
+        solution={`chord("<Dm7 G7 C^7 A7>").dict('lefthand').anchor("f4").voicing().s("piano")`}>
+    Change it to `anchor("f4")`. The tops are now E4, E4, D4, B3, and it is not a transposition:
+    Dm7, G7 and CM7 switch to their other shape to stay under the new ceiling. The A7 keeps its
+    shape and drops a whole octave, because its other top note, F♯4, is a semitone over f4.
+  </Step>
+  <Step check={{ includes: 'mode(', match: { keys: ['note', 's'] }, cycles: 4 }}
+        hints={['`mode` is a second control, next to `anchor`.']}
+        solution={`chord("<Dm7 G7 C^7 A7>").dict('lefthand').anchor("f4").mode("above").voicing().s("piano")`}>
+    Add `.mode("above")` next to the anchor. Now the **bottom** note is what gets anchored: F4,
+    F4, E4, D♭4, each at or just under f4, and the chord stacks upward from there. The comp jumps
+    up and spreads above the anchor instead of hanging below it.
+  </Step>
+</Exercise>
+
+| `mode` | What lands on the anchor (or just under it) |
+| --- | --- |
+| `below` (default) | the top note |
+| `above` | the bottom note, with the chord stacked above it |
+| `duck` | like `below`, but if the top note *is* the anchor, it is removed |
+| `root` | the dictionary's first shape, bottom note at or under the anchor |
+
+`mode` also takes the anchor after a colon: `mode("above:f4")` is the same as
+`.anchor("f4").mode("above")`.
+
+<Exercise id="harmony/anchor-challenge" title="Challenge: write the top voice"
+  goal="The same four chords with lefthand on piano, but the top note of each voicing is A4, A4, G4, then F#4 (Gb4): a line that steps down into the A7."
+  start={`chord("<Dm7 G7 C^7 A7>").dict('lefthand').voicing().s("piano")`}
+  target={`chord("<Dm7 G7 C^7 A7>").dict('lefthand').anchor("<a4 a4 g4 gb4>").voicing().s("piano")`}
+  check={{ match: { keys: ['note', 's'] }, cycles: 4 }}
+  hints={['`anchor` is a ceiling: the top note lands on it or just under it.',
+          'Like every control, `anchor` takes a pattern, so it can change once per chord.',
+          'Four anchors inside `< >`, one per cycle. The first three already come out right with the default.']} />
+
+## Inversions on demand
+
+A left-hand dictionary has exactly two shapes per chord: one with the **third** on the bottom and
+one with the **seventh** on the bottom. Through a ii–V–I they alternate, which is why the inner
+voices move by step: Dm7 C–E–F–A, G7 B–E–F–A, CM7 B–D–E–G. No voice moves more than a whole tone.
+`offset` walks through the shapes.
+
+<Exercise id="harmony/offset" title="Walk the inversions"
+  goal="Step the same progression up and down through its shapes."
+  start={`chord("<Dm7 G7 C^7>").dict('lefthand').voicing().s("piano")`}
+  target={`chord("<Dm7 G7 C^7>").dict('lefthand').offset(-1).voicing().s("piano")`}>
+  <Step check={{ includes: 'offset(', match: { keys: ['note', 's'] }, cycles: 3 }}
+        target={`chord("<Dm7 G7 C^7>").dict('lefthand').offset(1).voicing().s("piano")`}
+        hints={['Another control, before `.voicing()`, with a whole number.']}
+        solution={`chord("<Dm7 G7 C^7>").dict('lefthand').offset(1).voicing().s("piano")`}>
+    Add `.offset(1)`. Every chord moves to its other shape, one inversion up: Dm7 is now F–A–C–E
+    (third on the bottom), G7 is F–A–B–E (seventh on the bottom). Still alternating, just the other
+    way round.
+  </Step>
+  <Step check={{ includes: 'offset(2)', match: { keys: ['note', 's'] }, cycles: 3 }}
+        target={`chord("<Dm7 G7 C^7>").dict('lefthand').offset(2).voicing().s("piano")`}
+        hints={['Only the number changes.']}
+        solution={`chord("<Dm7 G7 C^7>").dict('lefthand').offset(2).voicing().s("piano")`}>
+    Make it `offset(2)`. With two shapes, two steps up is the original shape an octave higher.
+  </Step>
+  <Step check={{ includes: 'offset(-1)', match: { keys: ['note', 's'] }, cycles: 3 }}
+        hints={['Negative numbers go down.']}
+        solution={`chord("<Dm7 G7 C^7>").dict('lefthand').offset(-1).voicing().s("piano")`}>
+    Make it `offset(-1)`: one shape below the default, down around middle C where a pianist's left
+    hand actually lives.
+  </Step>
+</Exercise>
+
+`duck` and `root` answer two other questions: how to keep a melody note out of the chord, and how
+to put the root in the bass.
+
+<Exercise id="harmony/duck-root" title="Duck the top, find the root"
+  goal="Remove the anchor note from the voicing, then switch to root-position voicings with the root in the bass."
+  start={`chord("<Dm7 G7 C^7>").dict('lefthand').anchor("a4").voicing().s("piano")`}
+  target={`chord("<Dm7 G7 C^7>").anchor("c3").mode("root").voicing().s("piano")`}>
+  <Step check={{ includes: 'duck', events: 10, cycles: 3 }}
+        hints={['`mode` goes next to `anchor`.']}
+        solution={`chord("<Dm7 G7 C^7>").dict('lefthand').anchor("a4").mode("duck").voicing().s("piano")`}>
+    Add `.mode("duck")`. The A4 on top of Dm7 and G7 is gone, and they play three notes; CM7 had no
+    A on top, so it keeps all four. This is how you voice under a melody: the melody note is the
+    anchor, and the chord leaves it to the melody.
+  </Step>
+  <Step check={{ excludes: 'lefthand', match: { keys: ['note', 's'] }, cycles: 3 }}
+        target={`chord("<Dm7 G7 C^7>").anchor("a4").mode("duck").voicing().s("piano")`}
+        hints={['Delete the whole `.dict(...)` call.']}
+        solution={`chord("<Dm7 G7 C^7>").anchor("a4").mode("duck").voicing().s("piano")`}>
+    Delete `.dict('lefthand')`. Back to the default `ireal`: bigger voicings, four or five notes,
+    spread down to B2, still under a4 and still without it.
+  </Step>
+  <Step check={{ includes: 'root', match: { keys: ['note', 's'] }, cycles: 3 }}
+        target={`chord("<Dm7 G7 C^7>").anchor("a4").mode("root").voicing().s("piano")`}
+        hints={['Only the word inside `mode` changes.']}
+        solution={`chord("<Dm7 G7 C^7>").anchor("a4").mode("root").voicing().s("piano")`}>
+    Change `"duck"` to `"root"`. Root position, with the root at or just under a4: D4, G4, C4. And
+    everything else stacked above it, up to B5. Far too high.
+  </Step>
+  <Step check={{ includes: 'c3', match: { keys: ['note', 's'] }, cycles: 3 }}
+        hints={['The root lands at or under the anchor, so move the anchor.']}
+        solution={`chord("<Dm7 G7 C^7>").anchor("c3").mode("root").voicing().s("piano")`}>
+    Change the anchor to `"c3"`. Roots D2, G2, C3: a two-handed voicing with a bass note. Listen to
+    the Dm7: F2 and A2 a third apart that low turn to mud, which is why pianists hand the bass to
+    someone else. That is the section after next.
+  </Step>
+</Exercise>
+
+<Box>
+`root` means "the dictionary's first shape", not "the root". In `ireal` the first shape is root
+position for most qualities, but not half-diminished: `Bh7` in root mode puts D on the bottom. In
+`lefthand` there is no root in any shape, so `root` just gives you the third-on-the-bottom shape.
+</Box>
+
+<Exercise id="harmony/offset-challenge" title="Challenge: thirds on the bottom"
+  goal="Dm7 G7 C^7 with lefthand on piano, every chord with its third as the lowest note: F3, B3 and E3."
+  start={`chord("<Dm7 G7 C^7>").dict('lefthand').voicing().s("piano")`}
+  target={`chord("<Dm7 G7 C^7>").dict('lefthand').offset("<-1 0 -1>").voicing().s("piano")`}
+  check={{ match: { keys: ['note', 's'] }, cycles: 3 }}
+  hints={['By default the bottoms are C, B, B: seventh, third, seventh.',
+          'One of the three is already right. The other two need their other shape, and downwards.',
+          '`offset` takes a pattern, one value per cycle.']} />
+
+## Dictionaries
+
+A dictionary is a set of answers to "what would a pianist play for this symbol?". Each one is
+written for a different job, and each one only knows the qualities it lists.
+
+<Exercise id="harmony/dictionaries" title="Same changes, different pianists"
+  goal="Hear the same progression through each dictionary, and find out what each one refuses to play."
+  start={`$: chord("<Dm7 G7 C^7 C^7>").voicing().s("piano")
+$: chord("<Dm7 G7 C^7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}
+  target={`$: chord("<Dm7 G7 C^7 C^7>").dict('legacy').voicing().s("piano")
+$: chord("<Dm7 G7 C^7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}>
+  <Step check={{ includes: 'lefthand', events: 20, cycles: 4 }}
+        hints={['`dict(...)` goes before `.voicing()` on the piano line.']}
+        solution={`$: chord("<Dm7 G7 C^7 C^7>").dict('lefthand').voicing().s("piano")
+$: chord("<Dm7 G7 C^7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}>
+    Listen to `ireal` first: five notes per chord (four on CM7), spread over two hands. Then add
+    `.dict('lefthand')` to the piano. Four notes, all between B3 and A4, and **no root**: the
+    Dm7 has no D in it. That is the bassist's note.
+  </Step>
+  <Step check={{ includes: 'guidetones', events: 12, cycles: 4 }}
+        hints={['Only the dictionary name changes.']}
+        solution={`$: chord("<Dm7 G7 C^7 C^7>").dict('guidetones').voicing().s("piano")
+$: chord("<Dm7 G7 C^7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}>
+    Change it to `'guidetones'`. Two notes per chord, the third and the seventh: F–C, F–B, E–B.
+    Follow the top: the seventh of Dm7 (C) falls to the third of G7 (B). That line is the ii–V–I.
+  </Step>
+  <Step check={{ includes: '<Dm G C C>', events: 4, cycles: 4 }}
+        hints={['Delete the `7`, `7` and `^7`s from the symbols on the piano line.']}
+        solution={`$: chord("<Dm G C C>").dict('guidetones').voicing().s("piano")
+$: chord("<Dm7 G7 C^7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}>
+    Change the piano's symbols to plain triads: `"<Dm G C C>"`. The piano goes silent. A triad has
+    no seventh, so `guidetones` has nothing to say about it, and `lefthand` would be silent too.
+  </Step>
+  <Step check={{ includes: 'triads', events: 16, cycles: 4 }}
+        hints={['A dictionary named after what it knows.']}
+        solution={`$: chord("<Dm G C C>").dict('triads').voicing().s("piano")
+$: chord("<Dm7 G7 C^7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}>
+    Change the dictionary to `'triads'`. Close-position triads, D–F–A, D–G–B, E–G–C: each in
+    whichever inversion puts its top note closest to c5 without going over.
+  </Step>
+  <Step check={{ includes: 'legacy', events: 16, cycles: 4 }}
+        hints={['Only the dictionary name changes.']}
+        solution={`$: chord("<Dm G C C>").dict('legacy').voicing().s("piano")
+$: chord("<Dm7 G7 C^7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}>
+    Change it to `'legacy'`. Identical: `legacy` is the old default, and its triads are these ones.
+  </Step>
+  <Step check={{ includes: 'legacy', match: { keys: ['note', 's'] }, cycles: 4 }}
+        hints={['Put the sevenths back into the piano line: the same symbols as the bass line.']}
+        solution={`$: chord("<Dm7 G7 C^7 C^7>").dict('legacy').voicing().s("piano")
+$: chord("<Dm7 G7 C^7 C^7>").rootNotes(2).s("gm_acoustic_bass")`}>
+    Put the sevenths back: `"<Dm7 G7 C^7 C^7>"`. Not silent this time, and you have heard these
+    voicings before: `legacy`'s sevenths are the `lefthand` shapes. It is the one dictionary that
+    covers both triads and sevenths with small voicings.
+  </Step>
+</Exercise>
+
+| Dictionary | Notes | Knows | Use it for |
+| --- | --- | --- | --- |
+| `ireal` (default) | 4–5, two hands | over 60 qualities, triads to `7alt` | a full piano sound on its own |
+| `ireal-ext` | 5 | the same symbols; some shapes add extensions (its CM7 adds the 9th and 13th) | a lusher version of the same |
+| `lefthand` | 4, rootless (except `o7`) | sevenths and a few sixths and altered chords, **no triads** | comping over a bass |
+| `guidetones` | 2: third and seventh | sevenths and sixths, **no triads** | the sparest comp, or a second instrument |
+| `triads` | 3 | `''` `M` `m` `o` `aug` only | pop and rock |
+| `legacy` | 3 or 4 | triads plus the `lefthand` sevenths | mixing both |
+
+<Exercise id="harmony/dictionaries-challenge" title="Challenge: a pop progression in triads"
+  goal="C G Am F, one per cycle, as three-note triads on piano, with each top note at or under e5."
+  start={`chord("<C G Am F>").voicing().s("piano")`}
+  target={`chord("<C G Am F>").dict('triads').anchor("e5").voicing().s("piano")`}
+  check={{ match: { keys: ['note', 's'] }, cycles: 4 }}
+  hints={['Two controls, both before `.voicing()`.',
+          'One dictionary is named after exactly this, and `legacy` gives the same triads.',
+          'The anchor is the ceiling for the top note.']} />
+
+## Your own dictionary
+
+`addVoicings(name, dictionary)` registers a new one. The dictionary is an object from quality to a
+list of shapes, and each shape is a string of intervals above the root: names like `1P 3m 7m`, or
+semitones like `0 3 10`. `voicing()` tries every shape and anchors it exactly as before.
+
+<Exercise id="harmony/add-voicings" title="Bud Powell shells"
+  goal="Build a dictionary of three-note shells, root plus third plus seventh, for a low left hand."
+  start={`chord("<Dm7 G7 C^7>").dict('guidetones').anchor("c4").voicing().s("piano")`}
+  target={`addVoicings('shells', { m7: ['1P 3m 7m', '1P 7m 10m'], 7: ['1P 3M 7m', '1P 7m 10M'], '^7': ['1P 3M 7M', '1P 7M 10M'] })
+chord("<Dm7 G7 C^7>").dict('shells').anchor("c4").voicing().s("piano")`}>
+  <Step check={{ includes: 'addVoicings(', match: { keys: ['note', 's'] }, cycles: 3 }}
+        target={`chord("<Dm7 G7 C^7>").dict('guidetones').anchor("c4").voicing().s("piano")`}
+        hints={['A new first line, above the pattern.',
+                'Two shapes: root, third, seventh, and root, seventh, then the third an octave up (a tenth).']}
+        solution={`addVoicings('shells', { m7: ['1P 3m 7m', '1P 7m 10m'] })
+chord("<Dm7 G7 C^7>").dict('guidetones').anchor("c4").voicing().s("piano")`}>
+    Add a first line: `addVoicings('shells', { m7: ['1P 3m 7m', '1P 7m 10m'] })`. Nothing changes:
+    defining a dictionary does not use it. Keep hearing the guide tones for now.
+  </Step>
+  <Step check={{ code: "dict\\(['\"]shells", events: 3, cycles: 3 }}
+        hints={['Only the name inside `dict` changes.']}
+        solution={`addVoicings('shells', { m7: ['1P 3m 7m', '1P 7m 10m'] })
+chord("<Dm7 G7 C^7>").dict('shells').anchor("c4").voicing().s("piano")`}>
+    Change `'guidetones'` to `'shells'`. Dm7 plays D3–F3–C4. G7 and CM7 are silent, because your
+    dictionary only has `m7` so far.
+  </Step>
+  <Step check={{ includes: "'1P 3M 7m'" }}
+        hints={['A second key in the same object, after a comma.',
+                'A dominant seventh has a major third and a minor seventh; a tenth is `10M`.']}
+        solution={`addVoicings('shells', { m7: ['1P 3m 7m', '1P 7m 10m'], 7: ['1P 3M 7m', '1P 7m 10M'] })
+chord("<Dm7 G7 C^7>").dict('shells').anchor("c4").voicing().s("piano")`}>
+    Add the dominant: `7: ['1P 3M 7m', '1P 7m 10M']`. G7 plays G2–F3–B3. The F stays put
+    (the third of Dm7 is the seventh of G7) and the C falls a semitone to B.
+  </Step>
+  <Step check={{ includes: "'^7'", match: { keys: ['note', 's'] }, cycles: 3 }}
+        hints={['`^7` is not a valid bare key in an object literal, so it needs quotes.',
+                'Major third, major seventh.']}
+        solution={`addVoicings('shells', { m7: ['1P 3m 7m', '1P 7m 10m'], 7: ['1P 3M 7m', '1P 7m 10M'], '^7': ['1P 3M 7M', '1P 7M 10M'] })
+chord("<Dm7 G7 C^7>").dict('shells').anchor("c4").voicing().s("piano")`}>
+    Add the major seventh: `'^7': ['1P 3M 7M', '1P 7M 10M']`. CM7 plays C3–E3–B3. The root-plus-
+    guide-tones left hand of bebop piano, from a dictionary you wrote.
+  </Step>
+  <Step check={{ code: 'm7: \\[\\s*"', events: 6, cycles: 3 }}
+        hints={['Only the four quote marks around the two `m7` shapes change.']}
+        solution={`addVoicings('shells', { m7: ["1P 3m 7m", "1P 7m 10m"], 7: ['1P 3M 7m', '1P 7m 10M'], '^7': ['1P 3M 7M', '1P 7M 10M'] })
+chord("<Dm7 G7 C^7>").dict('shells').anchor("c4").voicing().s("piano")`}>
+    Now break it on purpose: change the single quotes around the two `m7` shapes to double quotes.
+    The Dm7 goes silent. In Strudel, double quotes are **mini-notation**, so those shapes became
+    patterns instead of strings, and the dictionary cannot read them.
+  </Step>
+  <Step check={{ excludes: '"1P', match: { keys: ['note', 's'] }, cycles: 3 }}
+        hints={['Back to single quotes.']}
+        solution={`addVoicings('shells', { m7: ['1P 3m 7m', '1P 7m 10m'], 7: ['1P 3M 7m', '1P 7m 10M'], '^7': ['1P 3M 7M', '1P 7M 10M'] })
+chord("<Dm7 G7 C^7>").dict('shells').anchor("c4").voicing().s("piano")`}>
+    Put the single quotes back and the Dm7 returns. **Inside `addVoicings`, always single quotes**,
+    for the shapes and for quoted keys like `'^7'`.
+  </Step>
+</Exercise>
+
+<Exercise id="harmony/add-voicings-challenge" title="Challenge: So What"
+  goal="A dictionary named sowhat with one m7 shape: three perfect fourths stacked up from the ninth, topped by a major third. Play Dm7 then Ebm7, one per cycle, on piano."
+  start={`chord("<Dm7 Ebm7>").voicing().s("piano")`}
+  target={`addVoicings('sowhat', { m7: ['2 7 12 17 21'] })
+chord("<Dm7 Ebm7>").dict('sowhat').voicing().s("piano")`}
+  check={{ match: { keys: ['note', 's'] }, cycles: 2 }}
+  hints={['`addVoicings` takes a name and an object from quality to a list of shape strings.',
+          'Shapes can be semitones above the root, and the root does not have to be in the shape. The ninth of D is E.',
+          "A fourth is 5 semitones and a major third is 4. Single quotes, not double."]} />
+
+## A bass that agrees
+
+A comp and a bass read from the **same** chord pattern cannot disagree. Name the pattern once and
+give each player its own lane.
+
+<Exercise id="harmony/lanes" title="One source, two players"
+  goal="Name the chord pattern, read it twice, and change the harmony in one place."
+  start={`$: chord("<Dm7 G7 C^7 C^7>").dict('lefthand').voicing().s("gm_epiano1")`}
+  target={`let changes = chord("<Em7 A7 Dm7 G7>")
+$: changes.dict('lefthand').voicing().s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}>
+  <Step check={{ code: '(let|const|var)\\s+\\w+\\s*=\\s*chord\\(', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`$: chord("<Dm7 G7 C^7 C^7>").dict('lefthand').voicing().s("gm_epiano1")`}
+        hints={['Plain JavaScript: a variable holding a pattern.']}
+        solution={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: chord("<Dm7 G7 C^7 C^7>").dict('lefthand').voicing().s("gm_epiano1")`}>
+    Add a first line: `let changes = chord("<Dm7 G7 C^7 C^7>")`. Nothing changes: a pattern in a
+    variable does not play until a lane uses it.
+  </Step>
+  <Step check={{ code: '\\$:\\s*[A-Za-z_]\\w*\\s*\\.\\s*dict', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`$: chord("<Dm7 G7 C^7 C^7>").dict('lefthand').voicing().s("gm_epiano1")`}
+        hints={['The lane starts with the variable name instead of `chord(...)`.']}
+        solution={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.dict('lefthand').voicing().s("gm_epiano1")`}>
+    In the lane, replace `chord("<Dm7 G7 C^7 C^7>")` with `changes`. Same sound, and now the harmony
+    lives on one line.
+  </Step>
+  <Step check={{ includes: 'rootNotes(', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.dict('lefthand').voicing().s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}
+        hints={['A second `$:` line that starts from the same variable.',
+                'After `chord()`, `rootNotes` already gives a note, so no `.note()`.']}
+        solution={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.dict('lefthand').voicing().s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}>
+    Add a bass lane: `$: changes.rootNotes(2).s("gm_acoustic_bass")`. D2, G2, C2, C2 under the
+    rootless voicings. The comp has no roots, the bass has nothing else: together they are the whole
+    chord, and nobody doubles anybody.
+  </Step>
+  <Step check={{ includes: 'Em7', match: { keys: ['note', 's'] }, cycles: 4 }}
+        hints={['Only the `let` line changes.']}
+        solution={`let changes = chord("<Em7 A7 Dm7 G7>")
+$: changes.dict('lefthand').voicing().s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}>
+    Change the progression on the first line to `"<Em7 A7 Dm7 G7>"`, a turnaround. Both players
+    follow. You changed the harmony once and there is no second copy to forget.
+  </Step>
+</Exercise>
+
+<Box>
+`rootNotes(2)` and `mode("root")` both give you a root, differently. `mode("root")` puts it
+*inside* the voicing, on the same instrument, at the same moment. `rootNotes` gives the root to its
+own lane, with its own sound, octave and rhythm. For a bass, you nearly always want the lane.
+</Box>
+
+<Exercise id="harmony/lanes-challenge" title="Challenge: half notes in the bass"
+  goal="Gm7 C7 F^7 F^7, one per cycle, from one named source. The comp is lefthand on gm_epiano1, held for the bar. The bass is the root in octave 2 on gm_acoustic_bass, played on beats 1 and 3."
+  start=""
+  target={`let changes = chord("<Gm7 C7 F^7 F^7>")
+$: changes.dict('lefthand').voicing().s("gm_epiano1")
+$: changes.rootNotes(2).struct("x x").s("gm_acoustic_bass")`}
+  check={{ match: { keys: ['note', 's'] }, cycles: 4 }}
+  hints={['Three lines: a variable, then two `$:` lanes that start from it.',
+          'The bass needs a rhythm of its own, two hits per cycle, and `struct` gives a pattern a rhythm.',
+          'After `chord()`, `rootNotes` needs no `.note()`.']} />
+
+## Comping
+
+A chord held for the whole bar is a pad. A pianist comping plays short chords in a rhythm, leaves
+space for the soloist, and often plays the next bar's chord early.
+
+<Exercise id="harmony/comping" title="From pad to comp"
+  goal="Give the comp a Charleston rhythm, push the chord changes an eighth early, then thin the voicings."
+  start={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.dict('lefthand').voicing().s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}
+  target={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.early(1/8).dict('guidetones').voicing().struct("~ ~ ~ x ~ ~ ~ x").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}>
+  <Step check={{ includes: 'struct(', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.dict('lefthand').voicing().struct("x ~ ~ x ~ ~ ~ ~").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}
+        hints={['Eight slots, one per eighth note. Beat 1 is slot 1, the “and” of 2 is slot 4.']}
+        solution={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.dict('lefthand').voicing().struct("x ~ ~ x ~ ~ ~ ~").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}>
+    Add `.struct("x ~ ~ x ~ ~ ~ ~")` after `.voicing()` in the comp lane. The Charleston: a chord on
+    beat 1 and on the "and" of 2, then half a bar of space.
+  </Step>
+  <Step check={{ includes: 'x ~ ~ ~ x', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.dict('lefthand').voicing().struct("x ~ ~ x ~ ~ ~ x").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}
+        hints={['The last slot of the eight.']}
+        solution={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.dict('lefthand').voicing().struct("x ~ ~ x ~ ~ ~ x").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}>
+    Turn the last `~` into `x`: a third hit on the "and" of 4. For now it plays the same chord as
+    the rest of the bar.
+  </Step>
+  <Step check={{ includes: '.early(', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.early(1/8).dict('lefthand').voicing().struct("x ~ ~ x ~ ~ ~ x").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}
+        hints={['It goes on the chords, straight after `changes` in the comp lane, not after the `struct`.',
+                'An eighth note is 1/8 of a cycle.']}
+        solution={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.early(1/8).dict('lefthand').voicing().struct("x ~ ~ x ~ ~ ~ x").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}>
+    Add `.early(1/8)` straight after `changes` in the comp lane. The rhythm stays where it was, but
+    the chords change an eighth early, so the "and" of 4 now plays the **next** bar's chord: the
+    push. The bass still changes on the downbeat.
+  </Step>
+  <Step check={{ includes: '~ ~ ~ x ~ ~ ~ x', match: { keys: ['note', 's'] }, cycles: 4 }}
+        target={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.early(1/8).dict('lefthand').voicing().struct("~ ~ ~ x ~ ~ ~ x").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}
+        hints={['The first slot of the rhythm.']}
+        solution={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.early(1/8).dict('lefthand').voicing().struct("~ ~ ~ x ~ ~ ~ x").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}>
+    Change the first `x` to `~`. The pushed chord is not struck again on beat 1: each bar opens
+    with the bass alone, and the comp only answers on the offbeats.
+  </Step>
+  <Step check={{ includes: 'guidetones', match: { keys: ['note', 's'] }, cycles: 4 }}
+        hints={['Only the dictionary name changes.']}
+        solution={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.early(1/8).dict('guidetones').voicing().struct("~ ~ ~ x ~ ~ ~ x").s("gm_epiano1")
+$: changes.rootNotes(2).s("gm_acoustic_bass")`}>
+    Change `'lefthand'` to `'guidetones'`. Two notes per stab instead of four: the harmony is still
+    unambiguous, because the bass has the root and the two notes are the third and the seventh.
+    This is the comp you play when a horn is soloing.
+  </Step>
+</Exercise>
+
+<QA q="Does voicing() lead each voice from the previous chord?">
+No. It is stateless: every chord is voiced on its own, against the anchor. The smooth motion is a
+consequence of every chord sharing the same ceiling, and of the `lefthand` shapes being written so
+that the two forms alternate. If a change leaps, move the ceiling (`anchor`) or pick the other
+shape (`offset`) for that one chord. The deprecated `voicings()`, with an s, did remember the last
+chord; do not use it.
+</QA>
+
+<QA q="Why does F#m7 come out as Gb, Db and so on?">
+`voicing()` names every note with flats. The pitches are right. It only matters if you read the
+note names in the pattern display.
+</QA>
+
+## A ii–V–I that sounds like one
+
+All of it together: one named source, rootless voicings in the middle of the piano, roots in the
+bass, and a comp that pushes into each bar.
+
+<Exercise id="harmony/two-five-one" title="Challenge: the whole ii–V–I"
+  goal="Dm7 G7 C^7 C^7, one per cycle, from one named source. Comp: lefthand on gm_epiano1, one shape above the default, hitting only the “and” of 2 and the “and” of 4, with the chords changing an eighth early. Bass: roots in octave 2 on gm_acoustic_bass, on beats 1 and 3."
+  start=""
+  target={`let changes = chord("<Dm7 G7 C^7 C^7>")
+$: changes.early(1/8).dict('lefthand').offset(1).voicing().struct("~ ~ ~ x ~ ~ ~ x").s("gm_epiano1")
+$: changes.rootNotes(2).struct("x x").s("gm_acoustic_bass")`}
+  check={{ match: { keys: ['note', 's'] }, cycles: 4 }}
+  hints={['Three lines: a variable, then a comp lane and a bass lane that both start from it.',
+          'The push is a time shift on the chords, before the rhythm is applied; "one shape above" is a voicing control.',
+          'Eight slots for the comp, two for the bass. `rootNotes` after `chord()` needs no `.note()`.']} />
+
+Playing a voicing one note at a time (`arp()`, `n()` into a voicing, a melody over the changes) is
+<L to="/tutorial/arpeggios">Arpeggios &amp; Melody</L>.
+
+## Recap
+
+| Function | Purpose |
+| --- | --- |
+| `chord("<Dm7 G7>")` | chord symbols as a control; required once any other control is chained |
+| `voicing()` | symbols to notes: the shape whose top note is closest under the anchor |
+| `dict('lefthand')` | `ireal` (default), `ireal-ext`, `lefthand`, `guidetones`, `triads`, `legacy` |
+| `anchor("f4")` | the reference note; the default is `c5` |
+| `mode("below")` | which note lands on the anchor: `below`, `above`, `duck`, `root` |
+| `offset(1)` | the next shape up; `-1` the next one down |
+| `rootNotes(2)` | the root in octave 2; no `.note()` after `chord()`, `.note()` after a bare string |
+| `addVoicings('name', { m7: ['…'] })` | your own dictionary; single quotes inside |
+| `struct("x ~ ~ x ~ ~ ~ ~")` | a comping rhythm |
+| `early(1/8)` on the chords | push the changes an eighth ahead of the barline |

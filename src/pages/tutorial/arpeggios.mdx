@@ -1,0 +1,655 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: arpeggios
+title: Arpeggios & Melody
+lede: Five ways to break a chord into a line, what each one is for, and what each one costs you.
+---
+
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
+
+An arpeggio is a chord spread out in time. Strudel gives you several ways to write one, and they
+are not interchangeable: each decides something different for you. You will build every one of them
+up a change at a time, and the chapter ends with a table of when to reach for which.
+
+## 1. By hand
+
+Name every note. Total control, and nothing is reused.
+
+<Exercise id="arpeggios/by-hand" title="Four notes that ring"
+  goal="Turn four separate stabs into an arpeggio that rings, then add a second chord and count what it cost you."
+  start={`note("c3 eb3 g3 c4")
+  .s("gm_epiano1")`}
+  target={`note("<[c3 eb3 g3 c4] [c3 f3 ab3 c4]>")
+  .s("gm_epiano1")
+  .clip(4)`}>
+  <Step check={{ includes: '.clip(', has: { clip: [1.5, 3] } }}
+        hints={['`clip` multiplies how long each note lasts, relative to its slot.']}
+        solution={`note("c3 eb3 g3 c4")
+  .s("gm_epiano1")
+  .clip(2)`}>
+    Play it first: four stabs. Each note stops dead when its quarter of the cycle ends, so you hear a
+    melody that happens to spell a chord. Add `.clip(2)` on a new line at the end: every note now
+    lasts two slots, so it is still sounding when the next one starts, and the chord builds up.
+  </Step>
+  <Step check={{ has: { clip: [3.5, 16] } }}
+        hints={['Only the number changes.']}
+        solution={`note("c3 eb3 g3 c4")
+  .s("gm_epiano1")
+  .clip(4)`}>
+    Change it to `.clip(4)`. The first note now lasts the whole cycle: this is the sustain pedal held
+    down. The overlap, not the note order, is what makes you hear a chord rather than a tune.
+  </Step>
+  <Step check={{ includes: 'ab3', cycles: 2, match: { keys: ['note'] } }}
+        hints={['`< >` plays one element per cycle, and `[ ]` squeezes four notes into one element.',
+                'F minor over a C in the bass is c, f, ab, c.']}
+        solution={`note("<[c3 eb3 g3 c4] [c3 f3 ab3 c4]>")
+  .s("gm_epiano1")
+  .clip(4)`}>
+    Add a second chord on the next cycle: `note("<[c3 eb3 g3 c4] [c3 f3 ab3 c4]>")`. It works, and
+    notice what it cost: four more notes typed. Moving this to D minor means retyping all eight.
+  </Step>
+</Exercise>
+
+<Exercise id="arpeggios/by-hand-challenge" title="Challenge: up and back"
+  goal="An F major arpeggio up and back down (f3, a3, c4, f4, then c4 and a3), on gm_epiano1, each note ringing for three slots."
+  start={`note("f3")
+  .s("gm_epiano1")`}
+  target={`note("f3 a3 c4 f4 c4 a3")
+  .s("gm_epiano1")
+  .clip(3)`}
+  check={{ match: { keys: ['note', 'clip'] } }}
+  hints={['`clip` is a length multiplier: 1 is the slot, 2 is two slots.',
+          'Up and back means the top note appears once, and the way down skips it.',
+          'Six note names in one string, then one control on the end.']} />
+
+## 2. By scale degree
+
+Here is the same arpeggio written as scale degrees. Press play: the same four pitches as
+`c3 eb3 g3 c4`.
+
+```js
+n("0 2 4 7")
+  .scale("C:minor")
+```
+
+Why `0 2 4` is a triad: on the keyboard, every triad inside a key is *play one, skip one, play one*,
+and skipping one key of the scale is adding 2 degrees. `7` is the octave, because a seven-note scale
+repeats after seven steps. The quality (major, minor, diminished) is never written down; the scale
+supplies it.
+
+<Exercise id="arpeggios/by-degree" title="One shape, every chord in the key"
+  goal="Move one arpeggio shape through a progression, fix the one chord the scale gets wrong, then change key without retyping a note."
+  start={`n("0 2 4 7")
+  .scale("C:minor")
+  .s("gm_epiano1")
+  .clip(2)`}
+  target={`n("0 2 4 7".add("<0 5 3 4>"))
+  .scale("A:harmonic:minor")
+  .s("gm_epiano1")
+  .clip(2)`}>
+  <Step check={{ includes: '.add(', cycles: 4, match: { keys: ['note'] } }}
+        target={`n("0 2 4 7".add("<0 5 3 4>"))
+  .scale("C:minor")
+  .s("gm_epiano1")
+  .clip(2)`}
+        hints={['The `add` goes on the string, inside `n(...)`, as in the Notes chapter.',
+                'Inside a scale, adding 5 moves the whole shape up five degrees.']}
+        solution={`n("0 2 4 7".add("<0 5 3 4>"))
+  .scale("C:minor")
+  .s("gm_epiano1")
+  .clip(2)`}>
+    Add `.add("<0 5 3 4>")` to the string: `n("0 2 4 7".add("<0 5 3 4>"))`. One shape, four chords:
+    i, VI, iv, v. Ab major and F minor came out right without you naming them.
+  </Step>
+  <Step check={{ includes: 'harmonic', cycles: 4, match: { keys: ['note'] } }}
+        target={`n("0 2 4 7".add("<0 5 3 4>"))
+  .scale("C:harmonic:minor")
+  .s("gm_epiano1")
+  .clip(2)`}
+        hints={['Multi-word scale names are joined with colons.']}
+        solution={`n("0 2 4 7".add("<0 5 3 4>"))
+  .scale("C:harmonic:minor")
+  .s("gm_epiano1")
+  .clip(2)`}>
+    Listen to the fourth chord: G, Bb, D. It is minor, because C natural minor has a Bb. That is
+    the cost: degrees only reach notes that are in the scale. Change the scale to
+    `C:harmonic:minor`. Now the fourth chord is G, B, D, a proper dominant, and the other three are
+    unchanged.
+  </Step>
+  <Step check={{ includes: 'A:harmonic', cycles: 4, match: { keys: ['note'] } }}
+        hints={['Only the root of the scale name changes.']}
+        solution={`n("0 2 4 7".add("<0 5 3 4>"))
+  .scale("A:harmonic:minor")
+  .s("gm_epiano1")
+  .clip(2)`}>
+    Change key: `A:harmonic:minor`. Sixteen pitches moved and you typed one letter. By hand, that
+    was sixteen notes to retype.
+  </Step>
+</Exercise>
+
+<Exercise id="arpeggios/by-degree-challenge" title="Challenge: a spread triad in D dorian"
+  goal="In D dorian, one chord per cycle, i then IV: each played as root, fifth, the third an octave up (a tenth), then the fifth again."
+  start=""
+  target={`n("0 4 9 4".add("<0 3>"))
+  .scale("D:dorian")
+  .s("gm_epiano1")`}
+  check={{ cycles: 2, match: { keys: ['note'] } }}
+  hints={['The root is degree 0, the third is 2 and the fifth is 4.',
+          'An octave is 7 degrees, so a tenth is an octave plus a third.',
+          'Four degrees in the string, and an `add` with one value per cycle to move it from i to IV.']} />
+
+## 3. Where the maths goes: the bare `.n()`
+
+Before the next technique you need one rule about adding to pitches, because breaking it fails
+silently.
+
+<Exercise id="arpeggios/bare-wrap" title="Arithmetic before the label"
+  goal="Watch an add do nothing, find out why, and learn the spelling that puts the maths first."
+  start={`n("0 2 4 7")
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+  target={`"0 2 4 7".add(2).n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+  <Step check={{ includes: '.add(', match: { keys: ['note'] } }}
+        target={`n("0 2 4 7")
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+        hints={['It goes straight after the closing parenthesis of `n(...)`.']}
+        solution={`n("0 2 4 7").add(2)
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    Add `.add(2)` right after `n("0 2 4 7")`, and listen. **Nothing changes**, and there is no
+    error. `n(...)` has already turned each number into a labelled value, `n: 0`, and `add` refuses
+    to do arithmetic on a label. The only trace is a warning in the browser console:
+    *Can't do arithmetic on control pattern*.
+  </Step>
+  <Step check={{ match: { keys: ['note'] } }}
+        hints={['Put the `add` on the string, inside the parentheses, the way the Notes chapter did.']}
+        solution={`n("0 2 4 7".add(2))
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    Move it inside, onto the string: `n("0 2 4 7".add(2))`. Now it works: Eb, G, Bb, Eb. The
+    string is a pattern of plain numbers, and plain numbers can be added to.
+  </Step>
+  <Step check={{ includes: '.n()', match: { keys: ['note'] } }}
+        target={`n("0 2 4 7".add(2))
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+        hints={['`n` with nothing in the parentheses labels whatever the pattern already holds.',
+                'Start the line with the string, then the `add`, then the label.']}
+        solution={`"0 2 4 7".add(2).n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    Now write the same thing as a chain: `"0 2 4 7".add(2).n()`. `.n()` with **no argument** takes
+    the values the pattern already has and labels them as `n`. Same notes. This spelling matters
+    because it lets you chain anything you like between the string and the label.
+  </Step>
+</Exercise>
+
+<Box>
+**Do the arithmetic on plain values; put the label last.** `"0 2 4".add(2).n()` and
+`n("0 2 4".add(2))` are the same thing, and `.note()` works the same way for note names:
+`"c3 eb3 g3".add(12).note()`. Once a pattern is labelled, a plain `.add(2)` is ignored. If you must
+add to a labelled pattern, label the number too: `.add(n(2))`, or `.add(note(12))`.
+</Box>
+
+<Exercise id="arpeggios/bare-wrap-challenge" title="Challenge: the chain form"
+  goal="Degrees 0 1 2 4 in C minor on gm_epiano1, played as written on one cycle and four degrees higher on the next, written as a chain that starts with the string and ends in `.n()` before the scale."
+  start=""
+  target={`"0 1 2 4".add("<0 4>").n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+  check={{ includes: '.n()', cycles: 2, match: { keys: ['note'] } }}
+  hints={['`.n()` with nothing inside turns the plain values of a pattern into degrees.',
+          'Anything that does maths on the numbers has to come before that label.',
+          'String, then `add` with one value per cycle, then `.n()`, then the scale.']} />
+
+## 4. off(): an arpeggio made of time
+
+`off` is normally a <L to="/tutorial/pattern-functions">Pattern Functions</L> topic; here it is the
+tool for one specific job. It takes **one** note and builds the chord out of delayed, transposed
+copies of it.
+
+<Exercise id="arpeggios/off" title="One note, three echoes, a seventh chord"
+  goal="Build a four-note arpeggio from a single note using only copies of it, then collapse it back into a chord by changing nothing but time."
+  start={`"0"
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+  target={`"<0 3 4 0>"
+  .off(0, add(2))
+  .off(1/4, add(4))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+  <Step check={{ includes: '.off(', events: 2 }}
+        hints={['It goes on its own line between `"0"` and `.n()`.',
+                '`x => x` is a function that returns what it is given.']}
+        solution={`"0"
+  .off(1/4, x => x)
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    One C per cycle. Insert `.off(1/4, x => x)` on a new line between `"0"` and `.n()`.
+    `off(time, fn)` copies the pattern, shifts the copy `time` cycles later, runs it through `fn`,
+    and plays both. `x => x` hands the copy back unchanged, so you hear C twice, a quarter apart.
+  </Step>
+  <Step check={{ fn: "(h) => (h.length === 2 && Math.abs(h[1].t - 0.125) < 1e-6) || 'The copy should land an eighth of a cycle after the original.'" }}
+        hints={['The first argument is how late the copy is, in cycles.']}
+        solution={`"0"
+  .off(1/8, x => x)
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    Change `1/4` to `1/8`. The echo moves closer. The first argument is only time; it never
+    touches pitch.
+  </Step>
+  <Step check={{ match: { keys: ['note'] } }}
+        target={`"0"
+  .off(1/8, x => x.add(2))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+        hints={['The function receives the copy; call `add` on it.']}
+        solution={`"0"
+  .off(1/8, x => x.add(2))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    Change `x => x` to `x => x.add(2)`. The copy now comes back two degrees up: C, then Eb. This
+    is why `.n()` sits **after** `off`: the copy is still plain numbers, so the `add` works.
+  </Step>
+  <Step check={{ excludes: '=>', match: { keys: ['note'] } }}
+        target={`"0"
+  .off(1/8, x => x.add(2))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+        hints={['`add(2)` on its own, not called on anything, is already a function of a pattern.']}
+        solution={`"0"
+  .off(1/8, add(2))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    Replace `x => x.add(2)` with just `add(2)`. Same sound. Written on its own, `add(2)` is already
+    a function that takes a pattern and adds 2 to it, so the arrow is unnecessary.
+  </Step>
+  <Step check={{ events: 4, match: { keys: ['note'] } }}
+        target={`"0"
+  .off(1/8, add(2))
+  .off(1/4, add(4))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+        hints={['A second `off` on its own line, right under the first.',
+                'The second copy should be a quarter late and four degrees up.']}
+        solution={`"0"
+  .off(1/8, add(2))
+  .off(1/4, add(4))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    Add a second line, `.off(1/4, add(4))`, under the first. You hear **four** notes, not three:
+    the second `off` copies everything above it, the note *and* its echo. 0, 2, 4, and 2+4 = 6:
+    C, Eb, G, Bb, a minor seventh out of one note.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['note'] } }}
+        target={`"<0 3 4 0>"
+  .off(1/8, add(2))
+  .off(1/4, add(4))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+        hints={['Only the source string changes; `< >` gives one value per cycle.']}
+        solution={`"<0 3 4 0>"
+  .off(1/8, add(2))
+  .off(1/4, add(4))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    Change the source from `"0"` to `"<0 3 4 0>"`. The whole arpeggio rides on the root, so
+    changing one number per cycle gives you i, iv, v, i with every chord tone following.
+  </Step>
+  <Step check={{ match: { keys: ['note'] } }}
+        target={`"<0 3 4 0>"
+  .off(0, add(2))
+  .off(1/4, add(4))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}
+        hints={['Only the first `off` time changes.']}
+        solution={`"<0 3 4 0>"
+  .off(0, add(2))
+  .off(1/4, add(4))
+  .n()
+  .scale("C:minor")
+  .s("gm_epiano1")`}>
+    Change the first `1/8` to `0`. The root and its third now land together, and so do the fifth
+    and seventh: two dyads instead of four notes. The pitches did not change, only when they
+    happen. This arpeggio is made of time, not of choosing notes.
+  </Step>
+</Exercise>
+
+That last point generalises. Point the same `off` at a melody instead of a single note and the copy
+becomes a second voice, the same line a few degrees up and a moment later. That is counterpoint,
+and it stays in key for free.
+
+<Exercise id="arpeggios/off-challenge" title="Challenge: a line that answers itself"
+  goal="The melody 0 1 2 4 in D dorian, answered by a copy of itself a sixth higher, an eighth of a cycle later."
+  start={`"0 1 2 4"
+  .n()
+  .scale("D:dorian")
+  .s("gm_epiano1")`}
+  target={`"0 1 2 4"
+  .off(1/8, add(5))
+  .n()
+  .scale("D:dorian")
+  .s("gm_epiano1")`}
+  check={{ includes: '.off(', match: { keys: ['note'] } }}
+  hints={['`off(time, fn)` plays a shifted, transformed copy on top of the original.',
+          'Counting in degrees, a third is 2 and a fifth is 4, so a sixth is one more.',
+          'One `off` line, before the `.n()`, with the time as a fraction of a cycle.']} />
+
+## 5. arp(): pick apart a chord that already exists
+
+`arp` does the opposite of `off`: it starts from a stacked chord and plays its notes one index at a
+time.
+
+<Exercise id="arpeggios/arp" title="Index into a stack"
+  goal="Break a block chord up by index, stack two indices at once, find out what an index means, then let the chord come from chord symbols."
+  start={`note("[c3,eb3,g3,c4]")
+  .s("gm_epiano1")`}
+  target={`chord("<Cm Fm Ab G>").voicing()
+  .arp("0 [2,3] 1 [2,3]")
+  .s("gm_epiano1")`}>
+  <Step check={{ includes: '.arp(', match: { keys: ['note'] } }}
+        target={`note("[c3,eb3,g3,c4]")
+  .arp("0 1 2 3")
+  .s("gm_epiano1")`}
+        hints={['It goes on its own line between the chord and `.s(...)`.',
+                'Index 0 is the first note of the stack.']}
+        solution={`note("[c3,eb3,g3,c4]")
+  .arp("0 1 2 3")
+  .s("gm_epiano1")`}>
+    Play it: one block chord. Insert `.arp("0 1 2 3")` between the chord and `.s(...)`. The
+    index pattern decides the rhythm, four slots here, and each slot plays one note of the stack.
+  </Step>
+  <Step check={{ match: { keys: ['note'] } }}
+        target={`note("[c3,eb3,g3,c4]")
+  .arp("0 2 1 3")
+  .s("gm_epiano1")`}
+        hints={['Swap the middle two indices.']}
+        solution={`note("[c3,eb3,g3,c4]")
+  .arp("0 2 1 3")
+  .s("gm_epiano1")`}>
+    Change it to `"0 2 1 3"`: root, fifth, third, octave. The order of the arpeggio is now
+    separate from the chord itself.
+  </Step>
+  <Step check={{ events: 6, match: { keys: ['note'] } }}
+        target={`note("[c3,eb3,g3,c4]")
+  .arp("0 [2,3] 1 [2,3]")
+  .s("gm_epiano1")`}
+        hints={['A comma inside brackets stacks, and that works for indices too.']}
+        solution={`note("[c3,eb3,g3,c4]")
+  .arp("0 [2,3] 1 [2,3]")
+  .s("gm_epiano1")`}>
+    Make it `"0 [2,3] 1 [2,3]"`. An index can itself be a stack: root, then fifth and octave
+    together, third, fifth and octave again. That is a left-hand comping figure, not a harp.
+  </Step>
+  <Step check={{ match: { keys: ['note'] } }}
+        target={`note("[g3,c3,eb3,c4]")
+  .arp("0 [2,3] 1 [2,3]")
+  .s("gm_epiano1")`}
+        hints={['Move `g3` from third place to first inside the brackets.']}
+        solution={`note("[g3,c3,eb3,c4]")
+  .arp("0 [2,3] 1 [2,3]")
+  .s("gm_epiano1")`}>
+    Now rewrite the chord as `[g3,c3,eb3,c4]`, the same four notes in a different order. The
+    figure changes: index 0 is now G. **An index is the position in the stack as you wrote it, not
+    the lowest pitch**: `arp` does not sort.
+  </Step>
+  <Step check={{ includes: 'voicing(', cycles: 2, match: { keys: ['note'] } }}
+        target={`chord("<Cm Fm>").voicing()
+  .arp("0 [2,3] 1 [2,3]")
+  .s("gm_epiano1")`}
+        hints={['`chord()` takes the symbols and `voicing()` turns them into a stack of notes.',
+                'Two chords, one per cycle, so they go in `< >`.']}
+        solution={`chord("<Cm Fm>").voicing()
+  .arp("0 [2,3] 1 [2,3]")
+  .s("gm_epiano1")`}>
+    Replace `note("[g3,c3,eb3,c4]")` with `chord("<Cm Fm>").voicing()`. A voicing is always stacked
+    from the bottom up, so index 0 is its lowest note. The figure is the same; the chord under it
+    now changes.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['note'] } }}
+        hints={['Add two more symbols inside the `< >`.']}
+        solution={`chord("<Cm Fm Ab G>").voicing()
+  .arp("0 [2,3] 1 [2,3]")
+  .s("gm_epiano1")`}>
+    Extend the progression to `"<Cm Fm Ab G>"`. You wrote the figure once and the harmony four
+    times, and neither knows about the other. That separation is the point of `arp`.
+  </Step>
+</Exercise>
+
+<Box kind="warn">
+Voicings do not all have the same number of notes: here Cm and Fm come out with five, Ab and G with
+four. An index past the top **wraps back to the bottom, in the same octave**: on the four-note Ab,
+index 4 is Ab3 again. If a figure sounds as though it has lost its top note on some chords, count
+the notes in each voicing. Controlling the voicing itself is
+<L to="/tutorial/harmony">Harmony &amp; Voicings</L>.
+</Box>
+
+<Exercise id="arpeggios/arp-challenge" title="Challenge: one figure, four seventh chords"
+  goal="Cm7, Fm7, Bb7, Eb^7, one per cycle: the bottom note, then the second and third notes together, then the fourth, then the second and third together again."
+  start={`chord("<Cm7 Fm7 Bb7 Eb^7>").voicing()
+  .s("gm_epiano1")`}
+  target={`chord("<Cm7 Fm7 Bb7 Eb^7>").voicing()
+  .arp("0 [1,2] 3 [1,2]")
+  .s("gm_epiano1")`}
+  check={{ cycles: 4, match: { keys: ['note'] } }}
+  hints={['`arp` reads notes out of a stack by index, and index 0 is the bottom of a voicing.',
+          'Two notes at once is a stacked index.',
+          'Four slots: one index, one pair, one index, the same pair.']} />
+
+## 6. Melody over changes
+
+An arpeggio follows the harmony because it is built out of the chord. A melody has to be told. Two
+spellings, one limit.
+
+<Exercise id="arpeggios/over-changes" title="A line that follows the chords"
+  goal="Make a fixed four-note melody follow a progression, rewrite it so each chord names its own scale, then use that to follow a chord outside the key."
+  start={`$: chord("<C^7 Am7 Dm7 G7>").voicing().s("gm_epiano1")
+$: n("0 2 4 2")
+  .scale("C5:major")
+  .s("gm_vibraphone")`}
+  target={`$: chord("<C^7 A7 Dm7 G7>").voicing().s("gm_epiano1")
+$: n("0 2 4 2")
+  .scale("<C5:major A5:mixolydian D5:dorian G5:mixolydian>")
+  .s("gm_vibraphone")`}>
+  <Step check={{ includes: '.scaleTranspose(', cycles: 4, match: { keys: ['note'] } }}
+        target={`$: chord("<C^7 Am7 Dm7 G7>").voicing().s("gm_epiano1")
+$: n("0 2 4 2")
+  .scale("C5:major")
+  .scaleTranspose("<0 5 1 4>")
+  .s("gm_vibraphone")`}
+        hints={['It goes after `.scale(...)`, which it needs in order to count steps.',
+                'From C, the roots A, D and G are 5, 1 and 4 steps up the scale.']}
+        solution={`$: chord("<C^7 Am7 Dm7 G7>").voicing().s("gm_epiano1")
+$: n("0 2 4 2")
+  .scale("C5:major")
+  .scaleTranspose("<0 5 1 4>")
+  .s("gm_vibraphone")`}>
+    Play it: the vibes play C, E, G over every chord, which rubs against the G7. Add
+    `.scaleTranspose("<0 5 1 4>")` under the scale line. Each cycle the line walks up the scale to
+    the chord's root: C–E–G, A–C–E, D–F–A, G–B–D.
+  </Step>
+  <Step check={{ excludes: 'scaleTranspose', cycles: 4, match: { keys: ['note'] } }}
+        target={`$: chord("<C^7 Am7 Dm7 G7>").voicing().s("gm_epiano1")
+$: n("0 2 4 2")
+  .scale("C5:major")
+  .scaleTranspose("<0 5 1 4>")
+  .s("gm_vibraphone")`}
+        hints={['Delete the `scaleTranspose` line and make the scale itself change every cycle.',
+                'Each chord gets the mode of C major that starts on its root, in octave 5.']}
+        solution={`$: chord("<C^7 Am7 Dm7 G7>").voicing().s("gm_epiano1")
+$: n("0 2 4 2")
+  .scale("<C5:major A5:minor D5:dorian G5:mixolydian>")
+  .s("gm_vibraphone")`}>
+    Delete the `scaleTranspose` line and change the scale to
+    `"<C5:major A5:minor D5:dorian G5:mixolydian>"`. Identical notes: these are the modes of C
+    major that start on each root. The difference is that you now name each chord's scale
+    separately, so it no longer has to be C major.
+  </Step>
+  <Step check={{ includes: 'A7', cycles: 4, match: { keys: ['note'] } }}
+        target={`$: chord("<C^7 A7 Dm7 G7>").voicing().s("gm_epiano1")
+$: n("0 2 4 2")
+  .scale("<C5:major A5:minor D5:dorian G5:mixolydian>")
+  .s("gm_vibraphone")`}
+        hints={['Only the chord lane changes; one symbol loses its `m`.']}
+        solution={`$: chord("<C^7 A7 Dm7 G7>").voicing().s("gm_epiano1")
+$: n("0 2 4 2")
+  .scale("<C5:major A5:minor D5:dorian G5:mixolydian>")
+  .s("gm_vibraphone")`}>
+    In the chord lane, change `Am7` to `A7`, the secondary dominant that pulls to Dm. Listen to the
+    second cycle: the chord now has a C#, and the vibes still play C natural against it.
+    `scaleTranspose` could never fix this, because it only walks C major.
+  </Step>
+  <Step check={{ includes: 'A5:mixolydian', cycles: 4, match: { keys: ['note'] } }}
+        hints={['A dominant seventh chord fits the mixolydian mode on its root.']}
+        solution={`$: chord("<C^7 A7 Dm7 G7>").voicing().s("gm_epiano1")
+$: n("0 2 4 2")
+  .scale("<C5:major A5:mixolydian D5:dorian G5:mixolydian>")
+  .s("gm_vibraphone")`}>
+    Change `A5:minor` to `A5:mixolydian`. The line now plays A–C#–E: it follows the chord out of
+    the key and back in, and the degrees never changed.
+  </Step>
+</Exercise>
+
+<Exercise id="arpeggios/over-changes-challenge" title="Challenge: a ii–V–I in Bb"
+  goal="Keep the chord lane. Make the melody 0 2 4 6 fit each chord: C dorian from C5, F mixolydian from F5, Bb major from Bb4."
+  start={`$: chord("<Cm7 F7 Bb^7>").voicing().s("gm_epiano1")
+$: n("0 2 4 6")
+  .scale("C5:major")
+  .s("gm_vibraphone")`}
+  target={`$: chord("<Cm7 F7 Bb^7>").voicing().s("gm_epiano1")
+$: n("0 2 4 6")
+  .scale("<C5:dorian F5:mixolydian Bb4:major>")
+  .s("gm_vibraphone")`}
+  check={{ cycles: 3, match: { keys: ['note'] } }}
+  hints={['Mode names such as `dorian` and `mixolydian` go after the root, separated by a colon.',
+          'The scale argument is a pattern, so it can change once per cycle.',
+          'All three are modes of Bb major, so `scaleTranspose` from `Bb4:major` gets you there too.']} />
+
+## 7. Craft: direction, rhythm, register
+
+Which notes you play is half of an arpeggio. The other half is which way it goes, what rhythm it
+has, and where on the keyboard it sits.
+
+<Exercise id="arpeggios/craft" title="Same chords, different arpeggio"
+  goal="Keep one progression and change only the direction, the rhythm, the register and the ring."
+  start={`chord("<Cm Ab Fm G>").voicing()
+  .arp("0 1 2 3")
+  .s("gm_epiano1")`}
+  target={`chord("<Cm Ab Fm G>").voicing()
+  .arp("0 [1 2] 3 [2 1]")
+  .transpose(12)
+  .s("gm_epiano1")
+  .clip(2)`}>
+  <Step check={{ cycles: 4, match: { keys: ['note'] } }}
+        target={`chord("<Cm Ab Fm G>").voicing()
+  .arp("3 2 1 0")
+  .s("gm_epiano1")`}
+        hints={['Reverse the four indices.']}
+        solution={`chord("<Cm Ab Fm G>").voicing()
+  .arp("3 2 1 0")
+  .s("gm_epiano1")`}>
+    Reverse it: `"3 2 1 0"`. Falling arpeggios sound like they are settling; rising ones sound like
+    they are asking.
+  </Step>
+  <Step check={{ cycles: 4, events: 24, match: { keys: ['note'] } }}
+        target={`chord("<Cm Ab Fm G>").voicing()
+  .arp("0 1 2 3 2 1")
+  .s("gm_epiano1")`}
+        hints={['Up to the top and back down, without repeating the top or the bottom.']}
+        solution={`chord("<Cm Ab Fm G>").voicing()
+  .arp("0 1 2 3 2 1")
+  .s("gm_epiano1")`}>
+    Up and back: `"0 1 2 3 2 1"`. Six slots in a cycle is a triplet feel. The count of indices is
+    the rhythm, so choosing the shape also chooses the groove.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['note'] } }}
+        target={`chord("<Cm Ab Fm G>").voicing()
+  .arp("0 [1 2] 3 [2 1]")
+  .s("gm_epiano1")`}
+        hints={['Brackets squeeze two indices into one slot.']}
+        solution={`chord("<Cm Ab Fm G>").voicing()
+  .arp("0 [1 2] 3 [2 1]")
+  .s("gm_epiano1")`}>
+    Make it `"0 [1 2] 3 [2 1]"`. Back to four beats, but two of them are split: the index string is
+    ordinary mini-notation, so every rhythm trick you know works here.
+  </Step>
+  <Step check={{ includes: '.transpose(', cycles: 4, match: { keys: ['note'] } }}
+        target={`chord("<Cm Ab Fm G>").voicing()
+  .arp("0 [1 2] 3 [2 1]")
+  .transpose(12)
+  .s("gm_epiano1")`}
+        hints={['Semitones, and an octave is twelve of them.']}
+        solution={`chord("<Cm Ab Fm G>").voicing()
+  .arp("0 [1 2] 3 [2 1]")
+  .transpose(12)
+  .s("gm_epiano1")`}>
+    Add `.transpose(12)` under the `arp` line. The same figure an octave up is brighter and gets
+    out of the way of a bass part. Register is a mixing decision as much as a musical one.
+  </Step>
+  <Step check={{ includes: '.clip(', has: { clip: [1.5, 4] } }}
+        hints={['The control from the first section of this chapter.']}
+        solution={`chord("<Cm Ab Fm G>").voicing()
+  .arp("0 [1 2] 3 [2 1]")
+  .transpose(12)
+  .s("gm_epiano1")
+  .clip(2)`}>
+    Finally add `.clip(2)` at the end so each note rings into the next. Without it, a fast figure
+    on an electric piano is a row of short, separate notes; with it, it is a chord in motion.
+  </Step>
+</Exercise>
+
+<Exercise id="arpeggios/craft-challenge" title="Challenge: a falling figure, up high"
+  goal="Am, F, C, G, one per cycle: the top note, then the two middle notes quickly going down, then the bottom, then the two middle notes quickly going up, all an octave above where voicing() puts them."
+  start={`chord("<Am F C G>").voicing()
+  .s("gm_epiano1")`}
+  target={`chord("<Am F C G>").voicing()
+  .arp("3 [2 1] 0 [1 2]")
+  .transpose(12)
+  .s("gm_epiano1")`}
+  check={{ cycles: 4, match: { keys: ['note'] } }}
+  hints={['`arp` picks notes from the voicing by index, and index 0 is the bottom.',
+          'Four slots, two of them split in half with brackets.',
+          'The octave shift is its own line, counted in semitones.']} />
+
+## Which one, when
+
+| Technique | Reach for it when | What it costs |
+| --- | --- | --- |
+| By hand, `note("c3 eb3 g3")` | a specific voicing matters, or it is a one-off | every chord is typed out; changing key means retyping |
+| Degrees, `n("0 2 4").scale(...)` | you are sketching inside one key | only notes in the scale exist; a borrowed chord needs a different scale |
+| `off()` on a plain pattern | you want the arpeggio or a second voice to come out of rhythm, from a single root or a line | the notes are implied by offsets, so it is harder to read at a glance |
+| `arp()` over a stack or `voicing()` | the harmony already exists and the figure should follow it | an index is a position, not a pitch; voicings vary in size and indices wrap |
+| Scale per chord, `scale("<C:major A:mixolydian>")` | a melody has to follow changes, including chords outside the key | you name a scale for every chord |
+
+<QA q="arp() or n() in front of chord().voicing()?">
+Both index into a voicing, and for indices inside the voicing they give the same notes. They differ
+past the top: `arp` wraps back to the bottom note in the same octave, while `n` climbs into the next
+octave. Use `arp` for a figure that stays inside the chord, and `n` for a line that should run up
+past it.
+</QA>
+
+<QA q="Why does off() need the numbers before .n()?">
+Because `off` is almost always used with an `add`, and `add` only works on plain values. Build the
+pattern, do all the maths, and label it with `.n()` or `.note()` last. If the pattern is already
+labelled, write the operand labelled too: `.off(1/8, add(n(2)))`.
+</QA>

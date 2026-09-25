@@ -44,6 +44,18 @@ export const CHAPTERS: Chapter[] = [
     blurb: 'note, n + scale, chord + voicing, transpose, arp.',
   },
   {
+    part: 'Harmony',
+    slug: 'harmony',
+    title: 'Harmony & Voicings',
+    blurb: 'Chord symbols, voicing dictionaries, anchor and mode, voice leading.',
+  },
+  {
+    part: 'Harmony',
+    slug: 'arpeggios',
+    title: 'Arpeggios & Melody',
+    blurb: 'Picking chords apart, and moving a melody over changes.',
+  },
+  {
     part: 'Shaping Sound',
     slug: 'envelopes',
     title: 'Envelopes',
