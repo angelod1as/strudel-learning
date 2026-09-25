@@ -108,10 +108,15 @@ Never paste the solution into a hint.
    note plays at the sample's base pitch. Write `.voicing().s(...)`. The opposite holds for
    `rootNotes()`, which emits a plain value and does need `.note()`. `__exerciseQA()` now fails on
    any `note`/`n`/`freq`/`s` that arrives as an object.
-6. Randomness (`?`, `|`, `degradeBy`, `rand`) can't be matched exactly — use `includes` plus an
+7. **Check sound names against the registry, never from memory.** An unknown name is silent or
+   unpitched rather than an error. The General MIDI names are short — `gm_epiano1`, not
+   `gm_electric_piano_1` — and not every bank has every sound (`RolandTR707` has no `perc`).
+   `__exerciseQA()` now fails on any sound it cannot resolve, banks included. To list what exists,
+   run `Object.keys(soundMap.get())` in the browser console.
+8. Randomness (`?`, `|`, `degradeBy`, `rand`) can't be matched exactly — use `includes` plus an
    `events` range.
-7. Tempo (`setcpm`) doesn't change event positions within a cycle. Check it with `includes`/`code`.
-8. `has` on an effect only sees it if the effect is actually on the event, so check ranges like
+9. Tempo (`setcpm`) doesn't change event positions within a cycle. Check it with `includes`/`code`.
+10. `has` on an effect only sees it if the effect is actually on the event, so check ranges like
    `has: { lpf: [100, 800] }` rather than an exact number the learner has to guess.
 
 ## Validating before you finish — required
