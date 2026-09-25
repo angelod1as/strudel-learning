@@ -87,6 +87,39 @@ export function malformedValues(pattern: PatternLike | null, cycles = 2): string
   return null;
 }
 
+/**
+ * Every sound an exercise triggers must actually be registered. An unknown
+ * name is silent or unpitched rather than an error — `gm_electric_piano_1`
+ * does not exist (it is `gm_epiano1`), and a chord played on it came out as
+ * one repeated note. Nothing in the pattern layer can see that.
+ *
+ * Skipped when the code registers its own sounds, since those load
+ * asynchronously and may not be ready while QA runs.
+ */
+export function unknownSounds(pattern: PatternLike | null, code: string, cycles = 2): string | null {
+  const registry = (globalThis as { soundMap?: { get(): Record<string, unknown> } }).soundMap;
+  if (!registry || /\bsamples\s*\(|\bsoundAlias\s*\(/.test(code)) return null;
+  const known = registry.get();
+  const missing = new Set<string>();
+  for (const e of eventsOf(pattern, cycles)) {
+    const raw = e.value.s ?? e.value.sound;
+    if (typeof raw !== 'string' || ['-', '~', '_'].includes(raw)) continue;
+    // A name with a space is a whole mini-notation string passed as a plain
+    // string ('single quotes'). That is its own, instantly audible mistake,
+    // and Getting Started teaches it on purpose, so it is not reported here.
+    if (/\s/.test(raw)) continue;
+    // Registry keys are lower case (`rolandtr909_bd`) and bank() lower-cases
+    // when it resolves, so compare that way. With a bank, only the banked name
+    // counts: falling back to the bare name hides a bank that lacks a sound.
+    const bank = typeof e.value.bank === 'string' ? e.value.bank : '';
+    const name = (bank ? `${bank}_${raw}` : raw).toLowerCase();
+    if (!(name in known)) missing.add(bank ? `${bank}_${raw}` : raw);
+  }
+  if (!missing.size) return null;
+  const list = [...missing].map((n) => `\`${n}\``).join(', ');
+  return `unknown sound ${list} — not registered, so it plays silent or unpitched`;
+}
+
 // ---------------------------------------------------------------- time, musically
 
 /** Best small fraction for x in [0, 1): "1/3", "5/12". */

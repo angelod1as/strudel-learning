@@ -998,3 +998,22 @@ main .exercise-done {
   font-size: 0.8rem;
   flex: none;
 }
+
+/* a draft written against an older version of an exercise */
+.exercise-outdated {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  font-size: 0.85rem;
+  color: var(--fg);
+}
+.exercise-outdated span {
+  flex: 1;
+  min-width: 14rem;
+}

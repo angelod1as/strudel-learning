@@ -499,31 +499,31 @@ events you get, ask which side the structure came from.
 
 <Exercise id="pattern-functions/windows" title="zoom, linger, inside"
   goal="Play a slice of a bar, loop a slice of a bar, and transform at a different time scale."
-  start={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707")`}
-  target={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").inside(2, rev)`}>
+  start={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707")`}
+  target={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").inside(2, rev)`}>
   <Step check={{ includes: '.zoom(', match: { keys: ['s'] } }}
-        target={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").zoom(.25, .75)`}
+        target={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").zoom(.25, .75)`}
         hints={['Two positions in the cycle, 0 to 1.']}
-        solution={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").zoom(.25, .75)`}>
+        solution={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").zoom(.25, .75)`}>
     Add `.zoom(.25, .75)`. The middle half of the bar is stretched out to fill the whole bar —
     beats 1 and 4 are gone, and what is left plays at half speed.
   </Step>
   <Step check={{ includes: '.linger(', match: { keys: ['s'] } }}
-        target={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").linger(.25)`}
+        target={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").linger(.25)`}
         hints={['One number: the fraction of the cycle to keep.']}
-        solution={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").linger(.25)`}>
+        solution={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").linger(.25)`}>
     Replace it with `.linger(.25)`. This one takes the first quarter and repeats it for the rest of
     the bar, at its original speed: an instant stutter.
   </Step>
   <Step check={{ includes: 'linger("<', cycles: 4, match: { keys: ['s'] } }}
-        target={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").linger("<1 .5 .25 .125>")`}
+        target={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").linger("<1 .5 .25 .125>")`}
         hints={['`< >`, one value per bar, starting at 1 for "the whole bar".']}
-        solution={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").linger("<1 .5 .25 .125>")`}>
+        solution={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").linger("<1 .5 .25 .125>")`}>
     Pattern it: `.linger("<1 .5 .25 .125>")`. Four bars that collapse in on themselves.
   </Step>
   <Step check={{ includes: '.inside(', match: { keys: ['s'] } }}
         hints={['`inside(n, f)` slows the pattern by n, applies f, and speeds it back up.', 'With n = 2 the function sees two bars at once, so it reverses half-bars.']}
-        solution={`s("bd*2 hh*3 [sd bd]*2 perc").bank("RolandTR707").inside(2, rev)`}>
+        solution={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").inside(2, rev)`}>
     Replace it with `.inside(2, rev)`. Instead of reversing the whole bar, `rev` now happens at
     half-bar scale: each half is reversed where it stands.
   </Step>

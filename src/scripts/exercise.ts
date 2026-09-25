@@ -1,7 +1,7 @@
 // Client runtime for <Exercise>/<Step>. The contract is src/exercise/types.ts;
 // the check engine is src/exercise/check.ts (shared with the QA harness).
 import type { Check } from '../exercise/types';
-import { passed, runCheck, type PatternLike, type Result, malformedValues } from '../exercise/check';
+import { passed, runCheck, type PatternLike, type Result, malformedValues, unknownSounds } from '../exercise/check';
 
 // ---------------------------------------------------------------- strudel glue
 
@@ -71,6 +71,16 @@ interface Saved {
   code?: string;
   step?: number;
   done?: boolean;
+  /** Fingerprint of the exercise this draft was written against. */
+  fp?: string;
+}
+
+/** Stable short hash (djb2) — used to notice that an exercise was edited. */
+function fingerprint(parts: (string | undefined)[]): string {
+  let h = 5381;
+  const text = parts.filter(Boolean).join('\u0000');
+  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
 }
 
 function readAll(): Record<string, Saved> {
@@ -177,8 +187,18 @@ class ExerciseUI {
       if (num) num.textContent = String(i + 1);
     });
 
+    this.fp = fingerprint([
+      this.start,
+      this.targetCode,
+      ...this.steps.map((st) => st.solution),
+      ...this.steps.map((st) => st.target),
+    ]);
+
     const saved = readAll()[this.id];
     if (saved) {
+      // The exercise changed since this draft was written (a fixed bug, new
+      // steps). Their code is kept; they are offered the new version.
+      this.outdated = saved.fp !== this.fp;
       this.done = !!saved.done;
       this.step = Math.min(Math.max(0, saved.step ?? 0), this.steps.length);
       if (this.done) this.step = this.steps.length;
@@ -189,6 +209,9 @@ class ExerciseUI {
     this.wire();
     this.render();
   }
+
+  private fp = '';
+  private outdated = false;
 
   get editor() {
     return this.editorEl.editor!;
@@ -395,6 +418,7 @@ class ExerciseUI {
 
   render() {
     const n = this.steps.length;
+    this.renderOutdated();
     this.root.toggleAttribute('data-done', this.done);
     this.steps.forEach((s, i) => {
       const state = this.done || i < this.step ? 'done' : i === this.step ? 'current' : 'todo';
@@ -496,6 +520,46 @@ class ExerciseUI {
   }
 
   /** Back to the start: code, step counter, done state, revealed hints. */
+  /**
+   * A draft written against an older version of this exercise. The code is
+   * kept — it may be their own work — but a fixed exercise would otherwise
+   * never reach someone who had already typed in it.
+   */
+  private renderOutdated() {
+    const existing = this.root.querySelector('[data-exercise-outdated]');
+    if (!this.outdated) {
+      existing?.remove();
+      return;
+    }
+    if (existing) return;
+
+    const box = document.createElement('div');
+    box.className = 'exercise-outdated';
+    box.setAttribute('data-exercise-outdated', '');
+    const text = document.createElement('span');
+    text.textContent = 'This exercise was updated since you last worked on it. Your code is still here.';
+    const load = document.createElement('button');
+    load.type = 'button';
+    load.className = 'ex-btn';
+    load.textContent = 'load the updated version';
+    load.addEventListener('click', () => {
+      if (!window.confirm('Replace your code with the updated starting code?')) return;
+      this.outdated = false;
+      this.reset();
+    });
+    const keep = document.createElement('button');
+    keep.type = 'button';
+    keep.className = 'ex-btn';
+    keep.textContent = 'keep mine';
+    keep.addEventListener('click', () => {
+      this.outdated = false;
+      this.saveNow();
+      this.render();
+    });
+    box.append(text, load, keep);
+    this.root.querySelector('.exercise-editor')?.before(box);
+  }
+
   reset() {
     this.editor.setCode(this.start);
     this.step = 0;
@@ -515,7 +579,7 @@ class ExerciseUI {
 
   saveNow() {
     window.clearTimeout(this.saveTimer);
-    writeOne(this.id, { code: this.editor.code, step: this.step, done: this.done });
+    writeOne(this.id, { code: this.editor.code, step: this.step, done: this.done, fp: this.fp });
   }
 
   // -------------------------------------------------------------- wiring
@@ -654,7 +718,7 @@ if (import.meta.env.DEV) {
         const start = await evalCode(ui.start);
         if (start.error !== undefined) add('start', `start fails to evaluate: ${start.error}`);
         else {
-          const bad = malformedValues(start.pattern);
+          const bad = malformedValues(start.pattern) ?? unknownSounds(start.pattern, ui.start);
           if (bad) add('start', bad);
         }
 
@@ -663,7 +727,8 @@ if (import.meta.env.DEV) {
         ui.steps.forEach((s, i) => s.target && !targets.has(s.target) && targets.set(s.target, `step ${i + 1} target`));
         for (const [code, where] of targets) {
           try {
-            const bad = malformedValues(await ui.targetPattern(code));
+            const tp = await ui.targetPattern(code);
+            const bad = malformedValues(tp) ?? unknownSounds(tp, code);
             if (bad) add(where, bad);
           } catch (e) {
             add(where, `${where} fails to evaluate: ${errText(e)}`);
@@ -701,7 +766,7 @@ if (import.meta.env.DEV) {
           if (!s.solution.trim()) add(where, 'empty data-solution');
           if (sol.error !== undefined) add(where, `solution fails to evaluate: ${sol.error}`);
           else {
-            const bad = malformedValues(sol.pattern);
+            const bad = malformedValues(sol.pattern) ?? unknownSounds(sol.pattern, s.solution);
             if (bad) add(where, bad);
           }
           if (s.check && sol.error === undefined) {
