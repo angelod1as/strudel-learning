@@ -47,26 +47,39 @@ at a time.
     the notes bleed into each other.
   </Step>
   <Step check={{ includes: '.decay(', has: { decay: [0.05, 0.3] } }}
-        hints={['Add it and listen before you read the next step — the surprise is the point.']}
+        hints={['`decay` is a time: how long the fall from full volume takes.']}
         solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1)`}>
-    Add `.decay(.1)` and play it. Listen carefully: nothing changed.
+    Add `.decay(.1)`. The long notes are gone: each one snaps down to nothing in a tenth of a
+    second. That is a pluck. **Decay is the fall from full volume down to the sustain level — and
+    when you set a decay without setting a sustain, that level is 0.**
   </Step>
   <Step check={{ has: { sustain: [0.1, 0.4] } }}
         hints={['`sustain` is a level from 0 to 1, not a time.']}
         solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1).sustain(.25)`}>
-    Add `.sustain(.25)`. *Now* the decay bites: each note drops to a quarter of full volume over
-    0.1 s and holds there. **Decay does nothing when sustain is 1** — there is nothing to decay to,
-    and 1 is the default.
+    Add `.sustain(.25)`. The fall now stops at a quarter of full volume and holds there for the
+    rest of the note, so the body comes back — a plucked attack with a tail behind it.
+  </Step>
+  <Step check={{ has: { sustain: [0.9, 1] } }}
+        hints={['If the fall starts and ends at the same level, there is no fall.']}
+        solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1).sustain(1)`}>
+    Now put the sustain up to `1` and listen: the decay stops doing anything at all. It is still
+    there, still 0.1 s long, but full volume falling *to* full volume is no change. Decay and
+    sustain only mean something together.
   </Step>
   <Step check={{ has: { sustain: [0, 0.02] } }}
+        hints={['Back to the level that made it a pluck.']}
         solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1).sustain(0)`}>
-    Change the sustain to `0`. The note falls all the way to silence in 0.1 s: the decay is now the
-    whole sound.
+    Take the sustain back down to `0` for the full pluck. You now have all four: `attack` and
+    `decay` and `release` are times, `sustain` is the level the decay aims at.
   </Step>
 </Exercise>
 
+Several Strudel controls take more than one number, packed into one string with colons in a fixed
+order. `adsr` is the first you meet: `adsr("attack:decay:sustain:release")` is the same as chaining
+all four. You will see the same shape later in `delay("level:time:feedback")` and `lpf("freq:q")`.
+
 <Exercise id="envelopes/adsr-challenge" title="Challenge: all four in one string"
-  goal="Write that same envelope — attack .01, decay .1, sustain .25, release .5 — as a single adsr() call."
+  goal='Write that same envelope — attack .01, decay .1, sustain .25, release .5 — as one adsr("a:d:s:r") call.'
   start={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600)`}
   target={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).adsr(".01:.1:.25:.5")`}
   check={{ includes: '.adsr(', match: { keys: ['attack', 'decay', 'sustain', 'release'] } }}
