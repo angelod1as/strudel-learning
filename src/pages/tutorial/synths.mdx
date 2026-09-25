@@ -52,11 +52,17 @@ Four oscillators, in order of how much they contain: `sine` has the fundamental 
     Put all four in one string, one per bar: `.s("<sawtooth square triangle sine>")`. Four bars,
     four timbres, same notes.
   </Step>
-  <Step check={{ includes: 'sqr', cycles: 4, match: { keys: ['s', 'note'] } }}
+  <Step check={{ includes: 'saw sqr', cycles: 4, match: { keys: ['s', 'note'] } }}
+        target={`note("c2 eb2 g2 c3").s("<saw sqr triangle sine>")`}
         hints={['Each name shortens to its first syllable.']}
+        solution={`note("c2 eb2 g2 c3").s("<saw sqr triangle sine>")`}>
+    Every name has a short alias. Change `sawtooth` to `saw` and `square` to `sqr`: bars 1 and 2
+    are identical, with less typing.
+  </Step>
+  <Step check={{ includes: 'tri sin>', cycles: 4, match: { keys: ['s', 'note'] } }}
+        hints={['Same rule: the first syllable.']}
         solution={`note("c2 eb2 g2 c3").s("<saw sqr tri sin>")`}>
-    Every name has a short alias. Replace them with `<saw sqr tri sin>`: identical sound, less
-    typing.
+    Shorten the other two: `triangle` to `tri`, `sine` to `sin`. Still the same four bars.
   </Step>
 </Exercise>
 
@@ -144,30 +150,50 @@ subtractive synthesis, because a static pulse sounds dead and a moving one sound
 
 <Exercise id="synths/pulse" title="Pulse width modulation"
   goal="Thin out a square by hand, then hand the job to an LFO."
-  start={`note("d2*8").s("sawtooth")`}
-  target={`note("d2*8").s("pulse").pw("<.1 .3 .5>").pwrate(4).pwsweep(.5)`}>
+  start={`note("d2*8")`}
+  target={`note("d2*8")
+  .s("pulse")
+  .pw("<.1 .3 .5>")
+  .pwrate(4)
+  .pwsweep(.5)`}>
   <Step check={{ has: { s: 'pulse' } }}
-        solution={`note("d2*8").s("pulse")`}>
-    Change `sawtooth` to `pulse`. With no width set you are hearing something square-ish.
+        hints={['One control per line from here on, so each step is one line.']}
+        solution={`note("d2*8")
+  .s("pulse")`}>
+    Play it first: the default `triangle`. Now add `.s("pulse")` on a new line. With no width set
+    you are hearing something square-ish.
   </Step>
   <Step check={{ includes: '.pw(', has: { pw: [0.02, 0.2] } }}
         hints={['`pw` is the fraction of each period the wave spends high: 0.5 is a square.']}
-        solution={`note("d2*8").s("pulse").pw(.1)`}>
+        solution={`note("d2*8")
+  .s("pulse")
+  .pw(.1)`}>
     Add `.pw(.1)`. A tenth high, nine tenths low: thin, buzzy, and much quieter in the low end.
   </Step>
   <Step check={{ cycles: 3, match: { keys: ['pw'] } }}
-        target={`note("d2*8").s("pulse").pw("<.1 .3 .5>")`}
-        solution={`note("d2*8").s("pulse").pw("<.1 .3 .5>")`}>
+        target={`note("d2*8")
+  .s("pulse")
+  .pw("<.1 .3 .5>")`}
+        solution={`note("d2*8")
+  .s("pulse")
+  .pw("<.1 .3 .5>")`}>
     Change it to `.pw("<.1 .3 .5>")` and listen to the tone fill out over three bars.
   </Step>
   <Step check={{ has: { pwrate: [1, 20] } }}
         hints={['The rate is in Hz, like any LFO.']}
-        solution={`note("d2*8").s("pulse").pw("<.1 .3 .5>").pwrate(4)`}>
+        solution={`note("d2*8")
+  .s("pulse")
+  .pw("<.1 .3 .5>")
+  .pwrate(4)`}>
     Add `.pwrate(4)`: an LFO wobbling the width four times a second, around whatever `pw` you set.
   </Step>
   <Step check={{ has: { pwsweep: [0.1, 1] }, cycles: 3, match: { keys: ['note', 's', 'pw', 'pwrate', 'pwsweep'] } }}
         hints={['`pwsweep` is how far the LFO pushes the width, not how fast.']}
-        solution={`note("d2*8").s("pulse").pw("<.1 .3 .5>").pwrate(4).pwsweep(.5)`}>
+        solution={`note("d2*8")
+  .s("pulse")
+  .pw("<.1 .3 .5>")
+  .pwrate(4)
+  .pwsweep(.5)`}>
     Add `.pwsweep(.5)` for the depth of that wobble. This is the sound of a string machine, and
     the reason PWM pads never sit still.
   </Step>
@@ -190,34 +216,61 @@ rolls off twice as hard and sounds like distant surf.
 
 <Exercise id="synths/noise" title="Three colours, then grit"
   goal="Compare the three noise sources, mix noise into a pitched tone, and thin it into crackle."
-  start={`s("white*4")`}
-  target={`s("crackle*4").density("<.01 .1 1>")`}>
+  start={`$: s("white*4")
+_$: note("c3*4").s("sine")
+_$: s("crackle*4").density(.2)`}
+  target={`_$: s("<white pink brown>*4")
+_$: note("c3*4").s("sine").noise("<0 .1 .5>")
+$: s("crackle*4").density("<.01 .1 1>")`}>
   <Step check={{ cycles: 3, match: { keys: ['s'] } }}
-        target={`s("<white pink brown>*4")`}
+        target={`$: s("<white pink brown>*4")
+_$: note("c3*4").s("sine")
+_$: s("crackle*4").density(.2)`}
         hints={['`< >` inside the quotes, `*4` outside it.']}
-        solution={`s("<white pink brown>*4")`}>
-    Change it to `s("<white pink brown>*4")`. Three bars: hard, medium, soft. The difference is
-    how fast the energy falls off as the frequency rises.
+        solution={`$: s("<white pink brown>*4")
+_$: note("c3*4").s("sine")
+_$: s("crackle*4").density(.2)`}>
+    Three lanes, and only the first one plays. In it, change `s("white*4")` to
+    `s("<white pink brown>*4")`. Three bars: hard, medium, soft. The difference is how fast the
+    energy falls off as the frequency rises.
+  </Step>
+  <Step check={{ has: { s: 'sine' } }}
+        hints={['`_$:` mutes a lane and `$:` plays it. Nothing else on either line changes.']}
+        solution={`_$: s("<white pink brown>*4")
+$: note("c3*4").s("sine")
+_$: s("crackle*4").density(.2)`}>
+    Swap which lane plays: change the first lane's `$:` to `_$:` and the second lane's `_$:` to
+    `$:`. A plain sine, with no noise in it yet.
   </Step>
   <Step check={{ includes: '.noise(', has: { s: 'sine', noise: [0.05, 1] } }}
         hints={['This is the `noise` *control*, not the `noise` sound source.']}
-        solution={`note("c3*4").s("sine").noise(.3)`}>
-    Noise is also something you mix **into** an oscillator. Replace the whole line with
-    `note("c3*4").s("sine").noise(.3)`: a clean sine with breath on it.
+        solution={`_$: s("<white pink brown>*4")
+$: note("c3*4").s("sine").noise(.3)
+_$: s("crackle*4").density(.2)`}>
+    Noise is also something you mix **into** an oscillator. Add `.noise(.3)` to the sine lane: a
+    clean sine with breath on it.
   </Step>
   <Step check={{ cycles: 3, match: { keys: ['noise'] } }}
-        target={`note("c3*4").s("sine").noise("<0 .1 .5>")`}
-        solution={`note("c3*4").s("sine").noise("<0 .1 .5>")`}>
+        target={`_$: s("<white pink brown>*4")
+$: note("c3*4").s("sine").noise("<0 .1 .5>")
+_$: s("crackle*4").density(.2)`}
+        solution={`_$: s("<white pink brown>*4")
+$: note("c3*4").s("sine").noise("<0 .1 .5>")
+_$: s("crackle*4").density(.2)`}>
     Change it to `.noise("<0 .1 .5>")`. Bar 1 is pure, bar 2 is a flute, bar 3 is a broken speaker.
   </Step>
   <Step check={{ has: { s: 'crackle', density: [0.01, 2] } }}
-        hints={['`crackle` is its own sound source, and `density` is how many clicks per second.']}
-        solution={`s("crackle*4").density(.2)`}>
-    Now the opposite of a wall of noise: replace the line with `s("crackle*4").density(.2)`.
-    Individual clicks, vinyl-style.
+        hints={['Same swap as before, one lane further down.', '`crackle` is its own sound source, and `density` is how many clicks per second.']}
+        solution={`_$: s("<white pink brown>*4")
+_$: note("c3*4").s("sine").noise("<0 .1 .5>")
+$: s("crackle*4").density(.2)`}>
+    Now the opposite of a wall of noise: mute the sine lane and play the third one,
+    `s("crackle*4").density(.2)`. Individual clicks, vinyl-style.
   </Step>
   <Step check={{ cycles: 3, match: { keys: ['s', 'density'] } }}
-        solution={`s("crackle*4").density("<.01 .1 1>")`}>
+        solution={`_$: s("<white pink brown>*4")
+_$: note("c3*4").s("sine").noise("<0 .1 .5>")
+$: s("crackle*4").density("<.01 .1 1>")`}>
     Change it to `.density("<.01 .1 1>")`. From an occasional tick to a downpour.
   </Step>
 </Exercise>
@@ -240,31 +293,51 @@ A pitch LFO, built in. `vib` is the rate in Hz and `vibmod` the depth in semiton
 in one string, `"rate:depth"`.
 
 <Exercise id="synths/vibrato" title="Wobble the pitch"
-  goal="Go from a gentle singer's vibrato to a siren, then write it in one string."
-  start={`note("<a4 e4>").s("triangle")`}
-  target={`note("<a4 e4>").s("triangle").vib("6:12")`}>
+  goal="Go from a gentle singer's vibrato to a siren, write it in one string, then push the rate past a wobble."
+  start={`note("<a4 e4>")
+  .s("triangle")`}
+  target={`note("<a4 e4>")
+  .s("triangle")
+  .vib("<.5 2 8 16>:2")`}>
   <Step check={{ includes: '.vib(', has: { vib: [1, 10] } }}
         hints={['The number is a rate in Hz — around 5 is what a singer does.']}
-        solution={`note("<a4 e4>").s("triangle").vib(4)`}>
-    Add `.vib(4)`: the pitch wobbles four times a second. That is expression.
-  </Step>
-  <Step check={{ cycles: 4, match: { keys: ['vib'] } }}
-        target={`note("<a4 e4>").s("triangle").vib("<.5 2 8 16>")`}
-        solution={`note("<a4 e4>").s("triangle").vib("<.5 2 8 16>")`}>
-    Change it to `.vib("<.5 2 8 16>")`. Past about 10 Hz you stop hearing a wobble and start
-    hearing a new timbre — which is the whole idea behind FM, two sections down.
+        solution={`note("<a4 e4>")
+  .s("triangle")
+  .vib(4)`}>
+    Add `.vib(4)` on a new line: the pitch wobbles four times a second. That is expression.
   </Step>
   <Step check={{ includes: '.vibmod(', has: { vibmod: [0.1, 12] } }}
         hints={['Depth is in semitones, so `1` is a semitone either side.']}
-        solution={`note("<a4 e4>").s("triangle").vib("<.5 2 8 16>").vibmod(2)`}>
+        solution={`note("<a4 e4>")
+  .s("triangle")
+  .vib(4)
+  .vibmod(2)`}>
     Add `.vibmod(2)`: two semitones of depth. Rate without depth is nothing; this is the knob that
     decides between "tasteful" and "seasick".
   </Step>
-  <Step check={{ excludes: '.vibmod(', has: { vib: 6, vibmod: 12 } }}
+  <Step check={{ includes: ':', excludes: '.vibmod(', has: { vib: 4, vibmod: 2 } }}
         hints={['One string, one colon, no `vibmod` call left.']}
-        solution={`note("<a4 e4>").s("triangle").vib("6:12")`}>
-    Replace both calls with `.vib("6:12")` — rate and depth in one string. Twelve semitones is an
-    octave each way: an air-raid siren.
+        solution={`note("<a4 e4>")
+  .s("triangle")
+  .vib("4:2")`}>
+    Replace both lines with `.vib("4:2")`: rate, then depth, in one string. Nothing changes — it
+    sets exactly the same two values.
+  </Step>
+  <Step check={{ has: { vib: 6, vibmod: 12 } }}
+        hints={['Only the two numbers inside the string change.']}
+        solution={`note("<a4 e4>")
+  .s("triangle")
+  .vib("6:12")`}>
+    Change it to `.vib("6:12")`. Twelve semitones is an octave each way: an air-raid siren.
+  </Step>
+  <Step check={{ cycles: 4, match: { keys: ['vib', 'vibmod'] } }}
+        hints={['The rate half of the string takes mini-notation: `< >` before the colon.']}
+        solution={`note("<a4 e4>")
+  .s("triangle")
+  .vib("<.5 2 8 16>:2")`}>
+    Now sweep the rate and pull the depth back to 2: `.vib("<.5 2 8 16>:2")`, one rate per bar.
+    Past about 10 Hz you stop hearing a wobble and start hearing a new timbre — which is the whole
+    idea behind FM, two sections down.
   </Step>
 </Exercise>
 
@@ -385,36 +458,64 @@ an array, one entry per harmonic; `phases` says where each harmonic starts in it
 
 <Exercise id="synths/partials" title="Build a tone from harmonics"
   goal="Tame a saw with a partials array, then build a waveform from scratch and compute one."
-  start={`note("c2 g2 c3 g2").s("sawtooth")`}
-  target={`note("c2 g2 c3 g2").s("user").partials(new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1))).phases(randL(16))`}>
+  start={`note("c2 g2 c3 g2")
+  .s("sawtooth")`}
+  target={`note("c2 g2 c3 g2")
+  .s("user")
+  .partials(
+    new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1))
+  )
+  .phases(randL(16))`}>
   <Step check={{ includes: '.partials(', fn: "(h) => h.every((e) => Array.isArray(e.value.partials)) || 'Every note needs a partials array.'" }}
         hints={['One number per harmonic, starting at the fundamental.']}
-        solution={`note("c2 g2 c3 g2").s("sawtooth").partials([1, 1, 1, 0, 0, 0, 0, 0])`}>
-    Add `.partials([1, 1, 1, 0, 0, 0, 0, 0])`. You have muted everything above the third harmonic:
+        solution={`note("c2 g2 c3 g2")
+  .s("sawtooth")
+  .partials(
+    [1, 1, 1, 0, 0, 0, 0, 0]
+  )`}>
+    Add `.partials([1, 1, 1, 0, 0, 0, 0, 0])`, with the array on a line of its own inside the
+    call: it is what the next steps change. You have muted everything above the third harmonic:
     the saw loses its edge without a filter anywhere in sight.
   </Step>
   <Step check={{ has: { s: 'user' } }}
         hints={['The source is called `user`.']}
-        solution={`note("c2 g2 c3 g2").s("user").partials([1, 1, 1, 0, 0, 0, 0, 0])`}>
+        solution={`note("c2 g2 c3 g2")
+  .s("user")
+  .partials(
+    [1, 1, 1, 0, 0, 0, 0, 0]
+  )`}>
     Change `.s("sawtooth")` to `.s("user")`. Now there is no starting waveform at all — the array
     *is* the waveform.
   </Step>
   <Step check={{ fn: "(h) => h.every((e) => e.value.partials && e.value.partials.length === 8 && e.value.partials[1] === 0 && e.value.partials[2] === 0.3) || 'Expected eight partials, the second 0 and the third 0.3.'" }}
         hints={['Zero out the even entries and give the odd ones falling amplitudes.']}
-        solution={`note("c2 g2 c3 g2").s("user").partials([1, 0, 0.3, 0, 0.1, 0, 0, 0.3])`}>
+        solution={`note("c2 g2 c3 g2")
+  .s("user")
+  .partials(
+    [1, 0, 0.3, 0, 0.1, 0, 0, 0.3]
+  )`}>
     Change the array to `[1, 0, 0.3, 0, 0.1, 0, 0, 0.3]`. Mostly odd harmonics, plus a loud eighth:
     hollow with a glassy ring on top.
   </Step>
   <Step check={{ includes: 'new Array(', fn: "(h) => h.every((e) => e.value.partials && e.value.partials.length === 16) || 'Expected a computed array of 16 partials.'" }}
         hints={['It is plain JavaScript inside the call: build the array, then `.map` it.']}
-        solution={`note("c2 g2 c3 g2").s("user").partials(new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1)))`}>
+        solution={`note("c2 g2 c3 g2")
+  .s("user")
+  .partials(
+    new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1))
+  )`}>
     Compute them instead. Replace the array with
     `new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1))`. Every harmonic at `1/n`
     with alternating signs is the Fourier series of a sawtooth: you have just rebuilt one by hand.
   </Step>
   <Step check={{ includes: '.phases(', fn: "(h) => h.every((e) => Array.isArray(e.value.phases) && e.value.phases.length === 16) || 'Expected a phases array of 16 entries.'" }}
         hints={['`randL(n)` is a list of n random numbers.']}
-        solution={`note("c2 g2 c3 g2").s("user").partials(new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1))).phases(randL(16))`}>
+        solution={`note("c2 g2 c3 g2")
+  .s("user")
+  .partials(
+    new Array(16).fill(0).map((_, i) => ((-1) ** (i + 1)) / (i + 1))
+  )
+  .phases(randL(16))`}>
     Add `.phases(randL(16))`. The spectrum is unchanged — the same harmonics at the same
     amplitudes — but the waveform looks and feels different. Re-evaluate a few times: each one is
     a new random set.
@@ -446,34 +547,46 @@ Wavetable device in Live. Over a thousand from the AKWF set are available.
 <Exercise id="synths/wavetables" title="Scan a wavetable"
   goal="Play a bass line through a wavetable and sweep across the table while it runs."
   start={`samples('github:bubobubobubobubo/dough-waveforms')
-note("c2*8").s("sawtooth")`}
+note("c2*8")
+  .s("sawtooth")`}
   target={`samples('github:bubobubobubobubo/dough-waveforms')
-note("c2*8").s("wt_dbass").n(saw.range(0, 8).slow(4))`}>
+note("c2*8")
+  .s("wt_dbass")
+  .n(saw.range(0, 8).slow(4))`}>
   <Step check={{ has: { s: 'wt_dbass' } }}
         hints={['The `samples(...)` line on top is what makes the `wt_*` names available.']}
         solution={`samples('github:bubobubobubobubo/dough-waveforms')
-note("c2*8").s("wt_dbass")`}>
+note("c2*8")
+  .s("wt_dbass")`}>
     Change `sawtooth` to `wt_dbass`. The first bar may be silent while the file downloads — sounds
     load lazily, so the first hit of anything new can be missing.
   </Step>
   <Step check={{ includes: '.n(', has: { n: 3 } }}
         hints={['`n` here is an index into the file, exactly like picking a sample from a folder.']}
         solution={`samples('github:bubobubobubobubo/dough-waveforms')
-note("c2*8").s("wt_dbass").n(3)`}>
+note("c2*8")
+  .s("wt_dbass")
+  .n(3)`}>
     Add `.n(3)`: a different single-cycle waveform out of the same file. Try `0`, `3` and `7` and
     listen to how far apart they are.
   </Step>
   <Step check={{ includes: 'run(', match: { keys: ['n'] } }}
         target={`samples('github:bubobubobubobubo/dough-waveforms')
-note("c2*8").s("wt_dbass").n(run(8))`}
+note("c2*8")
+  .s("wt_dbass")
+  .n(run(8))`}
         solution={`samples('github:bubobubobubobubo/dough-waveforms')
-note("c2*8").s("wt_dbass").n(run(8))`}>
+note("c2*8")
+  .s("wt_dbass")
+  .n(run(8))`}>
     Change it to `.n(run(8))`: a different waveform on every eighth note. One note, eight timbres.
   </Step>
   <Step check={{ includes: 'saw.range(', cycles: 4, match: { keys: ['n'] } }}
         hints={['`saw` is a signal that ramps from 0 to 1 every cycle; `.range(a, b)` rescales it.']}
         solution={`samples('github:bubobubobubobubo/dough-waveforms')
-note("c2*8").s("wt_dbass").n(saw.range(0, 8).slow(4))`}>
+note("c2*8")
+  .s("wt_dbass")
+  .n(saw.range(0, 8).slow(4))`}>
     Now automate it properly: `.n(saw.range(0, 8).slow(4))`. One slow sweep across the whole table
     every four bars, sampled at each note — the knob is now moving by itself.
   </Step>
@@ -485,28 +598,50 @@ pitch rather than rhythm.
 
 <Exercise id="synths/loop-oscillator" title="Turn a kick into an oscillator"
   goal="Loop the first few percent of a bass drum until it stops being a drum and becomes a note."
-  start={`s("bd*4").gain(.2)`}
-  target={`note("<c3 eb3 g3 f3>").s("bd").gain(.2).loop(1).loopEnd(.05)`}>
-  <Step check={{ includes: 'note(', match: { keys: ['note', 's'] } }}
-        target={`note("<c3 eb3 g3 f3>").s("bd").gain(.2)`}
+  start={`note("c3")
+  .s("bd")
+  .gain(.2)`}
+  target={`note("<c3 eb3 g3 f3>")
+  .s("bd")
+  .gain(.2)
+  .loop(1)
+  .loopEnd(.05)`}>
+  <Step check={{ includes: 'note("<c3', cycles: 4, match: { keys: ['note', 's'] } }}
+        target={`note("<c3 eb3 g3 f3>")
+  .s("bd")
+  .gain(.2)`}
         hints={['`note` sets the playback pitch of a sample, one per bar here.']}
-        solution={`note("<c3 eb3 g3 f3>").s("bd").gain(.2)`}>
-    Replace `s("bd*4")` with `note("<c3 eb3 g3 f3>").s("bd")`, keeping the `.gain(.2)` — what
-    comes next gets loud. One kick per bar, transposed, still unmistakably a kick.
+        solution={`note("<c3 eb3 g3 f3>")
+  .s("bd")
+  .gain(.2)`}>
+    One kick per bar. The `.gain(.2)` is there already because what comes next gets loud. Change
+    `note("c3")` to `note("<c3 eb3 g3 f3>")`: one kick per bar, transposed, still unmistakably a
+    kick.
   </Step>
   <Step check={{ includes: '.loop(', has: { loop: 1 } }}
-        solution={`note("<c3 eb3 g3 f3>").s("bd").gain(.2).loop(1)`}>
+        solution={`note("<c3 eb3 g3 f3>")
+  .s("bd")
+  .gain(.2)
+  .loop(1)`}>
     Add `.loop(1)`. The file now repeats for as long as the event lasts instead of playing once.
   </Step>
   <Step check={{ includes: '.loopEnd(', has: { loopEnd: [0.3, 0.8] } }}
         hints={['`loopEnd` is a fraction of the file, so `.5` is its first half.']}
-        solution={`note("<c3 eb3 g3 f3>").s("bd").gain(.2).loop(1).loopEnd(.5)`}>
+        solution={`note("<c3 eb3 g3 f3>")
+  .s("bd")
+  .gain(.2)
+  .loop(1)
+  .loopEnd(.5)`}>
     Add `.loopEnd(.5)`: only the first half of the file loops. You can still count the repeats —
     it is a very fast rhythm.
   </Step>
   <Step check={{ has: { loopEnd: [0.005, 0.1] }, cycles: 4, match: { keys: ['note', 's', 'loop', 'loopEnd', 'gain'] } }}
         hints={['Ten times shorter than the last one.']}
-        solution={`note("<c3 eb3 g3 f3>").s("bd").gain(.2).loop(1).loopEnd(.05)`}>
+        solution={`note("<c3 eb3 g3 f3>")
+  .s("bd")
+  .gain(.2)
+  .loop(1)
+  .loopEnd(.05)`}>
     Change it to `.loopEnd(.05)`. Counting the repeats is now impossible: the loop rate has crossed
     into the audio range and your ear hears a pitch that follows the `note`. That is a wavetable,
     hand-made — and the same threshold as `hh*32` in

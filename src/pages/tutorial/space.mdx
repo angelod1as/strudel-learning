@@ -29,35 +29,63 @@ source of the most common confusing bug in Strudel. The last exercise in this ch
 
 <Exercise id="space/delay" title="Three knobs, then one string"
   goal="Build a slapback by hand, then write the same thing in one colon-separated string."
-  start={`s("bd rim").bank("RolandTR707")`}
-  target={`s("bd rim").bank("RolandTR707").delay("0.8:0.06:0.8")`}>
+  start={`s("bd rim")
+  .bank("RolandTR707")`}
+  target={`s("bd rim")
+  .bank("RolandTR707")
+  .delay("0.8:0.06:0.8")`}>
   <Step check={{ includes: '.delay(', has: { delay: [0.3, 0.8] } }}
         hints={['`delay` is a send level, like an aux send in Live — 0 is dry, 1 is everything.']}
-        solution={`s("bd rim").bank("RolandTR707").delay(.5)`}>
-    Add `.delay(.5)`. Half the signal is now going into the delay unit, and you hear repeats
-    trailing off behind each hit.
+        solution={`s("bd rim")
+  .bank("RolandTR707")
+  .delay(.5)`}>
+    Add `.delay(.5)` on a new line. Half the signal is now going into the delay unit, and you hear
+    repeats trailing off behind each hit.
   </Step>
   <Step check={{ includes: '.delaytime(', has: { delaytime: [0.1, 0.15] } }}
         hints={['The argument is a number of **seconds**, not a fraction of a bar.']}
-        solution={`s("bd rim").bank("RolandTR707").delay(.5).delaytime(.125)`}>
+        solution={`s("bd rim")
+  .bank("RolandTR707")
+  .delay(.5)
+  .delaytime(.125)`}>
     Pin down how far apart the repeats are: add `.delaytime(.125)` — an eighth of a second between
     each one.
   </Step>
   <Step check={{ includes: '.delayfeedback(', has: { delayfeedback: [0.6, 0.95] } }}
         hints={['How much of the delay output is fed back into its own input, 0 to 1.']}
-        solution={`s("bd rim").bank("RolandTR707").delay(.5).delaytime(.125).delayfeedback(.8)`}>
+        solution={`s("bd rim")
+  .bank("RolandTR707")
+  .delay(.5)
+  .delaytime(.125)
+  .delayfeedback(.8)`}>
     Add `.delayfeedback(.8)`. Each repeat is now 80% of the one before, so the tail goes on much
     longer.
   </Step>
+  <Step check={{ code: 'delay\\(\\s*"[^"]*:', has: { delay: [0.3, 0.8], delaytime: [0.1, 0.15], delayfeedback: [0.6, 0.95] } }}
+        hints={['`delay("level:time:feedback")` — three numbers, two colons, one string.',
+                'Level first. The other two numbers are already on the lines below.']}
+        solution={`s("bd rim")
+  .bank("RolandTR707")
+  .delay("0.5:0.125:0.8")
+  .delaytime(.125)
+  .delayfeedback(.8)`}>
+    `delay` also takes all three knobs in one string, `"level:time:feedback"`. Change `.delay(.5)`
+    to `.delay("0.5:0.125:0.8")`, and leave the two lines below it alone. Nothing changes: the
+    string sets the same three values those lines already set.
+  </Step>
   <Step check={{ excludes: ['.delaytime(', '.delayfeedback('], has: { delay: [0.3, 0.8], delaytime: [0.1, 0.15], delayfeedback: [0.6, 0.95] } }}
-        hints={['`delay("level:time:feedback")` — three numbers, two colons, one string.']}
-        solution={`s("bd rim").bank("RolandTR707").delay("0.5:0.125:0.8")`}>
-    All three fit in one string. Replace the whole chain with `.delay("0.5:0.125:0.8")`. Identical
-    sound, one call.
+        hints={['Two whole lines go; the `.delay(...)` line stays.']}
+        solution={`s("bd rim")
+  .bank("RolandTR707")
+  .delay("0.5:0.125:0.8")`}>
+    So the `.delaytime` and `.delayfeedback` lines are now saying the same thing twice. Delete
+    both. Identical sound, one call.
   </Step>
   <Step check={{ has: { delay: [0.7, 0.9], delaytime: [0.04, 0.08], delayfeedback: [0.6, 0.95] } }}
-        hints={['Only the middle number changes — and it gets much smaller.']}
-        solution={`s("bd rim").bank("RolandTR707").delay("0.8:0.06:0.8")`}>
+        hints={['The middle number gets much smaller, and the first one goes up. The last one stays.']}
+        solution={`s("bd rim")
+  .bank("RolandTR707")
+  .delay("0.8:0.06:0.8")`}>
     Shrink the time to `0.06` and push the level to `0.8`: `.delay("0.8:0.06:0.8")`. Short enough
     that you stop hearing repeats and start hearing a slapback smear on the drum itself.
   </Step>

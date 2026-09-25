@@ -27,28 +27,34 @@ octave above, in half the time. Negative values run the tape backwards.
 
 <Exercise id="samples/speed" title="Spin it faster, then backwards"
   goal="Pitch a kick up and down with `speed`, then pattern it, then reverse it."
-  start={`s("bd*4")`}
-  target={`s("bd*4").speed("1 2 -1 -2")`}>
+  start={`s("bd bd bd bd")`}
+  target={`s("bd bd bd bd")
+  .speed("1 2 -1 -2")`}>
   <Step check={{ includes: '.speed(', has: { speed: 2 } }}
-        solution={`s("bd*4").speed(2)`}>
-    Add `.speed(2)`. An octave up and half as long — the kick turns into a tom hit.
+        solution={`s("bd bd bd bd")
+  .speed(2)`}>
+    Add `.speed(2)` on a new line. An octave up and half as long — the kick turns into a tom hit.
   </Step>
   <Step check={{ has: { speed: 0.5 } }}
         hints={['Halving the rate drops it an octave.']}
-        solution={`s("bd*4").speed(.5)`}>
-    Change it to `.speed(.5)`. An octave down, twice as long, and suddenly it is a sub drop.
+        solution={`s("bd bd bd bd")
+  .speed(.5)`}>
+    Change the `2` to `.5`. An octave down, twice as long, and suddenly it is a sub drop.
   </Step>
   <Step check={{ match: { keys: ['speed'] } }}
-        target={`s("bd*4").speed("1 2 4 8")`}
+        target={`s("bd bd bd bd")
+  .speed("1 2 4 8")`}
         hints={['`speed` takes mini-notation like every other argument.']}
-        solution={`s("bd*4").speed("1 2 4 8")`}>
+        solution={`s("bd bd bd bd")
+  .speed("1 2 4 8")`}>
     Change it to `.speed("1 2 4 8")`: one value per kick, climbing four octaves across the bar.
   </Step>
   <Step check={{ includes: '-1', match: { keys: ['s', 'speed'] } }}
         hints={['A minus sign in front of the number plays the file from the end.']}
-        solution={`s("bd*4").speed("1 2 -1 -2")`}>
-    Change it to `.speed("1 2 -1 -2")`. The last two play backwards. On a kick that is a suck-in;
-    on a crash it is the classic reverse-cymbal lead-in.
+        solution={`s("bd bd bd bd")
+  .speed("1 2 -1 -2")`}>
+    Change the last two values to `-1 -2`: `.speed("1 2 -1 -2")`. The last two play backwards. On
+    a kick that is a suck-in; on a crash it is the classic reverse-cymbal lead-in.
   </Step>
 </Exercise>
 
@@ -105,32 +111,56 @@ both of them work **by setting `speed`** — so the pitch moves with the tempo, 
 turntable. `stretch` is the only one that does not.
 
 <Exercise id="samples/fit" title="Lock a break to the cycle"
-  goal="Make a whole break fill its event, at two different lengths, two different ways."
+  goal="Make a whole break fill its event, at three different lengths, two different ways."
   start={`samples('github:yaxu/clean-breaks')
 s("amen/2")`}
   target={`samples('github:yaxu/clean-breaks')
-s("amen").loopAt(4)`}>
+s("amen")
+  .loopAt(4)`}>
   <Step check={{ includes: '.fit()', has: { unit: 'c' } }}
         hints={['It takes no arguments: the event length is the argument.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen").fit()`}>
-    The break is playing at its recorded speed and drifting out of time. Rewrite the line as
-    `s("amen").fit()`: the file is resampled to fill exactly one cycle.
+s("amen/2")
+  .fit()`}>
+    The break is playing at its recorded speed and drifting out of time. Add `.fit()` on a new
+    line: the file is resampled to fill its event exactly, and `amen/2` makes that event two
+    cycles long.
+  </Step>
+  <Step check={{ fn: "(h) => h.length > 0 && h.every((e) => Math.abs(e.value.speed - 1) < 1e-6) || 'Expected the break fitted to one cycle (speed 1).'" }}
+        hints={['The `/2` is what makes the event two cycles long.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen")
+  .fit()`}>
+    Change `s("amen/2")` to `s("amen")`. The event is one cycle now, so `fit` plays the file twice
+    as fast to fill it: it jumps up an octave on the way.
   </Step>
   <Step check={{ fn: "(h) => h.every((e) => Math.abs(e.value.speed - 0.25) < 1e-6) || 'Expected the break stretched over four cycles (speed 0.25).'" }}
         hints={['`x/n` spreads one event over n cycles, and `fit` follows whatever event it lands on.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen/4").fit()`}>
+s("amen/4")
+  .fit()`}>
     Change `s("amen")` to `s("amen/4")`. The event is now four cycles long, so `fit` slows the file
     down to match — and it drops two octaves on the way. `fit` is a turntable, not a time-stretcher.
   </Step>
   <Step check={{ includes: '.loopAt(', excludes: '.fit()', has: { unit: 'c' } }}
-        hints={['`loopAt` takes the number of cycles you want the file to last, so the `/4` is no longer needed.']}
+        hints={['`loopAt` takes the number of cycles you want the file to last.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen").loopAt(4)`}>
-    Say the same thing the other way round: replace the line with `s("amen").loopAt(4)`. It slows
-    the pattern *and* the playback so the file spans four cycles. Same pitch drop, because it is
-    the same mechanism.
+s("amen/4")
+  .loopAt(4)`}>
+    Say the same thing the other way round: change `.fit()` to `.loopAt(4)`. Now wait. The break
+    plays for four cycles and then goes quiet for twelve, because `loopAt` slows the *pattern* as
+    well as the playback, and the `/4` was already slowing it.
+  </Step>
+  <Step check={{ cycles: 8, match: { keys: ['s', 'speed', 'unit'] } }}
+        target={`samples('github:yaxu/clean-breaks')
+s("amen")
+  .loopAt(4)`}
+        hints={['`loopAt` already makes the event four cycles long.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen")
+  .loopAt(4)`}>
+    Change `s("amen/4")` back to `s("amen")`. The file spans four cycles and comes straight back
+    round. Same pitch drop as `amen/4` with `fit`, because it is the same mechanism.
   </Step>
 </Exercise>
 
@@ -203,45 +233,84 @@ nothing new; the point is what you do to the pieces afterwards.
 <Exercise id="samples/chop" title="Mangle a break"
   goal="Cut a break into grains, reverse their order, then stutter and reverse them at random."
   start={`samples('github:yaxu/clean-breaks')
-s("amen/2").fit()`}
+s("amen/2")
+  .fit()`}
   target={`samples('github:yaxu/clean-breaks')
-s("amen/2").fit().chop(8).rev().cut(1)
+s("amen/2")
+  .fit()
+  .chop(8)
+  .rev()
+  .cut(1)
   .sometimesBy(.5, ply("2"))
   .sometimesBy(.25, mul(speed("-1")))`}>
   <Step check={{ includes: '.chop(', cycles: 2, events: 8 }}
         hints={['One argument: how many pieces.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen/2").fit().chop(8)`}>
-    Add `.chop(8)`. It sounds identical — eight pieces of the same file, played back to back in
-    the right order, is just the file.
+s("amen/2")
+  .fit()
+  .chop(8)`}>
+    Add `.chop(8)` on a new line. It sounds identical — eight pieces of the same file, played back
+    to back in the right order, is just the file.
   </Step>
-  <Step check={{ cycles: 2, match: { keys: ['begin', 'end'] } }}
+  <Step check={{ includes: '.rev(', cycles: 2, match: { keys: ['begin', 'end'] } }}
         target={`samples('github:yaxu/clean-breaks')
-s("amen/2").fit().chop(8).rev()`}
+s("amen/2")
+  .fit()
+  .chop(8)
+  .rev()`}
         hints={['`rev` reverses the order of the events, not the audio inside them.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen/2").fit().chop(8).rev()`}>
-    Add `.rev()`. Now the grains play last-to-first: the same drums, in a new order, each one still
-    forwards. That is what `chop` is for.
+s("amen/2")
+  .fit()
+  .chop(8)
+  .rev()`}>
+    `rev()` plays the events of each cycle in reverse order. Add `.rev()` on a new line. Now the
+    grains play last-to-first: the same drums, in a new order, each one still forwards. That is
+    what `chop` is for.
   </Step>
   <Step check={{ includes: '.cut(', has: { cut: 1 } }}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen/2").fit().chop(8).rev().cut(1)`}>
+s("amen/2")
+  .fit()
+  .chop(8)
+  .rev()
+  .cut(1)`}>
     Add `.cut(1)`. Any two events in the same cut group cannot overlap — a new one stops the
     previous. It should get tighter and less washy immediately.
   </Step>
-  <Step check={{ includes: 'sometimesBy(', cycles: 2, events: [9, 24] }}
+  <Step check={{ includes: '.ply(', cycles: 2, events: 16 }}
         hints={['`ply(n)` repeats each event n times inside its own slot.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen/2").fit().chop(8).rev().cut(1)
+s("amen/2")
+  .fit()
+  .chop(8)
+  .rev()
+  .cut(1)
+  .ply(2)`}>
+    `ply(n)` plays every event n times, squeezed into the slot the one event had. Add `.ply(2)`:
+    sixteen grains where there were eight, every one of them doubled.
+  </Step>
+  <Step check={{ includes: 'sometimesBy(', cycles: 2, events: [9, 24] }}
+        hints={['`sometimesBy(p, f)` applies `f` to each event with probability `p`.',
+                'The `ply` goes inside it, as the function; in that position it is written `ply("2")`, with no dot.']}
+        solution={`samples('github:yaxu/clean-breaks')
+s("amen/2")
+  .fit()
+  .chop(8)
+  .rev()
+  .cut(1)
   .sometimesBy(.5, ply("2"))`}>
-    Add `.sometimesBy(.5, ply("2"))` on a new line. Half the grains double up: the stutter that
-    jungle is built on.
+    `sometimesBy(p, f)` applies a function to each event with probability `p`. Change `.ply(2)` to
+    `.sometimesBy(.5, ply("2"))`. Half the grains double up: the stutter that jungle is built on.
   </Step>
   <Step check={{ includes: 'mul(speed(', cycles: 2, events: [9, 24] }}
         hints={['`mul` multiplies a control that is already there, instead of replacing it — `fit` has already set `speed`.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen/2").fit().chop(8).rev().cut(1)
+s("amen/2")
+  .fit()
+  .chop(8)
+  .rev()
+  .cut(1)
   .sometimesBy(.5, ply("2"))
   .sometimesBy(.25, mul(speed("-1")))`}>
     Add `.sometimesBy(.25, mul(speed("-1")))`. A quarter of the grains now play backwards, and
@@ -274,23 +343,32 @@ s("rhodes").chop(4).rev().loopAt(2)`}
 <Exercise id="samples/slice" title="Re-sequence a break"
   goal="Number the pieces of a break, play them in any order, then let `splice` fix the timing."
   start={`samples('github:yaxu/clean-breaks')
-s("amen").fit()`}
+s("amen")
+  .fit()`}
   target={`samples('github:yaxu/clean-breaks')
-s("amen").splice(8, "7 6 5 4 3 2 1 0").cut(1)`}>
+s("amen")
+  .splice(8, "7 6 5 4 3 2 1 0")
+  .cut(1)`}>
   <Step check={{ includes: '.slice(', events: 8 }}
         hints={['Two arguments: how many pieces the file has, and which of them to play.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen").fit().slice(8, "0 1 2 3 4 5 6 7")`}>
-    Add `.slice(8, "0 1 2 3 4 5 6 7")`. Identical to `chop(8)` so far — but now every piece has a
-    number you can move around. Note where the rhythm comes from: with `slice` it is the index
-    pattern, not the event you chained onto.
+s("amen")
+  .fit()
+  .slice(8, "0 1 2 3 4 5 6 7")`}>
+    Add `.slice(8, "0 1 2 3 4 5 6 7")` on a new line. Identical to `chop(8)` so far — but now every
+    piece has a number you can move around. Note where the rhythm comes from: with `slice` it is
+    the index pattern, not the event you chained onto.
   </Step>
   <Step check={{ match: { keys: ['begin'] } }}
         target={`samples('github:yaxu/clean-breaks')
-s("amen").fit().slice(8, "7 6 5 4 3 2 1 0")`}
+s("amen")
+  .fit()
+  .slice(8, "7 6 5 4 3 2 1 0")`}
         hints={['The second argument is an ordinary mini-notation pattern of indices.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen").fit().slice(8, "7 6 5 4 3 2 1 0")`}>
+s("amen")
+  .fit()
+  .slice(8, "7 6 5 4 3 2 1 0")`}>
     Reverse the order by hand: `.slice(8, "7 6 5 4 3 2 1 0")`. Try `"0 0 4 0 2 [4 5] 6 7"` too —
     any pattern of numbers works, including `*`, `< >` and rests. Listen to the ones that repeat:
     each piece still plays at its own speed, so it does not fill its slot.
@@ -298,23 +376,29 @@ s("amen").fit().slice(8, "7 6 5 4 3 2 1 0")`}>
   <Step check={{ includes: '.splice(', excludes: '.slice(' }}
         hints={['One letter more than `slice`.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen").fit().splice(8, "7 6 5 4 3 2 1 0")`}>
+s("amen")
+  .fit()
+  .splice(8, "7 6 5 4 3 2 1 0")`}>
     Change `slice` to `splice`. `splice` is `slice` plus an automatic `speed` for each piece, so
     every piece fills its slot exactly however you re-order or repeat them.
   </Step>
   <Step check={{ excludes: '.fit()', match: { keys: ['s', 'begin', 'end', 'speed'] } }}
         target={`samples('github:yaxu/clean-breaks')
-s("amen").splice(8, "7 6 5 4 3 2 1 0")`}
+s("amen")
+  .splice(8, "7 6 5 4 3 2 1 0")`}
         hints={['One deletion.']}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen").splice(8, "7 6 5 4 3 2 1 0")`}>
-    `splice` already sets the speed, so `fit` has nothing left to do: delete it. Try
+s("amen")
+  .splice(8, "7 6 5 4 3 2 1 0")`}>
+    `splice` already sets the speed, so `fit` has nothing left to do: delete that line. Try
     `"<0 1 2 3 4*2 5 6 [6 7]>*2"` as the index pattern — however you subdivide, `splice` keeps
     every piece in time.
   </Step>
   <Step check={{ has: { cut: 1 }, match: { keys: ['s', 'begin', 'end', 'speed', 'cut'] } }}
         solution={`samples('github:yaxu/clean-breaks')
-s("amen").splice(8, "7 6 5 4 3 2 1 0").cut(1)`}>
+s("amen")
+  .splice(8, "7 6 5 4 3 2 1 0")
+  .cut(1)`}>
     Add `.cut(1)` again, for the same reason as before: slices that overlap sound like a smear.
   </Step>
 </Exercise>
@@ -392,27 +476,33 @@ in rhythm. A colon adds a playback speed to a position.
   start={`samples('github:switchangel/pad')
 s("swpad:0")`}
   target={`samples('github:switchangel/pad')
-s("swpad:0").scrub("{0!3 .25 .5!2 <0.75:1.5>@2}%8")`}>
+s("swpad:0")
+  .scrub("{ 0!3 .25 .5!2 <0.75:1.5>@2 }%8")`}>
   <Step check={{ includes: '.scrub(', events: 8 }}
         hints={['The positions are fractions of the file, like `begin`.']}
         solution={`samples('github:switchangel/pad')
-s("swpad:0").scrub("{0 .25 .5 .75}%8")`}>
-    Add `.scrub("{0 .25 .5 .75}%8")`. Eight steps per cycle walking through four positions: the
-    pad is being played by a very steady hand.
+s("swpad:0")
+  .scrub("{ 0 .25 .5 .75 }%8")`}>
+    Add `.scrub("{ 0 .25 .5 .75 }%8")` on a new line. Eight steps per cycle walking through four
+    positions: the pad is being played by a very steady hand.
   </Step>
   <Step check={{ events: 7, match: { keys: ['begin'] } }}
         target={`samples('github:switchangel/pad')
-s("swpad:0").scrub("{0!3 .25 .5!2 .75@2}%8")`}
+s("swpad:0")
+  .scrub("{ 0!3 .25 .5!2 .75@2 }%8")`}
         hints={['`!` repeats a position as separate steps, `@` makes one step longer.']}
         solution={`samples('github:switchangel/pad')
-s("swpad:0").scrub("{0!3 .25 .5!2 .75@2}%8")`}>
-    Give it a rhythm: `.scrub("{0!3 .25 .5!2 .75@2}%8")`. Still eight steps, but they are no
-    longer one event each — the `@2` holds the playhead in one place for two of them.
+s("swpad:0")
+  .scrub("{ 0!3 .25 .5!2 .75@2 }%8")`}>
+    Give it a rhythm: change `0` to `0!3`, `.5` to `.5!2` and `.75` to `.75@2`. Still eight
+    steps, but they are no longer one event each — the `@2` holds the playhead in one place for two
+    of them.
   </Step>
   <Step check={{ includes: ':1.5', fn: "(h) => h.some((e) => e.value.speed === 1.5) || 'One position should carry a speed of 1.5.'" }}
         hints={['Position and speed go in one token, separated the way `vib(\"6:12\")` does it.']}
         solution={`samples('github:switchangel/pad')
-s("swpad:0").scrub("{0!3 .25 .5!2 <0.75:1.5>@2}%8")`}>
+s("swpad:0")
+  .scrub("{ 0!3 .25 .5!2 <0.75:1.5>@2 }%8")`}>
     Change the last position to `<0.75:1.5>`: from three quarters in, at one and a half times
     speed. Every position can carry its own rate.
   </Step>
@@ -440,29 +530,41 @@ loop points, as fractions of the file.
   start={`samples('github:switchangel/pad')
 s("swpad:0")`}
   target={`samples('github:switchangel/pad')
-s("swpad:0").loop(1).loopEnd(.26).loopBegin(.25)`}>
+s("swpad:0")
+  .loop(1)
+  .loopEnd(.26)
+  .loopBegin(.25)`}>
   <Step check={{ includes: '.loop(', has: { loop: 1 } }}
         solution={`samples('github:switchangel/pad')
-s("swpad:0").loop(1)`}>
-    Add `.loop(1)`. The pad now restarts as often as it needs to fill the cycle instead of decaying
-    away.
+s("swpad:0")
+  .loop(1)`}>
+    Add `.loop(1)` on a new line. The pad now restarts as often as it needs to fill the cycle
+    instead of decaying away.
   </Step>
   <Step check={{ has: { loopEnd: [0.3, 0.7] } }}
         solution={`samples('github:switchangel/pad')
-s("swpad:0").loop(1).loopEnd(.5)`}>
+s("swpad:0")
+  .loop(1)
+  .loopEnd(.5)`}>
     Add `.loopEnd(.5)`: only the first half of the file is in the loop, so it comes round twice as
     often.
   </Step>
   <Step check={{ includes: '.loopBegin(', has: { loopBegin: [0.1, 0.4] } }}
         hints={['Playback still starts at the top of the file; this only moves the point it jumps back to.']}
         solution={`samples('github:switchangel/pad')
-s("swpad:0").loop(1).loopEnd(.5).loopBegin(.25)`}>
+s("swpad:0")
+  .loop(1)
+  .loopEnd(.5)
+  .loopBegin(.25)`}>
     Add `.loopBegin(.25)`. The loop is now the quarter of the file between .25 and .5.
   </Step>
   <Step check={{ has: { loopEnd: [0.25, 0.3] }, match: { keys: ['s', 'loop', 'loopBegin', 'loopEnd'] } }}
         hints={['Move the end almost onto the beginning.']}
         solution={`samples('github:switchangel/pad')
-s("swpad:0").loop(1).loopEnd(.26).loopBegin(.25)`}>
+s("swpad:0")
+  .loop(1)
+  .loopEnd(.26)
+  .loopBegin(.25)`}>
     Change the end to `.loopEnd(.26)`: a 1% window. The loop now repeats hundreds of times a
     second, and you hear a pitch instead of a rhythm. Add a `note("<c3 eb3>")` and it plays like a
     synth — which is exactly how the `wt_*` wavetables in
@@ -492,33 +594,52 @@ through the lot.
   start={`samples('bubo:fox')
 s("ftabla*8")`}
   target={`samples('bubo:fox')
-n(run(8)).s("ftabla").early(2/8)
+s("ftabla*8")
+  .n(run(8))
+  .early(2/8)
   .sometimes(mul(speed("1.5")))`}>
   <Step check={{ includes: 'run(', match: { keys: ['n', 's'] } }}
         target={`samples('bubo:fox')
-n(run(8)).s("ftabla")`}
-        hints={['`run(8)` is the pattern `0 1 2 3 4 5 6 7`. Remember that the rhythm comes from the left.']}
+s("ftabla*8")
+  .n(run(8))`}
+        hints={['`run(8)` is the pattern `0 1 2 3 4 5 6 7`. The rhythm still comes from `ftabla*8` on the left.']}
         solution={`samples('bubo:fox')
-n(run(8)).s("ftabla")`}>
-    Replace the pattern with `n(run(8)).s("ftabla")`: still eight events, but each one is a
-    different recording from the bank.
+s("ftabla*8")
+  .n(run(8))`}>
+    `run(n)` is the pattern `0 1 … n-1`, one step each. Add `.n(run(8))` on a new line: still
+    eight events, but each one is a different recording from the bank.
   </Step>
   <Step check={{ includes: '.early(', match: { keys: ['n'] } }}
         target={`samples('bubo:fox')
-n(run(8)).s("ftabla").early(2/8)`}
+s("ftabla*8")
+  .n(run(8))
+  .early(2/8)`}
         hints={['`early(x)` pulls the whole pattern x cycles earlier; an eighth of a cycle is `1/8`.']}
         solution={`samples('bubo:fox')
-n(run(8)).s("ftabla").early(2/8)`}>
+s("ftabla*8")
+  .n(run(8))
+  .early(2/8)`}>
     The musical phrase in a bank rarely starts at index 0. Add `.early(2/8)` to rotate the whole
     run two slots earlier, so it starts on sample 2.
+  </Step>
+  <Step check={{ includes: '.speed(', events: 8, has: { speed: 1.5 } }}
+        solution={`samples('bubo:fox')
+s("ftabla*8")
+  .n(run(8))
+  .early(2/8)
+  .speed(1.5)`}>
+    Add `.speed(1.5)`: every hit jumps up a fifth.
   </Step>
   <Step check={{ includes: 'sometimes(', events: 8 }}
         hints={['`sometimes` is `sometimesBy(.5, …)`, and `mul` multiplies a control instead of setting it.']}
         solution={`samples('bubo:fox')
-n(run(8)).s("ftabla").early(2/8)
+s("ftabla*8")
+  .n(run(8))
+  .early(2/8)
   .sometimes(mul(speed("1.5")))`}>
-    Add `.sometimes(mul(speed("1.5")))` on a new line: half the hits jump up a fifth. A bank plus
-    a little randomness is a whole percussion track.
+    `sometimes(f)` is `sometimesBy(.5, f)`. Change `.speed(1.5)` to
+    `.sometimes(mul(speed("1.5")))`: now only half the hits jump up a fifth. A bank plus a little
+    randomness is a whole percussion track.
   </Step>
 </Exercise>
 

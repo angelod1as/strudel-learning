@@ -226,7 +226,9 @@ drums: s("bd*4")`}
 
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
-bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`}>
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4)
+  .decay(.2).sustain(0).orbit(2)`}>
   <Step check={{ has: { bank: 'RolandTR909' } }}
         hints={['The 909 is the house and techno kit; the Picking Sounds chapter lists the others.']}
         solution={`setcpm(128/4)
@@ -256,10 +258,35 @@ drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")`}>
 
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
-bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`}>
-    Add the bass lane:
-    `bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`.
-    One note per half bar, a new root every bar, short because `sustain` is 0.
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .orbit(2)`}>
+    Add the bass lane, with its bus on an indented line below:
+    `bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")` and then `.orbit(2)`. One note per half bar, a
+    new root every bar.
+  </Step>
+  <Step check={{ includes: '.lpf(', fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.cutoff === 600 && e.value.resonance === 4)) || 'The bass lane needs .lpf(600).lpq(4).' }" }}
+        hints={['`lpf` is the lowpass cutoff in Hz and `lpq` its resonance, as in the Filters chapter.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4)
+  .orbit(2)`}>
+    Filter it: insert a line `.lpf(600).lpq(4)` above `.orbit(2)`. A lowpass at 600 Hz with some
+    resonance at the cutoff.
+  </Step>
+  <Step check={{ fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.decay === 0.2 && e.value.sustain === 0)) || 'The bass lane needs .decay(.2).sustain(0).' }" }}
+        hints={['`decay` is how long the level takes to fall, `sustain` the level it falls to.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4)
+  .decay(.2).sustain(0).orbit(2)`}>
+    Shorten the notes: put `.decay(.2).sustain(0)` in front of `.orbit(2)`. Each note is now short,
+    because `sustain` is 0.
   </Step>
 </Exercise>
 
@@ -273,7 +300,9 @@ rest of this exercise comes from.
 
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
-bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)`}
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4)
+  .decay(.2).sustain(0).orbit(2)`}
   target={`setcpm(128/4)
 
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
@@ -284,21 +313,65 @@ bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
   .decay(.2).sustain(0).orbit(2)
 
 duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
-  <Step check={{ includes: 'duckorbit(', fn: "(h) => h.some((e) => e.value.duckorbit) || 'Expected a ducking lane naming orbit 2.'" }}
+  <Step check={{ includes: 'duck:', fn: "(h) => h.some((e) => e.value.s === 'bd' && !e.value.bank && e.value.postgain === 0) || 'Expected a silent kick lane: duck: s(\"bd*4\").postgain(0).'" }}
         hints={['The ducker is a pattern of its own: the same kick, silenced, whose only job is to push an orbit down.', '`postgain(0)` is what makes it silent, as in the Ducking chapter.']}
         solution={`setcpm(128/4)
 
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
 
-bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.2).sustain(0).orbit(2)
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4)
+  .decay(.2).sustain(0).orbit(2)
+
+duck: s("bd*4").postgain(0)`}>
+    Add a fourth lane: `duck: s("bd*4").postgain(0)`. A kick you cannot hear: its level is zero at
+    the very end of the chain, but its four events a bar still happen.
+  </Step>
+  <Step check={{ includes: 'duckorbit(', fn: "(h) => h.some((e) => e.value.duckorbit === 2 && e.value.duckdepth === 1) || 'Expected the duck lane to name orbit 2, at depth 1.'" }}
+        hints={['Both go on the duck lane, before the `.postgain(0)`.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4)
+  .decay(.2).sustain(0).orbit(2)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).postgain(0)`}>
+    Aim it at the bass: insert `.duckorbit(2).duckdepth(1)` before the `.postgain(0)`. Every beat
+    now pushes orbit 2 down.
+  </Step>
+  <Step check={{ fn: "(h) => { const d = h.filter((e) => e.value.duckorbit === 2); return (d.length > 0 && d.every((e) => e.value.duckattack === 0.2 && e.value.duckonset === 0.01)) || 'The duck lane needs .duckattack(.2).duckonset(.01).' }" }}
+        hints={['Recovery first, then a small onset so the drop does not click.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(4)
+  .decay(.2).sustain(0).orbit(2)
 
 duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
-    Add a fourth lane:
-    `duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`. Nothing
-    new is heard, but the bass now breathes around the kick instead of fighting it.
+    Shape it: insert `.duckattack(.2).duckonset(.01)` after the depth. Nothing new is heard, but the
+    bass now breathes around the kick instead of fighting it.
   </Step>
-  <Step check={{ includes: '.lpenv(', fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.lpenv === 3)) || 'The bass lane needs .lpa(.01).lpd(.12).lpenv(3).' }" }}
-        hints={['Three controls: attack, decay, and how far the envelope moves the cutoff.', 'Wrap the chain onto indented lines once it gets long.']}
+  <Step check={{ includes: '.lpenv(', fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.lpenv === 3 && e.value.resonance === 6)) || 'The bass lane needs .lpenv(3), and .lpq(6).' }" }}
+        hints={['`lpenv` is how far the filter envelope moves the cutoff, as in the Envelopes chapter.', 'It goes on its own line, under the filter line.']}
+        solution={`setcpm(128/4)
+
+drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
+  .lpf(600).lpq(6)
+  .lpenv(3)
+  .decay(.2).sustain(0).orbit(2)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
+    Give the bass a filter envelope: add a line `.lpenv(3)` under the filter line, and raise
+    `.lpq(4)` to `.lpq(6)`. The cutoff now moves on every note, from the `lpf` upwards.
+  </Step>
+  <Step check={{ fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.lpattack === 0.01 && e.value.lpdecay === 0.12 && e.value.lpenv === 3)) || 'The bass lane needs .lpa(.01).lpd(.12) in front of .lpenv(3).' }" }}
+        hints={['`lpa` is the attack of the filter envelope and `lpd` its decay, both in seconds.']}
         solution={`setcpm(128/4)
 
 drums: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909")
@@ -309,8 +382,8 @@ bass: note("<c2 c2 eb2 g1>*2").s("sawtooth")
   .decay(.2).sustain(0).orbit(2)
 
 duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
-    Give the bass a filter envelope: `.lpa(.01).lpd(.12).lpenv(3)`, and raise `.lpq(4)` to
-    `.lpq(6)`. Each note now opens and closes — that is the pluck.
+    Shape the envelope: put `.lpa(.01).lpd(.12)` in front of `.lpenv(3)` on the same line. Each
+    note now opens and closes — that is the pluck.
   </Step>
   <Step check={{ includes: 'sine.range(', fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.cutoff >= 400 && e.value.cutoff <= 1400 && e.value.cutoff !== 600)) || 'Expected the cutoff to come from a slow sine between 400 and 1400.' }" }}
         hints={['A signal instead of a number, stretched over several bars so you notice it slowly.', '`sine.range(lo, hi).slow(n)` is the shape.']}

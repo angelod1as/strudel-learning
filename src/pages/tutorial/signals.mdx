@@ -19,34 +19,50 @@ one change per step, ctrl+enter, listen.
 
 <Exercise id="signals/first-signal" title="Six waves on one hi-hat line"
   goal="Swap a constant for a signal, then hear what each of the six basic shapes does to volume."
-  start={`s("hh*16").gain(.8)`}
-  target={`s("hh*16").gain(rand)`}>
-  <Step check={{ includes: 'gain(sine)', fn: "(h) => new Set(h.map(e => e.value.gain)).size >= 8 || 'Every hat still has the same gain. A signal should give each one a different value.'" }}
+  start={`s("hh*16").gain(
+  .8
+)`}
+  target={`s("hh*16").gain(
+  rand
+)`}>
+  <Step check={{ code: 'gain\\(\\s*sine\\s*\\)', fn: "(h) => new Set(h.map(e => e.value.gain)).size >= 8 || 'Every hat still has the same gain. A signal should give each one a different value.'" }}
         hints={['No quotes. `sine` is a value, not a mini-notation string.']}
-        solution={`s("hh*16").gain(sine)`}>
+        solution={`s("hh*16").gain(
+  sine
+)`}>
     Replace `.8` with `sine` — no quotes. Sixteen hats, and the volume swells and fades once across
     the bar.
   </Step>
-  <Step check={{ includes: 'gain(cosine)', fn: "(h) => h[0].value.gain > 0.99 || 'The first hat should be at full volume: cosine starts at the top.'" }}
-        solution={`s("hh*16").gain(cosine)`}>
+  <Step check={{ code: 'gain\\(\\s*cosine\\s*\\)', fn: "(h) => h[0].value.gain > 0.99 || 'The first hat should be at full volume: cosine starts at the top.'" }}
+        solution={`s("hh*16").gain(
+  cosine
+)`}>
     Replace `sine` with `cosine`. Same wave, a quarter cycle ahead: it now starts loud instead of
     halfway.
   </Step>
-  <Step check={{ includes: 'gain(saw)', fn: "(h) => h.every((e, i) => i === 0 || e.value.gain > h[i - 1].value.gain) || 'The volume should climb all the way from the first hat to the last, with no dip.'" }}
-        solution={`s("hh*16").gain(saw)`}>
+  <Step check={{ code: 'gain\\(\\s*saw\\s*\\)', fn: "(h) => h.every((e, i) => i === 0 || e.value.gain > h[i - 1].value.gain) || 'The volume should climb all the way from the first hat to the last, with no dip.'" }}
+        solution={`s("hh*16").gain(
+  saw
+)`}>
     Replace `cosine` with `saw`. A ramp: silent, up to full, then it snaps back at the bar line.
   </Step>
-  <Step check={{ includes: 'gain(isaw)', fn: "(h) => h.every((e, i) => i === 0 || e.value.gain < h[i - 1].value.gain) || 'The volume should fall from the first hat to the last.'" }}
+  <Step check={{ code: 'gain\\(\\s*isaw\\s*\\)', fn: "(h) => h.every((e, i) => i === 0 || e.value.gain < h[i - 1].value.gain) || 'The volume should fall from the first hat to the last.'" }}
         hints={['The `i` prefix means inverted. It shows up all over Strudel.']}
-        solution={`s("hh*16").gain(isaw)`}>
+        solution={`s("hh*16").gain(
+  isaw
+)`}>
     Replace `saw` with `isaw` — the inverted saw. The ramp runs downhill instead.
   </Step>
-  <Step check={{ includes: 'gain(square)', fn: "(h) => new Set(h.map(e => e.value.gain)).size === 2 || 'A square wave only ever has two values.'" }}
-        solution={`s("hh*16").gain(square)`}>
+  <Step check={{ code: 'gain\\(\\s*square\\s*\\)', fn: "(h) => new Set(h.map(e => e.value.gain)).size === 2 || 'A square wave only ever has two values.'" }}
+        solution={`s("hh*16").gain(
+  square
+)`}>
     Replace `isaw` with `square`. No in-between any more: eight silent hats, then eight loud ones.
   </Step>
-  <Step check={{ includes: 'gain(rand)', fn: "(h) => { const g = h.map(e => e.value.gain); const sorted = g.every((v, i) => i === 0 || v >= g[i - 1]) || g.every((v, i) => i === 0 || v <= g[i - 1]); return (new Set(g).size >= 10 && !sorted) || 'Expected sixteen unrelated values, in no particular order.' }" }}
-        solution={`s("hh*16").gain(rand)`}>
+  <Step check={{ code: 'gain\\(\\s*rand\\s*\\)', fn: "(h) => { const g = h.map(e => e.value.gain); const sorted = g.every((v, i) => i === 0 || v >= g[i - 1]) || g.every((v, i) => i === 0 || v <= g[i - 1]); return (new Set(g).size >= 10 && !sorted) || 'Expected sixteen unrelated values, in no particular order.' }" }}
+        solution={`s("hh*16").gain(
+  rand
+)`}>
     Replace `square` with `rand`: a fresh random number every time it is read. Instant humanised
     velocity.
   </Step>
@@ -93,38 +109,67 @@ Signals are 0…1, and almost nothing you want to control is.
 
 <Exercise id="signals/range" title="Rescale it, flip it, curve it"
   goal="Take a signal from useless to musical with range, then rangex, and find out which controls need neither."
-  start={`s("hh*16").lpf(saw)`}
-  target={`s("hh*16").lpf(saw.rangex(4000, 200)).pan(sine2.range2(0, 1))`}>
+  start={`s("hh*16").lpf(
+  saw
+)`}
+  target={`s("hh*16").lpf(
+  saw
+    .rangex(4000, 200)
+).pan(sine2.range2(0, 1))`}>
   <Step check={{ includes: '.range(', has: { lpf: [200, 4000] } }}
         hints={['`range(min, max)`, in Hz.', 'A cutoff of 0.3 Hz is below anything you can hear — that is why the start sounds like a broken radio.']}
-        solution={`s("hh*16").lpf(saw.range(200, 4000))`}>
+        solution={`s("hh*16").lpf(
+  saw
+    .range(200, 4000)
+)`}>
     Play the starting line first: nearly silent. `saw` hands `lpf` numbers between 0 and 1, and a
     cutoff of 0.4 Hz removes the entire sound. Add `.range(200, 4000)` to the saw and it becomes a
     sweep.
   </Step>
   <Step check={{ includes: '.range(4000', fn: "(h) => (h[0].value.cutoff > 3000 && h[h.length - 1].value.cutoff < 600) || 'The sweep should start bright and end dark.'" }}
-        solution={`s("hh*16").lpf(saw.range(4000, 200))`}>
+        solution={`s("hh*16").lpf(
+  saw
+    .range(4000, 200)
+)`}>
     Swap the two numbers: `.range(4000, 200)`. Flipping the arguments inverts the shape — the same
     ramp now runs downhill, with no new function to learn.
   </Step>
   <Step check={{ includes: 'rangex', has: { lpf: [200, 4000] } }}
         hints={['One letter changes.']}
-        solution={`s("hh*16").lpf(saw.rangex(4000, 200))`}>
+        solution={`s("hh*16").lpf(
+  saw
+    .rangex(4000, 200)
+)`}>
     Change `range` to `rangex`. Same endpoints, spaced exponentially. Linear sweeps spend most of
     their time in the top octave where your ear barely notices; `rangex` sounds even. Use it for
     anything measured in Hz.
   </Step>
   <Step check={{ includes: '.pan(sine)', has: { pan: [0, 1] } }}
-        solution={`s("hh*16").lpf(saw.rangex(4000, 200)).pan(sine)`}>
+        solution={`s("hh*16").lpf(
+  saw
+    .rangex(4000, 200)
+).pan(sine)`}>
     Some controls are already 0…1. Chain `.pan(sine)` on the end — no `range` needed, and adding
     one would be wrong.
   </Step>
+  <Step check={{ includes: 'sine2', excludes: 'range2', fn: "(h) => h.some(e => e.value.pan < 0) || 'Expected some pan values below 0.'" }}
+        hints={['The `2` suffix means bipolar: −1…1 instead of 0…1.']}
+        solution={`s("hh*16").lpf(
+  saw
+    .rangex(4000, 200)
+).pan(sine2)`}>
+    Change `sine` to `sine2`, its bipolar twin. It runs −1…1, so for half the bar the pan value
+    is below 0, outside the 0…1 that `pan` is measured in.
+  </Step>
   <Step check={{ includes: ['sine2', 'range2'], has: { pan: [0, 1] } }}
-        hints={['The `2` suffix means bipolar: −1…1 instead of 0…1.', '`range2` is the rescaler that expects a bipolar input.']}
-        solution={`s("hh*16").lpf(saw.rangex(4000, 200)).pan(sine2.range2(0, 1))`}>
-    Change `.pan(sine)` to `.pan(sine2.range2(0, 1))`. It sounds identical, because `range2` maps
-    −1…1 onto 0…1. That is the point: bipolar twins exist so that modulation can go *below* a
-    centre as well as above it.
+        hints={['`range2` is the rescaler that expects a bipolar input.']}
+        solution={`s("hh*16").lpf(
+  saw
+    .rangex(4000, 200)
+).pan(sine2.range2(0, 1))`}>
+    Add `.range2(0, 1)` to it: `.pan(sine2.range2(0, 1))`. It sounds identical to the plain
+    `sine`, because `range2` maps −1…1 onto 0…1. That is the point: bipolar twins exist so that
+    modulation can go *below* a centre as well as above it.
   </Step>
 </Exercise>
 
@@ -208,34 +253,95 @@ working".
 </Box>
 
 <Exercise id="signals/sampling" title="The filter that will not move"
-  goal="Diagnose a frozen filter, then fix it three different ways and hear how each one differs."
-  start={`s("supersaw").note("c2").lpf(tri.range(100, 5000).slow(2))`}
-  target={`s("supersaw").note("c2").lpf(500).lpenv(4).lpa(1).lpd(1)`}>
+  goal="Diagnose a frozen filter, then fix it two different ways and hear how they differ."
+  start={`s("supersaw")
+  .note("c2")
+  .lpf(tri.range(100, 5000).slow(2))`}
+  target={`s("supersaw")
+  .note("c2")
+  .lpf(500)
+  .lfo({ s: 0.5, depthabs: 2000 })`}>
   <Step check={{ includes: '.seg(', events: 16 }}
         hints={['`seg` is short for `segment`: it chops a pattern into n events per cycle.', 'It goes before the control that reads the signal.']}
-        solution={`s("supersaw").note("c2").seg(16).lpf(tri.range(100, 5000).slow(2))`}>
+        solution={`s("supersaw")
+  .note("c2")
+  .seg(16)
+  .lpf(tri.range(100, 5000).slow(2))`}>
     Play it. One note per bar means one event, so `tri` is read once and held: a random static
     cutoff, never a sweep. **Fix 1** — make more events. Add `.seg(16)` after `.note("c2")`. Now
     the filter moves, in sixteen steps you can hear.
   </Step>
-  <Step check={{ excludes: ['seg(', 'tri'], has: { lpf: 500 } }}
-        solution={`s("supersaw").note("c2").lpf(500)`}>
-    Sixteen steps is still a staircase, not a glide. Strip it back: delete `.seg(16)` and replace
-    the whole signal with a plain `.lpf(500)`. One flat note — that is your blank canvas.
+  <Step check={{ excludes: 'tri', has: { lpf: 500 }, events: 16 }}
+        hints={['Only what is inside `.lpf(...)` changes.']}
+        solution={`s("supersaw")
+  .note("c2")
+  .seg(16)
+  .lpf(500)`}>
+    Sixteen steps is still a staircase, not a glide. Strip it back, one move at a time: first
+    replace the whole signal inside `.lpf(...)` with a plain `500`. Still sixteen events, but every
+    one of them now reads the same cutoff.
+  </Step>
+  <Step check={{ excludes: 'seg(', has: { lpf: 500 }, events: 1 }}
+        solution={`s("supersaw")
+  .note("c2")
+  .lpf(500)`}>
+    Now delete the `.seg(16)` line. One flat note — that is your blank canvas.
   </Step>
   <Step check={{ includes: '.lfo(', fn: "(h) => { const L = h[0].value.lfo; const m = L && L['0']; return (m && m.control === 'cutoff' && m.depthabs === 2000) || 'Expected one LFO on the cutoff with a depthabs of 2000.' }" }}
         hints={['`.lfo()` takes a config object and modulates the control immediately before it.', '`s` is the speed in cycles, `depthabs` the swing in Hz.']}
-        solution={`s("supersaw").note("c2").lpf(500).lfo({ s: 0.5, depthabs: 2000 })`}>
+        solution={`s("supersaw")
+  .note("c2")
+  .lpf(500)
+  .lfo({ s: 0.5, depthabs: 2000 })`}>
     **Fix 2** — modulate below the pattern level. Add `.lfo({ s: 0.5, depthabs: 2000 })`. Still one
     event, but the cutoff now glides continuously, because the LFO lives inside the audio engine.
     That is the whole of <L to="/tutorial/lfo">LFOs &amp; Modulators</L>.
   </Step>
-  <Step check={{ excludes: '.lfo(', has: { lpenv: 4 } }}
-        hints={['`lpenv` is how many octaves the filter envelope opens; `lpa` and `lpd` are its attack and decay.']}
-        solution={`s("supersaw").note("c2").lpf(500).lpenv(4).lpa(1).lpd(1)`}>
-    **Fix 3** — if what you meant was "per note", use an envelope. Replace `.lfo(...)` with
-    `.lpenv(4).lpa(1).lpd(1)`. The filter opens once when the note starts and closes again, the
-    same shape every time. See <L to="/tutorial/envelopes">Envelopes</L>.
+</Exercise>
+
+If what you meant was "per note", there is a third fix, and it starts from the same blank canvas.
+
+<Exercise id="signals/sampling-env" title="Fix 3: an envelope"
+  goal="Give the same held note a filter movement that restarts with every note."
+  start={`s("supersaw")
+  .note("c2")
+  .lpf(500)`}
+  target={`s("supersaw")
+  .note("c2")
+  .lpf(500)
+  .lpenv(4)
+  .lpa(1)
+  .lpd(1)`}>
+  <Step check={{ includes: '.lpenv(', has: { lpenv: 4 } }}
+        hints={['`lpenv` is how many octaves the filter envelope moves the cutoff.']}
+        solution={`s("supersaw")
+  .note("c2")
+  .lpf(500)
+  .lpenv(4)`}>
+    **Fix 3** — use an envelope. Add `.lpenv(4)`, the filter envelope depth from
+    <L to="/tutorial/envelopes">Envelopes</L>. With nothing else set it has the default shape: the
+    cutoff starts four octaves above 500 Hz and falls back to it over the note.
+  </Step>
+  <Step check={{ includes: '.lpa(', has: { lpa: 1 } }}
+        hints={['`lpa` is the filter envelope attack, in seconds.']}
+        solution={`s("supersaw")
+  .note("c2")
+  .lpf(500)
+  .lpenv(4)
+  .lpa(1)`}>
+    Add `.lpa(1)`. With an attack, the sweep goes **upward** into the note instead of falling away
+    from it, and it takes a full second to get there.
+  </Step>
+  <Step check={{ includes: '.lpd(', has: { lpd: 1 } }}
+        hints={['`lpd` is the filter envelope decay, in seconds.']}
+        solution={`s("supersaw")
+  .note("c2")
+  .lpf(500)
+  .lpenv(4)
+  .lpa(1)
+  .lpd(1)`}>
+    Add `.lpd(1)`. The filter opens once when the note starts and closes again, the same shape
+    every time.
   </Step>
 </Exercise>
 
@@ -262,41 +368,98 @@ events, so it changes the rhythm). **`lfo()`** when you want smooth movement und
 it a melody generator.
 
 <Exercise id="signals/melody" title="A melody out of a wave"
-  goal="Turn a ramp into a chromatic run, then into a random walk, then into scale degrees that always fit."
-  start={`note(saw.range(40, 52).segment(4))`}
-  target={`n(irand(8).segment(8)).scale("c:minor").s("piano")`}>
+  goal="Turn a ramp into a chromatic run, then into a drifting line, then into one that leaps."
+  start={`note(saw.range(40, 52)
+  .segment(4))`}
+  target={`note(rand.range(40, 52)
+  .segment(24))`}>
   <Step check={{ includes: 'segment(24)', events: 24 }}
         hints={['Only the number changes.']}
-        solution={`note(saw.range(40, 52).segment(24))`}>
+        solution={`note(saw.range(40, 52)
+  .segment(24))`}>
     Four notes climbing. `segment(4)` is what makes them exist at all: delete it and you get
     silence, because a raw signal has values everywhere and events nowhere. Change the `4` to `24`
     — a rising chromatic run, and you typed no notes.
   </Step>
   <Step check={{ includes: 'perlin', events: 24, fn: "(h) => { const n = h.map(e => e.value.note); const d = new Set(n.slice(1).map((v, i) => Math.round((v - n[i]) * 100))); return d.size > 2 || 'Every step is still the same size — that is a ramp, not a walk.' }" }}
-        solution={`note(perlin.range(40, 52).segment(24))`}>
+        solution={`note(perlin.range(40, 52)
+  .segment(24))`}>
     Replace `saw` with `perlin`. Same twenty-four slots, but the line now drifts: `perlin` is noise
     that changes smoothly, so consecutive values are always close together.
   </Step>
   <Step check={{ includes: 'rand', excludes: 'perlin', events: 24, fn: "(h) => { const n = h.map(e => e.value.note); const jump = Math.max(...n.slice(1).map((v, i) => Math.abs(v - n[i]))); return jump > 3 || 'Still too smooth: raw randomness should leap around.' }" }}
         hints={['`perlin` wanders, `rand` teleports.']}
-        solution={`note(rand.range(40, 52).segment(24))`}>
+        solution={`note(rand.range(40, 52)
+  .segment(24))`}>
     Replace `perlin` with `rand`. Same range, but every value is independent, so the line leaps
     around. For melodies, `perlin` almost always sounds more intentional; `rand` sounds like a fax
     machine, which is sometimes exactly right.
   </Step>
-  <Step check={{ includes: ['scale(', 'piano'], events: 24 }}
-        hints={['Scale degrees go in `n(...)`, not `note(...)`, and `scale` maps them to pitches.']}
-        solution={`n(rand.range(0, 8).segment(24)).scale("c:minor").s("piano")`}>
-    Chromatic randomness is ugly. Stop generating pitches and generate *scale degrees*: change
-    `note(` to `n(`, the range to `(0, 8)`, and chain `.scale("c:minor").s("piano")`. Every wrong
-    note just became impossible.
+</Exercise>
+
+Chromatic randomness is ugly. The fix is to stop generating pitches and generate *scale degrees*.
+
+<Exercise id="signals/melody-degrees" title="Random, but always in key"
+  goal="Turn the leaping chromatic line into a random walk through C minor, eight notes a bar, on piano."
+  start={`note(rand.range(40, 52)
+  .segment(24))`}
+  target={`n(irand(8)
+  .segment(8))
+  .scale("c:minor")
+  .s("piano")`}>
+  <Step check={{ includes: '.scale(', events: 24, fn: "(h) => h.every(e => typeof e.value.note === 'string') || 'Expected scale to have turned every number into a note name.'" }}
+        hints={['It chains onto the end, after the closing bracket of `note(...)`.']}
+        solution={`note(rand.range(40, 52)
+  .segment(24))
+  .scale("c:minor")`}>
+    Add `.scale("c:minor")` on a new line. `scale` reads each number as a **scale degree**, not a
+    MIDI note, and degree 40 of C minor is more than five octaves above C3: the notes are now Ab8
+    to F10, far above the top of a piano.
   </Step>
-  <Step check={{ includes: 'irand(8)', events: 8 }}
+  <Step check={{ includes: 'piano', has: { s: 'piano' } }}
+        solution={`note(rand.range(40, 52)
+  .segment(24))
+  .scale("c:minor")
+  .s("piano")`}>
+    Add `.s("piano")` on the end, so the next change lands on a sound you know.
+  </Step>
+  <Step check={{ includes: 'range(0, 8)', events: 24, fn: "(h) => h.every(e => /^[A-G][b#]?[34]$/.test(e.value.note)) || 'Expected every note between C3 and D4.'" }}
+        hints={['A degree is a position in the scale: 0 is the root, 7 is the root an octave up.']}
+        solution={`note(rand.range(0, 8)
+  .segment(24))
+  .scale("c:minor")
+  .s("piano")`}>
+    Change the range to `(0, 8)`. Degrees 0 to 8 of C minor run from C3 to D4. Every wrong note
+    just became impossible.
+  </Step>
+  <Step check={{ includes: 'n(rand', excludes: 'note(', match: { keys: ['note', 's'] } }}
+        target={`n(rand.range(0, 8)
+  .segment(24))
+  .scale("c:minor")
+  .s("piano")`}
+        solution={`n(rand.range(0, 8)
+  .segment(24))
+  .scale("c:minor")
+  .s("piano")`}>
+    Change `note(` to `n(`. Nothing changes: `scale` reads the number as a degree either way. But
+    `n` is the name for "a number that picks one of several", and it is how the rest of this
+    tutorial writes degrees.
+  </Step>
+  <Step check={{ includes: 'irand(8)', events: 24 }}
         hints={['`irand(n)` gives whole numbers from 0 to n-1, which is exactly what a degree is.']}
-        solution={`n(irand(8).segment(8)).scale("c:minor").s("piano")`}>
-    Degrees should be whole numbers, and 24 notes a bar is a lot. Replace `rand.range(0, 8)` with
-    `irand(8)` and `segment(24)` with `segment(8)`: a random walk through C minor, eight notes a
-    bar.
+        solution={`n(irand(8)
+  .segment(24))
+  .scale("c:minor")
+  .s("piano")`}>
+    Degrees should be whole numbers. Replace `rand.range(0, 8)` with `irand(8)`.
+  </Step>
+  <Step check={{ includes: 'segment(8)', events: 8 }}
+        solution={`n(irand(8)
+  .segment(8))
+  .scale("c:minor")
+  .s("piano")`}>
+    24 notes a bar is a lot. Change `segment(24)` to `segment(8)`: a random walk through C minor,
+    eight notes a bar.
   </Step>
 </Exercise>
 
@@ -317,28 +480,48 @@ Raw randomness gives you a different bar every bar. Two ways to pin it down.
 
 <Exercise id="signals/repeatable" title="Pin the dice"
   goal="Choose a different random stream, then loop one bar of it forever."
-  start={`n(irand(8).segment(8)).scale("c:minor").s("piano")`}
-  target={`n(irand(8).segment(8)).scale("c:minor").ribbon(1337, 1).s("piano")`}>
+  start={`n(irand(8).segment(8))
+  .scale("c:minor")
+  .s("piano")`}
+  target={`n(irand(8).segment(8))
+  .scale("c:minor")
+  .ribbon(1337, 1)
+  .s("piano")`}>
   <Step check={{ includes: '.seed(', match: { keys: ['note', 's'] } }}
-        target={`n(irand(8).segment(8)).scale("c:minor").seed(4).s("piano")`}
+        target={`n(irand(8).segment(8))
+  .scale("c:minor")
+  .seed(4)
+  .s("piano")`}
         hints={['It chains on like any other function, before `.s("piano")`.', 'Try 1, 2, 3 … until a bar sounds good.']}
-        solution={`n(irand(8).segment(8)).scale("c:minor").seed(4).s("piano")`}>
+        solution={`n(irand(8).segment(8))
+  .scale("c:minor")
+  .seed(4)
+  .s("piano")`}>
     Add `.seed(4)` before `.s("piano")`. The melody changes — you have picked a different stream of
     random numbers. It is still a new bar every bar, but it is the *same* new bar every time you
     press play, so a seed you like is a seed you can keep.
   </Step>
   <Step check={{ includes: '.ribbon(', cycles: 4, fn: "(h) => { const c = i => h.filter(e => Math.floor(e.t + 1e-9) === i).map(e => e.value.note).join(','); return (c(0) === c(2) && c(1) === c(3) && c(0) !== c(1)) || 'Expected a two-bar phrase that repeats: bar 3 should equal bar 1, bar 4 should equal bar 2.' }" }}
         hints={['`ribbon(offset, length)`: start at cycle `offset` and loop `length` cycles.']}
-        solution={`n(irand(8).segment(8)).scale("c:minor").ribbon(1337, 2).s("piano")`}>
+        solution={`n(irand(8).segment(8))
+  .scale("c:minor")
+  .ribbon(1337, 2)
+  .s("piano")`}>
     Replace `.seed(4)` with `.ribbon(1337, 2)`. This cuts a two-bar window out of the infinite
     random stream and loops just that. Now it is a phrase, not a sprinkle.
   </Step>
   <Step check={{ includes: 'ribbon', cycles: 2, fn: "(h) => { const c = i => h.filter(e => Math.floor(e.t + 1e-9) === i).map(e => e.value.note).join(','); return c(0) === c(1) || 'The two bars should now be identical.' }" }}
-        solution={`n(irand(8).segment(8)).scale("c:minor").ribbon(1337, 1).s("piano")`}>
+        solution={`n(irand(8).segment(8))
+  .scale("c:minor")
+  .ribbon(1337, 1)
+  .s("piano")`}>
     Narrow the window to one bar: `.ribbon(1337, 1)`. You have just used a random number generator
     as a riff writer, and then frozen the riff.
   </Step>
 </Exercise>
+
+The same trick freezes any randomness, not only random notes. `degradeBy(p)` drops each event with
+probability p — it is the function behind mini-notation’s `?`.
 
 <Exercise id="signals/repeatable-challenge" title="Challenge: the same half every bar"
   goal="Sixteenth-note hats with about half of them randomly missing — but the same half in every bar."
@@ -358,29 +541,42 @@ Signals are not only for parameters. Randomness plus `segment` is a drum machine
 <Exercise id="signals/structure" title="Program a beat by rolling dice"
   goal="Build a sixteen-slot kick pattern out of nothing but randomness, freeze it, and add hats that jump around the stereo field."
   start={`s("bd")`}
-  target={`$: s("bd").segment(16).degradeBy(.5).ribbon(16, 1)
+  target={`$: s("bd")
+  .segment(16)
+  .degradeBy(.5)
+  .ribbon(16, 1)
 $: s("hh*8").pan(brandBy(0.3))`}>
   <Step check={{ includes: 'segment(', events: 16 }}
-        solution={`s("bd").segment(16)`}>
+        solution={`s("bd")
+  .segment(16)`}>
     Add `.segment(16)`. Sixteen kicks: the grid, with everything switched on.
   </Step>
-  <Step check={{ includes: 'degradeBy', cycles: 4, events: [20, 44] }}
+  <Step check={{ includes: 'degradeBy(', cycles: 4, events: [20, 44] }}
         hints={['`degradeBy(.5)` keeps each event with 50% probability.']}
-        solution={`s("bd").segment(16).degradeBy(.5)`}>
-    Add `.degradeBy(.5)`. Now roughly half the slots survive — and a different half every bar. Let
-    it run for four bars and listen to how quickly "random" stops being interesting.
+        solution={`s("bd")
+  .segment(16)
+  .degradeBy(.5)`}>
+    Add `.degradeBy(.5)`. `degradeBy(p)` drops each event with probability p. Now roughly half the
+    slots survive — and a different half every bar. Let it run for four bars and listen to how
+    quickly "random" stops being interesting.
   </Step>
   <Step check={{ includes: 'ribbon', cycles: 2, fn: "(h) => { const c = i => h.filter(e => Math.floor(e.t + 1e-9) === i).map(e => +(e.t % 1).toFixed(4)).join(','); return c(0) === c(1) || 'Bar 2 should be identical to bar 1.' }" }}
         hints={['Change the first number until a bar lands well; `16` is as good as any.']}
-        solution={`s("bd").segment(16).degradeBy(.5).ribbon(16, 1)`}>
+        solution={`s("bd")
+  .segment(16)
+  .degradeBy(.5)
+  .ribbon(16, 1)`}>
     Add `.ribbon(16, 1)` to lock one bar in. That is a written beat now, and you never typed a
     single `bd`.
   </Step>
   <Step check={{ includes: 'brandBy', fn: "(h) => { const p = h.filter(e => e.value.s === 'hh').map(e => e.value.pan); return (p.length === 8 && p.includes(true) && p.includes(false)) || 'Expected eight hats, some hard left and some hard right.' }" }}
         hints={['Put `$: ` in front of the line you already have, then add a second `$: ` line.', '`brandBy(p)` is binary: it only ever returns 0 or 1, so the pan is always hard over.']}
-        solution={`$: s("bd").segment(16).degradeBy(.5).ribbon(16, 1)
+        solution={`$: s("bd")
+  .segment(16)
+  .degradeBy(.5)
+  .ribbon(16, 1)
 $: s("hh*8").pan(brandBy(0.3))`}>
-    Put `$: ` in front of your line and add a second lane below it:
+    Put `$: ` in front of your first line and add a second lane below it:
     `$: s("hh*8").pan(brandBy(0.3))`. Binary randomness — 30% chance of a 1 — so every hat is
     slammed either hard left or hard right, never in between. `brand` is the same thing at 50%.
   </Step>
@@ -404,22 +600,42 @@ you can feel the lag.
 
 <Exercise id="signals/mouse" title="Play it with the cursor"
   goal="Put the cutoff, the resonance and the pan of a held note under your cursor."
-  start={`s("supersaw").note("c2").seg(16).lpf(2000)`}
-  target={`s("supersaw").note("c2").seg(16).lpf(mouseX.range(200, 5000)).lpq(mouseY.range(1, 20)).pan(mouseX)`}>
+  start={`s("supersaw")
+  .note("c2")
+  .seg(16)
+  .lpf(2000)`}
+  target={`s("supersaw")
+  .note("c2")
+  .seg(16)
+  .lpf(mouseX.range(200, 5000))
+  .lpq(mouseY.range(1, 20))
+  .pan(mouseX)`}>
   <Step check={{ includes: 'mouseX', has: { lpf: [200, 5000] }, events: 16 }}
         hints={['It is a signal, so it needs the same `range(min, max)` as any other.']}
-        solution={`s("supersaw").note("c2").seg(16).lpf(mouseX.range(200, 5000))`}>
+        solution={`s("supersaw")
+  .note("c2")
+  .seg(16)
+  .lpf(mouseX.range(200, 5000))`}>
     Replace `2000` with `mouseX.range(200, 5000)` and move the cursor left and right while it
     plays. The `.seg(16)` is what makes it follow you: sixteen readings a bar.
   </Step>
   <Step check={{ includes: 'mouseY', has: { lpq: [1, 20] } }}
         hints={['`lpq` is the lowpass resonance: a peak right at the cutoff.']}
-        solution={`s("supersaw").note("c2").seg(16).lpf(mouseX.range(200, 5000)).lpq(mouseY.range(1, 20))`}>
+        solution={`s("supersaw")
+  .note("c2")
+  .seg(16)
+  .lpf(mouseX.range(200, 5000))
+  .lpq(mouseY.range(1, 20))`}>
     Add `.lpq(mouseY.range(1, 20))`. Now up and down adds the resonant whistle at the cutoff, and
     you have the two knobs every filter sweep in dance music is made of.
   </Step>
   <Step check={{ includes: '.pan(mouseX)', has: { pan: [0, 1] } }}
-        solution={`s("supersaw").note("c2").seg(16).lpf(mouseX.range(200, 5000)).lpq(mouseY.range(1, 20)).pan(mouseX)`}>
+        solution={`s("supersaw")
+  .note("c2")
+  .seg(16)
+  .lpf(mouseX.range(200, 5000))
+  .lpq(mouseY.range(1, 20))
+  .pan(mouseX)`}>
     One signal can feed several controls. Add `.pan(mouseX)` so the sound also follows the cursor
     across the stereo field. Lower `seg(16)` to `seg(4)` and you can hear the readings being taken.
   </Step>

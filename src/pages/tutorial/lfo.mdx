@@ -38,29 +38,43 @@ characters, and where you put them is the whole instruction.
 
 <Exercise id="lfo/positional" title="Six characters, two different instruments"
   goal="Move one bare .lfo() along the chain and hear it change target, then stack a second one."
-  start={`s("saw").lpf(800)`}
-  target={`s("saw").lfo().lpf(800).lfo({ s: 4 })`}>
+  start={`s("saw")
+  .lpf(800)`}
+  target={`s("saw")
+  .lfo()
+  .lpf(800)
+  .lfo({ s: 4 })`}>
   <Step check={{ includes: '.lfo()', fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'cutoff') || 'Expected one LFO, aimed at the cutoff.' }" }}
         hints={['Chain it on the very end, after `.lpf(800)`.']}
-        solution={`s("saw").lpf(800).lfo()`}>
+        solution={`s("saw")
+  .lpf(800)
+  .lfo()`}>
     Play the flat saw first, then add `.lfo()` to the end. The control immediately before it is
     `lpf`, so the cutoff starts breathing on its own — a held note that moves.
   </Step>
-  <Step check={{ includes: '.lfo().lpf(', fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 's') || 'Expected the LFO to land on the oscillator itself, not the filter.' }" }}
+  <Step check={{ code: 'lfo\\(\\)\\s*\\.lpf\\(', fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 's') || 'Expected the LFO to land on the oscillator itself, not the filter.' }" }}
         hints={['Nothing is added or deleted — the same six characters move to a different place in the chain.']}
-        solution={`s("saw").lfo().lpf(800)`}>
-    Now move it: `s("saw").lfo().lpf(800)`. With nothing but the oscillator before it, the LFO
-    grabs the oscillator frequency, and the filter goes still. Same code, one is a wah and the
-    other is seasick pitch.
+        solution={`s("saw")
+  .lfo()
+  .lpf(800)`}>
+    Now move it: put the `.lfo()` line above `.lpf(800)`. With nothing but the oscillator before
+    it, the LFO grabs the oscillator frequency, and the filter goes still. Same code, one is a wah
+    and the other is seasick pitch.
   </Step>
   <Step check={{ fn: "(h) => { const e = h.find(x => x.value.lfo); const L = e && e.value.lfo || {}; const ks = Object.keys(L).filter(k => k !== '__ids'); return (ks.length === 2 && ks.map(k => L[k].control).sort().join(',') === 'cutoff,s') || 'Expected two LFOs: one on the oscillator, one on the cutoff.' }" }}
-        solution={`s("saw").lfo().lpf(800).lfo()`}>
+        solution={`s("saw")
+  .lfo()
+  .lpf(800)
+  .lfo()`}>
     You can have as many as you like. Put a second `.lfo()` back on the end: now the pitch drifts
     *and* the filter breathes, independently.
   </Step>
   <Step check={{ fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['1']; return (m && m.sync === 4) || 'Expected the second LFO to run at four cycles per bar.' }" }}
         hints={['The config object goes inside the parentheses of the second `.lfo()`.', '`s` is speed in cycles per bar.']}
-        solution={`s("saw").lfo().lpf(800).lfo({ s: 4 })`}>
+        solution={`s("saw")
+  .lfo()
+  .lpf(800)
+  .lfo({ s: 4 })`}>
     Speed the filter one up: change the second call to `.lfo({ s: 4 })`. Four sweeps a bar against
     a slow pitch drift. That object is the rest of this chapter.
   </Step>
@@ -106,32 +120,67 @@ and every value can itself be a pattern.
 
 <Exercise id="lfo/control" title="One LFO, four destinations"
   goal="Name the target explicitly so position stops mattering, then hear the same wave as a wah, a tremolo and an auto-pan."
-  start={`s("saw").lpf(800).lfo()`}
-  target={`s("saw").lfo({ c: 'lpf' }).lpf(800).lpq(12)`}>
+  start={`s("saw")
+  .lpf(800)
+  .lfo()`}
+  target={`s("saw")
+  .lfo({ c: 'lpf' })
+  .lpf(800)
+  .lpq(12)`}>
   <Step check={{ includes: 'control', fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'cutoff') || 'Expected the LFO on the cutoff.' }" }}
         hints={['The value is a string: the name of the control you would have typed.']}
-        solution={`s("saw").lfo({ control: 'lpf' }).lpf(800)`}>
-    Rewrite it as `s("saw").lfo({ control: 'lpf' }).lpf(800)` — the LFO now sits *before* the filter
-    and still modulates it. Identical sound to the last exercise, but nothing breaks when you
-    reorder the chain later.
+        solution={`s("saw")
+  .lpf(800)
+  .lfo({ control: 'lpf' })`}>
+    Name the target: change `.lfo()` to `.lfo({ control: 'lpf' })`. Nothing changes — it was
+    already on the cutoff by position, and now it says so.
+  </Step>
+  <Step check={{ code: 'lfo\\(\\{[^}]*\\}\\)\\s*\\.lpf\\(', fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'cutoff') || 'Expected the LFO on the cutoff.' }" }}
+        hints={['Only the order of the two lines changes.']}
+        solution={`s("saw")
+  .lfo({ control: 'lpf' })
+  .lpf(800)`}>
+    Now move that line above `.lpf(800)` — the LFO sits *before* the filter and still modulates
+    it. Identical sound to the last exercise, but nothing breaks when you reorder the chain later.
+  </Step>
+  <Step check={{ includes: "c: 'lpf'", excludes: 'control', fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'cutoff') || 'Expected the LFO on the cutoff.' }" }}
+        hints={['Every key in the table has a short alias.']}
+        solution={`s("saw")
+  .lfo({ c: 'lpf' })
+  .lpf(800)`}>
+    Shorten `control` to its alias `c`. Nothing changes; this is the spelling you will see from
+    here on.
   </Step>
   <Step check={{ includes: "c: 'gain'", fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'gain') || 'Expected the LFO on gain.' }" }}
-        hints={['`c` is the alias for `control`.', 'You never wrote a `.gain()` — you do not have to.']}
-        solution={`s("saw").lfo({ c: 'gain' }).lpf(800)`}>
-    Shorten `control` to its alias `c` and aim it somewhere else: `.lfo({ c: 'gain' })`. That is
-    tremolo. Note you never set a gain — every control exists implicitly at its default, and the
-    LFO can grab it anyway.
+        hints={['You never wrote a `.gain()` — you do not have to.']}
+        solution={`s("saw")
+  .lfo({ c: 'gain' })
+  .lpf(800)`}>
+    Aim it somewhere else: change `'lpf'` to `'gain'`. That is tremolo. Note you never set a gain
+    — every control exists implicitly at its default, and the LFO can grab it anyway.
   </Step>
   <Step check={{ includes: "c: 'pan'", fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'pan') || 'Expected the LFO on pan.' }" }}
-        solution={`s("saw").lfo({ c: 'pan' }).lpf(800)`}>
+        solution={`s("saw")
+  .lfo({ c: 'pan' })
+  .lpf(800)`}>
     Change `'gain'` to `'pan'`. Headphones on: the sound is now walking around your head. One
     string, three completely different effects.
   </Step>
-  <Step check={{ has: { lpq: 12 }, fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'cutoff') || 'Point the LFO back at the cutoff.' }" }}
+  <Step check={{ excludes: "'pan'", fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'cutoff') || 'Point the LFO back at the cutoff.' }" }}
+        solution={`s("saw")
+  .lfo({ c: 'lpf' })
+  .lpf(800)`}>
+    Point it back at the filter: `'lpf'`. This is exactly the code you had right after shortening
+    `control` to `c`.
+  </Step>
+  <Step check={{ includes: '.lpq(', has: { lpq: 12 }, fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'cutoff') || 'Keep the LFO on the cutoff.' }" }}
         hints={['`lpq` is the lowpass resonance: a peak that sits right at the cutoff and follows it.']}
-        solution={`s("saw").lfo({ c: 'lpf' }).lpf(800).lpq(12)`}>
-    Back to `'lpf'`, and add `.lpq(12)` on the end. Resonance puts a loud peak at the cutoff, so a
-    sweep you could barely hear becomes the sound every acid record is made of.
+        solution={`s("saw")
+  .lfo({ c: 'lpf' })
+  .lpf(800)
+  .lpq(12)`}>
+    Add `.lpq(12)` on the end. Resonance puts a loud peak at the cutoff, so a sweep you could
+    barely hear becomes the sound every acid record is made of.
   </Step>
 </Exercise>
 
@@ -174,20 +223,31 @@ $: s("saw").lpf(800).lfo({ c: 'lpf', rate: "<2 4 8>" })`}>
     a bar or two: the wobble and the kick have nothing to do with each other, and it sounds like an
     accident.
   </Step>
-  <Step check={{ includes: 'sync', excludes: 'rate', cycles: 4, fn: "(h) => { const y = i => { const e = h.find(x => Math.floor(x.t + 1e-9) === i && x.value.lfo); return e && e.value.lfo['0']; }; const vals = [0, 1, 2, 3].map(i => y(i) && y(i).sync); return (vals.join(',') === '2,4,8,0.5' && !y(0).rate) || 'Expected sync 2, 4, 8, 0.5 across four bars, and no rate left.' }" }}
-        hints={['One word changes, and the numbers now mean "times per cycle".', '0.5 means one sweep every two bars.']}
+  <Step check={{ includes: 'sync', excludes: 'rate', cycles: 3, fn: "(h) => { const y = i => { const e = h.find(x => Math.floor(x.t + 1e-9) === i && x.value.lfo); return e && e.value.lfo['0']; }; const vals = [0, 1, 2].map(i => y(i) && y(i).sync); return (vals.join(',') === '2,4,8' && !y(0).rate) || 'Expected sync 2, 4, 8 across three bars, and no rate left.' }" }}
+        hints={['One word changes, and the numbers now mean "times per cycle".']}
+        solution={`$: s("bd*4").bank("RolandTR909")
+$: s("saw").lpf(800).lfo({ c: 'lpf', sync: "<2 4 8>" })`}>
+    Replace `rate` with `sync`. Now 2 means twice a bar, and the wobble lands on the kick.
+    Tempo-synced modulation is the difference between "a synth" and "a groove".
+  </Step>
+  <Step check={{ includes: '0.5>', cycles: 4, fn: "(h) => { const y = i => { const e = h.find(x => Math.floor(x.t + 1e-9) === i && x.value.lfo); return e && e.value.lfo['0']; }; const vals = [0, 1, 2, 3].map(i => y(i) && y(i).sync); return (vals.join(',') === '2,4,8,0.5' && !y(0).rate) || 'Expected sync 2, 4, 8, 0.5 across four bars, and no rate left.' }" }}
+        hints={['0.5 means one sweep every two bars.']}
         solution={`$: s("bd*4").bank("RolandTR909")
 $: s("saw").lpf(800).lfo({ c: 'lpf', sync: "<2 4 8 0.5>" })`}>
-    Replace `rate` with `sync` and the pattern with `"<2 4 8 0.5>"`. Now 2 means twice a bar, and
-    the wobble lands on the kick. Tempo-synced modulation is the difference between "a synth" and
-    "a groove".
+    Add a fourth bar to the pattern: `"<2 4 8 0.5>"`. A sync below 1 is slower than the bar: 0.5 is
+    one sweep every two bars.
   </Step>
-  <Step check={{ excludes: 'sync', fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.sync === 2 && m.rate === undefined) || 'Expected a single tempo-locked speed of 2.' }" }}
+  <Step check={{ includes: 's: "<', excludes: 'sync', cycles: 4, fn: "(h) => { const y = i => { const e = h.find(x => Math.floor(x.t + 1e-9) === i && x.value.lfo); return e && e.value.lfo['0']; }; const vals = [0, 1, 2, 3].map(i => y(i) && y(i).sync); return vals.join(',') === '2,4,8,0.5' || 'Expected the same four speeds, written with the alias.' }" }}
         hints={['`s` is the alias for `sync`. Do not confuse it with the `s()` that picks a sound.']}
         solution={`$: s("bd*4").bank("RolandTR909")
+$: s("saw").lpf(800).lfo({ c: 'lpf', s: "<2 4 8 0.5>" })`}>
+    Shorten `sync` to its alias `s`. Nothing changes.
+  </Step>
+  <Step check={{ excludes: 'sync', cycles: 4, fn: "(h) => { const L = h.filter(x => x.value.lfo).map(x => x.value.lfo['0']); return (L.length > 0 && L.every(m => m.sync === 2 && m.rate === undefined)) || 'Expected a single tempo-locked speed of 2.' }" }}
+        solution={`$: s("bd*4").bank("RolandTR909")
 $: s("saw").lpf(800).lfo({ c: 'lpf', s: 2 })`}>
-    Settle on one speed and use the alias: `{ c: 'lpf', s: 2 }`. This is the shape you will type
-    most often.
+    Settle on one speed: replace the pattern with `2`, giving `{ c: 'lpf', s: 2 }`. This is the
+    shape you will type most often.
   </Step>
 </Exercise>
 
@@ -303,24 +363,46 @@ window. The default is `-0.5`.
 
 <Exercise id="lfo/shape" title="Five waveforms on one filter"
   goal="Hear a triangle, a sine, a ramp, a saw and a square doing the same job, then generate the choice."
-  start={`note("c2*4").s("sawtooth").lpf(800).lfo({ c: 'lpf', s: 2 })`}
-  target={`note("c2*4").s("sawtooth").lpf(800).lfo({ c: 'lpf', s: 2, sh: irand(4) })`}>
+  start={`note("c2*4")
+  .s("sawtooth")
+  .lpf(800)
+  .lfo({ c: 'lpf', s: 2 })`}
+  target={`note("c2*4")
+  .s("sawtooth")
+  .lpf(800)
+  .lfo({ c: 'lpf', s: 2, sh: irand(4) })`}>
   <Step check={{ includes: 'shape', fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && (m.shape === 'square' || m.shape === 4)) || 'Expected a square shape.' }" }}
-        solution={`note("c2*4").s("sawtooth").lpf(800).lfo({ c: 'lpf', s: 2, shape: 'square' })`}>
+        solution={`note("c2*4")
+  .s("sawtooth")
+  .lpf(800)
+  .lfo({ c: 'lpf', s: 2, shape: 'square' })`}>
     Add `shape: 'square'`. No glide at all: the cutoff teleports between two values twice a bar.
     The default is `'triangle'`, which is what you have been hearing.
   </Step>
   <Step check={{ includes: '<triangle sine ramp saw square>', cycles: 5, fn: "(h) => { const s = i => { const e = h.find(x => Math.floor(x.t + 1e-9) === i && x.value.lfo); return e && e.value.lfo['0'].shape; }; return ([0, 1, 2, 3, 4].map(s).join(',') === 'triangle,sine,ramp,saw,square') || 'Expected one shape per bar, in the order of the table.' }" }}
         hints={['A mini-notation list, one per bar.']}
-        solution={`note("c2*4").s("sawtooth").lpf(800).lfo({ c: 'lpf', s: 2, shape: "<triangle sine ramp saw square>" })`}>
+        solution={`note("c2*4")
+  .s("sawtooth")
+  .lpf(800)
+  .lfo({ c: 'lpf', s: 2, shape: "<triangle sine ramp saw square>" })`}>
     Replace `'square'` with `"<triangle sine ramp saw square>"` and let it run for five bars. Pick
     the one you would have reached for — a `ramp` rises slowly and drops instantly, a `saw` does
     the opposite, and that asymmetry is most of what "character" means here.
   </Step>
+  <Step check={{ includes: 'sh:', excludes: 'shape', cycles: 5, fn: "(h) => { const s = i => { const e = h.find(x => Math.floor(x.t + 1e-9) === i && x.value.lfo); return e && e.value.lfo['0'].shape; }; return ([0, 1, 2, 3, 4].map(s).join(',') === 'triangle,sine,ramp,saw,square') || 'Expected the same five shapes, one per bar.' }" }}
+        solution={`note("c2*4")
+  .s("sawtooth")
+  .lpf(800)
+  .lfo({ c: 'lpf', s: 2, sh: "<triangle sine ramp saw square>" })`}>
+    Shorten `shape` to its alias `sh`. Nothing changes.
+  </Step>
   <Step check={{ includes: 'irand(4)', fn: "(h) => { const sh = h.filter(x => x.value.lfo).map(x => x.value.lfo['0'].shape); return (sh.length === 4 && sh.every(v => typeof v === 'number') && new Set(sh).size > 1) || 'Expected a numeric shape that differs between notes in the bar.' }" }}
         hints={['Shapes have numbers, which means a signal can choose one.', '`irand(n)` gives whole numbers from 0 to n-1.']}
-        solution={`note("c2*4").s("sawtooth").lpf(800).lfo({ c: 'lpf', s: 2, sh: irand(4) })`}>
-    Because shapes have numbers you can generate them. Use the alias and a signal:
+        solution={`note("c2*4")
+  .s("sawtooth")
+  .lpf(800)
+  .lfo({ c: 'lpf', s: 2, sh: irand(4) })`}>
+    Because shapes have numbers you can generate them. Replace the pattern with a signal:
     `sh: irand(4)`. A different waveform on every note.
   </Step>
 </Exercise>
@@ -441,12 +523,14 @@ A free-running LFO ignores your notes: each one arrives wherever the wave happen
     changes yet. Indices work too, but they shift the moment you insert an LFO in the middle;
     names do not.
   </Step>
-  <Step check={{ includes: 'sometimes', cycles: 4, fn: "(h) => { const d = h.filter(e => e.value.lfo).map(e => e.value.lfo.wob.depth); return (d.some(v => v === 4) && d.some(v => v === undefined)) || 'Expected some bars where wob has a depth of 4 and some where it does not.' }" }}
+  <Step check={{ includes: '.sometimes(', cycles: 4, fn: "(h) => { const d = h.filter(e => e.value.lfo).map(e => e.value.lfo.wob.depth); return (d.some(v => v === 4) && d.some(v => v === undefined)) || 'Expected some bars where wob has a depth of 4 and some where it does not.' }" }}
         hints={['A later `.lfo()` call with an existing name modifies that modulator instead of adding one.']}
         solution={`s("saw").lpf(800).lfo({ c: 'lpf', s: 2 }, "wob").lfo({ c: 'gain', s: 8 }, "trem")
   .sometimes(x => x.lfo({ dr: 4 }, "wob"))`}>
-    Now reach back and poke one. Add `.sometimes(x => x.lfo({ dr: 4 }, "wob"))` on a new line: in
-    roughly half the bars, the filter wobble goes four times deeper. You are automating a knob you
+    Now reach back and poke one. `sometimes(f)` applies the function `f` to roughly half of the
+    events, picked at random. Add `.sometimes(x => x.lfo({ dr: 4 }, "wob"))` on a new line: with
+    one event per bar, that is roughly half the bars, and in those the filter wobble goes four
+    times deeper. You are automating a knob you
     named eight characters ago.
   </Step>
   <Step check={{ includes: '<wob trem>', cycles: 4, fn: "(h) => { const L = h.filter(e => e.value.lfo).map(e => e.value.lfo); return (L.some(x => x.trem.depth === 4) && L.some(x => x.wob.depth === 4)) || 'Expected the deepening to land on wob in some bars and trem in others.' }" }}
@@ -594,11 +678,12 @@ address the effect by index with `fxi`, counting from 0.
     Make the rate a pattern: `sync: "<1 2 4>"`. Halftime, then straight, then double — the whole
     dubstep vocabulary, in six characters.
   </Step>
-  <Step check={{ has: { room: 0.3 } }}
+  <Step check={{ includes: '.room(', has: { room: 0.3 } }}
         solution={`s("supersaw").note("<c2 eb2 g1 bb1>")
   .lpf(500).lpq(8).lfo({ c: 'lpf', sync: "<1 2 4>", depthabs: 400, sh: 'sine' })
   .room(.3)`}>
-    Add `.room(.3)` on the end. Reverb after modulation means the tail keeps moving too.
+    Add `.room(.3)` on the end. `room` is reverb, and the number is how much of it. Reverb after
+    modulation means the tail keeps moving too.
   </Step>
 </Exercise>
 
@@ -637,31 +722,31 @@ address the effect by index with `fxi`, counting from 0.
 <Exercise id="lfo/gate" title="Hard gate"
   goal="Chop a held note into a rhythm with a square gain LFO that ducks but never boosts."
   start={`note("<c3 eb3>").s("sawtooth").sustain(1).gain(0.8)`}
-  target={`note("<c3 eb3>").s("sawtooth").sustain(1)
-  .gain(0.8).lfo({ c: 'gain', s: "<4 8 16>", sh: 'square', dc: -1, dr: 1 })`}>
+  target={`note("<c3 eb3>").s("sawtooth").sustain(1).gain(0.8)
+  .lfo({ c: 'gain', s: "<4 8 16>", sh: 'square', dc: -1, dr: 1 })`}>
   <Step check={{ fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.control === 'gain' && m.shape === 'square') || 'Expected a square LFO on gain.' }" }}
-        solution={`note("<c3 eb3>").s("sawtooth").sustain(1)
-  .gain(0.8).lfo({ c: 'gain', s: 4, sh: 'square' })`}>
+        solution={`note("<c3 eb3>").s("sawtooth").sustain(1).gain(0.8)
+  .lfo({ c: 'gain', s: 4, sh: 'square' })`}>
     Add `.lfo({ c: 'gain', s: 4, sh: 'square' })`. A held note is now four notes — rhythm out of
     nothing. But the wave is centred on 0.8, so half the time it is pushing the gain *above* what
     you asked for.
   </Step>
   <Step check={{ fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.dcoffset === -1) || 'Expected the gate to be offset so it only ducks.' }" }}
-        solution={`note("<c3 eb3>").s("sawtooth").sustain(1)
-  .gain(0.8).lfo({ c: 'gain', s: 4, sh: 'square', dc: -1 })`}>
+        solution={`note("<c3 eb3>").s("sawtooth").sustain(1).gain(0.8)
+  .lfo({ c: 'gain', s: 4, sh: 'square', dc: -1 })`}>
     Add `dc: -1`. Now the wave sits entirely below 0.8: loud half at exactly the gain you set,
     quiet half below it. Nothing can clip, and that is what makes it a gate rather than a tremolo.
   </Step>
   <Step check={{ fn: "(h) => { const e = h.find(x => x.value.lfo); const m = e && e.value.lfo['0']; return (m && m.depth === 1) || 'Expected a depth of 1.' }" }}
         hints={['`dr` is the alias for the relative depth.']}
-        solution={`note("<c3 eb3>").s("sawtooth").sustain(1)
-  .gain(0.8).lfo({ c: 'gain', s: 4, sh: 'square', dc: -1, dr: 1 })`}>
+        solution={`note("<c3 eb3>").s("sawtooth").sustain(1).gain(0.8)
+  .lfo({ c: 'gain', s: 4, sh: 'square', dc: -1, dr: 1 })`}>
     Add `dr: 1` to open the gate fully. Try 0.3 first and then 1: shallow is a pulse you feel,
     full is silence between hits.
   </Step>
   <Step check={{ includes: '<4 8 16>', cycles: 3, fn: "(h) => { const y = i => { const e = h.find(x => Math.floor(x.t + 1e-9) === i && x.value.lfo); return e && e.value.lfo['0'].sync; }; return ([0, 1, 2].map(y).join(',') === '4,8,16') || 'Expected 4, 8 and 16 gates per bar.' }" }}
-        solution={`note("<c3 eb3>").s("sawtooth").sustain(1)
-  .gain(0.8).lfo({ c: 'gain', s: "<4 8 16>", sh: 'square', dc: -1, dr: 1 })`}>
+        solution={`note("<c3 eb3>").s("sawtooth").sustain(1).gain(0.8)
+  .lfo({ c: 'gain', s: "<4 8 16>", sh: 'square', dc: -1, dr: 1 })`}>
     Make the rate a pattern: `s: "<4 8 16>"`. Quarters, eighths, sixteenths — a build, written as
     three numbers.
   </Step>
@@ -671,22 +756,31 @@ address the effect by index with `fxi`, counting from 0.
 
 <Exercise id="lfo/vibrato" title="vib: a pitch LFO with no config object"
   goal="Use the dedicated pitch modulator and set its depth in semitones."
-  start={`note("a e").s("sawtooth")`}
-  target={`note("a e").s("sawtooth").vib("<.5 1 2 4 8 16>:12")`}>
-  <Step check={{ has: { vib: 4 } }}
-        solution={`note("a e").s("sawtooth").vib(4)`}>
+  start={`note("a e")
+  .s("sawtooth")`}
+  target={`note("a e")
+  .s("sawtooth")
+  .vib("<.5 1 2 4 8 16>:12")`}>
+  <Step check={{ includes: '.vib(', has: { vib: 4 } }}
+        solution={`note("a e")
+  .s("sawtooth")
+  .vib(4)`}>
     Add `.vib(4)`: four wobbles a second on the pitch. No control name, no depth, no shape — this
     is a fixed-purpose modulator and it only does one thing.
   </Step>
   <Step check={{ fn: "(h) => h.every(e => e.value.vib === 4 && e.value.vibmod === 12) || 'Expected a vibrato of 4 with a depth of 12 semitones.'" }}
         hints={['The argument becomes a string: `"rate:depth"`.', 'Depth is in semitones, so 12 is an octave.']}
-        solution={`note("a e").s("sawtooth").vib("4:12")`}>
+        solution={`note("a e")
+  .s("sawtooth")
+  .vib("4:12")`}>
     Set the depth too: `.vib("4:12")`. The colon separates rate from depth **in semitones**, so
     that is a full octave of wobble — a siren, not a violin. Try `"4:0.3"` for something you would
     actually keep.
   </Step>
   <Step check={{ includes: '<.5 1 2 4 8 16>', cycles: 6, fn: "(h) => { const v = i => { const e = h.find(x => Math.floor(x.t + 1e-9) === i); return e && e.value.vib; }; return ([0, 1, 2, 3, 4, 5].map(v).join(',') === '0.5,1,2,4,8,16') || 'Expected the rate to double every bar from 0.5 to 16.' }" }}
-        solution={`note("a e").s("sawtooth").vib("<.5 1 2 4 8 16>:12")`}>
+        solution={`note("a e")
+  .s("sawtooth")
+  .vib("<.5 1 2 4 8 16>:12")`}>
     Pattern the rate: `.vib("<.5 1 2 4 8 16>:12")`. Six bars, doubling each time. Somewhere in the
     middle it stops being vibrato and becomes a new timbre — that is the boundary between an LFO
     and an oscillator, and you can hear exactly where it is. Add `._scope()` to watch it.

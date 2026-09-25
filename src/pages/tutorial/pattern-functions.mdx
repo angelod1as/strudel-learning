@@ -22,7 +22,7 @@ type into a running pattern and listen to.
 <Exercise id="pattern-functions/rev" title="Backwards, and back again"
   goal="Hear the difference between reversing inside a cycle and reversing the cycles themselves."
   start={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano")`}
-  target={`n("0 2 4 7").scale("C:minor").s("piano").palindrome()`}>
+  target={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano").palindrome()`}>
   <Step check={{ includes: '.rev()', cycles: 2, match: { keys: ['note'] } }}
         target={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano").rev()`}
         hints={['It chains on the end, like any other function.']}
@@ -42,17 +42,12 @@ type into a running pattern and listen to.
         solution={`n("<[0 2 4 7] [9 11 12 14]>").scale("C:minor").s("piano").palindrome()`}>
     Change `.revv()` to `.palindrome()`. Bar 1 forwards, bar 2 backwards.
   </Step>
-  <Step check={{ excludes: '<', cycles: 2, match: { keys: ['note'] } }}
-        hints={['The `< >` and the second group both go; keep the four numbers of the first group.']}
-        solution={`n("0 2 4 7").scale("C:minor").s("piano").palindrome()`}>
-    Drop the alternation so you can hear `palindrome` on its own: cut the source down to
-    `n("0 2 4 7")`. Up, then down, forever.
-  </Step>
 </Exercise>
 
 <Box>
 `rev` reverses each cycle on its own. `revv` reverses the order of the cycles as well.
-`palindrome` is the pattern, then `rev` of it, one per cycle.
+`palindrome` is the pattern, then `rev` of it, one per cycle: on a one-bar source such as
+`n("0 2 4 7")`, that is up, then down, forever.
 </Box>
 
 ## jux — one ear at a time
@@ -332,33 +327,51 @@ and then speeds them up across the whole cycle. Functions that stay put — `ply
 
 <Exercise id="pattern-functions/chance" title="Roll the dice"
   goal="Hit-by-hit randomness, then cycle-by-cycle randomness, then dropping hits altogether."
-  start={`s("hh*8").bank("RolandTR909")`}
-  target={`s("hh*8").bank("RolandTR909").often(x => x.speed(2)).someCyclesBy(.5, x => x.gain(.4)).degradeBy(.3)`}>
+  start={`s("hh*8")
+  .bank("RolandTR909")`}
+  target={`s("hh*8")
+  .bank("RolandTR909")
+  .often(x => x.speed(2))
+  .someCyclesBy(.5, x => x.gain(.4))
+  .degradeBy(.3)`}>
   <Step check={{ includes: '.sometimesBy(', cycles: 8, fn: "(h) => { const n = h.filter(e => e.value.speed === 2).length; return (h.length === 64 && n > 14 && n < 50) || 'Expected all 64 hats, with roughly half of them at speed 2 (got ' + h.filter(e => e.value.speed === 2).length + ').' }" }}
         hints={['`sometimesBy(probability, f)` — the probability comes first.']}
-        solution={`s("hh*8").bank("RolandTR909").sometimesBy(.5, x => x.speed(2))`}>
-    Add `.sometimesBy(.5, x => x.speed(2))`. Every hat still plays; about half of them are pitched
+        solution={`s("hh*8")
+  .bank("RolandTR909")
+  .sometimesBy(.5, x => x.speed(2))`}>
+    Add `.sometimesBy(.5, x => x.speed(2))` on a new line. Every hat still plays; about half of them are pitched
     up. Let it run — the choice is remade every cycle.
   </Step>
   <Step check={{ includes: '.sometimes(', excludes: '.sometimesBy(', cycles: 8, fn: "(h) => { const n = h.filter(e => e.value.speed === 2).length; return (h.length === 64 && n > 14 && n < 50) || 'It should still sound like the previous step.' }" }}
         hints={['There is a named shortcut for exactly 0.5.']}
-        solution={`s("hh*8").bank("RolandTR909").sometimes(x => x.speed(2))`}>
-    Replace it with `.sometimes(x => x.speed(2))` — the named shortcut for 0.5. No audible change.
+        solution={`s("hh*8")
+  .bank("RolandTR909")
+  .sometimes(x => x.speed(2))`}>
+    Change `sometimesBy(.5,` to `sometimes(` — the named shortcut for 0.5. No audible change.
   </Step>
   <Step check={{ includes: '.often(', cycles: 8, fn: "(h) => { const n = h.filter(e => e.value.speed === 2).length; return (h.length === 64 && n > 34 && n < 62) || 'Expected roughly three quarters of the 64 hats at speed 2 (got ' + h.filter(e => e.value.speed === 2).length + ').' }" }}
         hints={['The next one up the list.']}
-        solution={`s("hh*8").bank("RolandTR909").often(x => x.speed(2))`}>
+        solution={`s("hh*8")
+  .bank("RolandTR909")
+  .often(x => x.speed(2))`}>
     Change `sometimes` to `often`, which is 0.75. Noticeably more of them jump.
   </Step>
   <Step check={{ includes: '.someCyclesBy(', cycles: 8, fn: "(h) => { const byCycle = [0,1,2,3,4,5,6,7].map(c => h.filter(e => Math.floor(e.t) === c)); const loud = byCycle.filter(c => c.length && c.every(e => e.value.gain === 0.4)).length; const none = byCycle.filter(c => c.length && c.every(e => e.value.gain === undefined)).length; return (loud > 0 && none > 0 && loud + none === 8) || 'Expected whole bars at gain .4 and whole bars untouched — never a mix inside one bar.' }" }}
-        hints={['`someCyclesBy` has the same shape as `sometimesBy`.', 'Chain it after the `often(...)`.']}
-        solution={`s("hh*8").bank("RolandTR909").often(x => x.speed(2)).someCyclesBy(.5, x => x.gain(.4))`}>
+        hints={['`someCyclesBy` has the same shape as `sometimesBy`.', 'A new line after the `often(...)`.']}
+        solution={`s("hh*8")
+  .bank("RolandTR909")
+  .often(x => x.speed(2))
+  .someCyclesBy(.5, x => x.gain(.4))`}>
     Add `.someCyclesBy(.5, x => x.gain(.4))`. Listen to the difference: this decides once per bar,
     so a whole bar is quiet or a whole bar is not. `sometimesBy` decides per hit.
   </Step>
   <Step check={{ includes: '.degradeBy(', cycles: 8, events: [30, 58] }}
         hints={['`degradeBy(p)` drops each event with probability p.']}
-        solution={`s("hh*8").bank("RolandTR909").often(x => x.speed(2)).someCyclesBy(.5, x => x.gain(.4)).degradeBy(.3)`}>
+        solution={`s("hh*8")
+  .bank("RolandTR909")
+  .often(x => x.speed(2))
+  .someCyclesBy(.5, x => x.gain(.4))
+  .degradeBy(.3)`}>
     Finally, stop playing some of them: add `.degradeBy(.3)`. Three hats in ten go missing.
     (`degrade` is `degradeBy(.5)`.)
   </Step>
@@ -379,25 +392,46 @@ Each is `sometimesBy` with that number baked in, and each has a `someCycles…` 
 
 <Exercise id="pattern-functions/undegrade" title="The other half of the coin"
   goal="Split one hat line into the hits `degradeBy` keeps and the hits it drops, and treat them differently."
-  start={`s("hh*16").bank("RolandTR909")`}
-  target={`$: s("hh*16").bank("RolandTR909").degradeBy(.5).gain(.8)
-$: s("hh*16").bank("RolandTR909").undegradeBy(.5).gain(.3).speed(2)`}>
+  start={`s("hh*16")
+  .bank("RolandTR909")`}
+  target={`$: s("hh*16")
+  .bank("RolandTR909")
+  .degradeBy(.5)
+  .gain(.8)
+$: s("hh*16")
+  .bank("RolandTR909")
+  .undegradeBy(.5)
+  .gain(.3)
+  .speed(2)`}>
   <Step check={{ includes: '.degradeBy(', cycles: 4, events: [18, 46] }}
         hints={['Half of them, on average, are dropped.']}
-        solution={`s("hh*16").bank("RolandTR909").degradeBy(.5)`}>
+        solution={`s("hh*16")
+  .bank("RolandTR909")
+  .degradeBy(.5)`}>
     Add `.degradeBy(.5)`. Sixteenths, with half of them missing.
   </Step>
   <Step check={{ includes: '.undegradeBy(', cycles: 4, events: 64 }}
         hints={['A second `$:` lane, the same source, `undegradeBy` instead of `degradeBy`.', 'The first lane needs a `$:` too once there are two.']}
-        solution={`$: s("hh*16").bank("RolandTR909").degradeBy(.5)
-$: s("hh*16").bank("RolandTR909").undegradeBy(.5)`}>
+        solution={`$: s("hh*16")
+  .bank("RolandTR909")
+  .degradeBy(.5)
+$: s("hh*16")
+  .bank("RolandTR909")
+  .undegradeBy(.5)`}>
     Add a second lane with `.undegradeBy(.5)` instead. Every sixteenth is back, exactly once:
     `undegradeBy` keeps precisely the events `degradeBy` threw away.
   </Step>
   <Step check={{ includes: '.speed(2)', cycles: 4, events: 64, fn: "(h) => { const g = [...new Set(h.map(e => e.value.gain))]; return (g.length === 2 && h.filter(e => e.value.speed === 2).length > 0 && h.filter(e => e.value.speed === undefined).length > 0) || 'Expected two gains, and only one of the two lanes sped up.' }" }}
         hints={['One `.gain(.8)`, the other `.gain(.3).speed(2)`.']}
-        solution={`$: s("hh*16").bank("RolandTR909").degradeBy(.5).gain(.8)
-$: s("hh*16").bank("RolandTR909").undegradeBy(.5).gain(.3).speed(2)`}>
+        solution={`$: s("hh*16")
+  .bank("RolandTR909")
+  .degradeBy(.5)
+  .gain(.8)
+$: s("hh*16")
+  .bank("RolandTR909")
+  .undegradeBy(.5)
+  .gain(.3)
+  .speed(2)`}>
     Now treat them differently: `.gain(.8)` on the first lane, `.gain(.3).speed(2)` on the second.
     Every hat is played, but the same coin toss decides which of two sounds it gets.
   </Step>
@@ -438,11 +472,18 @@ $: s("hh*16").bank("RolandTR909").undegradeBy(.5).gain(.3).speed(2)`}>
     Change `shuffle` to `scramble`. It picks each slot independently, so parts repeat and others
     never show up. Let it run a while and you will hear notes land twice in a row.
   </Step>
+  <Step check={{ includes: '.add(', excludes: 'scramble', cycles: 4, match: { keys: ['note'] } }}
+        target={`n("0 1 2 3").scale("A:minor").s("piano").add(note(7))`}
+        hints={['`add(note(7))` adds 7 semitones to every note.']}
+        solution={`n("0 1 2 3").scale("A:minor").s("piano").add(note(7))`}>
+    Replace `.scramble(4)` with `.add(note(7))`. Back in order, and every note is now 7 semitones
+    higher: the whole riff moved up.
+  </Step>
   <Step check={{ includes: '.chunk(', cycles: 4, match: { keys: ['note'] } }}
-        hints={['`chunk(n, f)` applies `f` to a different nth of the cycle each cycle.']}
+        hints={['`chunk(n, f)` applies `f` to a different nth of the cycle each cycle.', 'The transposition becomes the `f`: `x => x.add(note(7))`.']}
         solution={`n("0 1 2 3").scale("A:minor").s("piano").chunk(4, x => x.add(note(7)))`}>
-    Replace it with `.chunk(4, x => x.add(note(7)))`. Nothing is reordered now; instead a different
-    quarter of the bar is transposed each time round.
+    Wrap it so it only hits part of the bar: `.chunk(4, x => x.add(note(7)))`. Nothing is
+    reordered; instead a different quarter of the bar is transposed each time round.
   </Step>
 </Exercise>
 
@@ -461,25 +502,42 @@ $: s("hh*16").bank("RolandTR909").undegradeBy(.5).gain(.3).speed(2)`}>
 
 <Exercise id="pattern-functions/struct" title="struct, mask, beat"
   goal="Give a one-note-per-bar pattern a rhythm three different ways, and hear which one creates events."
-  start={`note("<c3 eb3 g3>").s("sawtooth").lpf(800)`}
-  target={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).beat("0,4,6,10,14", 16)`}>
+  start={`note("<c3 eb3 g3>")
+  .s("sawtooth")
+  .lpf(800)`}
+  target={`note("<c3 eb3 g3>")
+  .s("sawtooth")
+  .lpf(800)
+  .beat("0,4,6,10,14", 16)`}>
   <Step check={{ includes: '.struct(', events: 5 }}
         hints={['`x` means on, `~` means off, and there are eight slots.']}
-        solution={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).struct("x ~ x x ~ x ~ x")`}>
+        solution={`note("<c3 eb3 g3>")
+  .s("sawtooth")
+  .lpf(800)
+  .struct("x ~ x x ~ x ~ x")`}>
     One long note per bar. Add `.struct("x ~ x x ~ x ~ x")`: five hits, all on the same note.
     The rhythm came from the **right**, the pitch from the left.
   </Step>
   <Step check={{ includes: '.mask(', events: 1 }}
         hints={['Only the function name changes.', '`mask` cannot create events — it can only remove ones that exist.']}
-        solution={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).mask("x ~ x x ~ x ~ x")`}>
+        solution={`note("<c3 eb3 g3>")
+  .s("sawtooth")
+  .lpf(800)
+  .mask("x ~ x x ~ x ~ x")`}>
     Change `struct` to `mask` and count: one event. There was only ever one note in the bar, and
     `mask` filters what is there instead of creating anything.
   </Step>
   <Step check={{ includes: '.beat(', match: { keys: ['note'] } }}
-        target={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).struct("x ~ x x ~ x ~ x")`}
+        target={`note("<c3 eb3 g3>")
+  .s("sawtooth")
+  .lpf(800)
+  .struct("x ~ x x ~ x ~ x")`}
         hints={['Eight slots out of a bar is the same as sixteen steps, counting the on ones.', '`beat(positions, steps)` counts from 0.']}
-        solution={`note("<c3 eb3 g3>").s("sawtooth").lpf(800).beat("0,4,6,10,14", 16)`}>
-    Same rhythm, written as step numbers instead of a grid:
+        solution={`note("<c3 eb3 g3>")
+  .s("sawtooth")
+  .lpf(800)
+  .beat("0,4,6,10,14", 16)`}>
+    Same rhythm, written as step numbers instead of a grid: replace the `.mask(...)` line with
     `.beat("0,4,6,10,14", 16)`. It should sound exactly like the `struct` version.
   </Step>
 </Exercise>
@@ -499,32 +557,60 @@ events you get, ask which side the structure came from.
 
 <Exercise id="pattern-functions/windows" title="zoom, linger, inside"
   goal="Play a slice of a bar, loop a slice of a bar, and transform at a different time scale."
-  start={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707")`}
-  target={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").inside(2, rev)`}>
+  start={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")`}
+  target={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .inside(2, rev)`}>
   <Step check={{ includes: '.zoom(', match: { keys: ['s'] } }}
-        target={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").zoom(.25, .75)`}
+        target={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .zoom(.25, .75)`}
         hints={['Two positions in the cycle, 0 to 1.']}
-        solution={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").zoom(.25, .75)`}>
+        solution={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .zoom(.25, .75)`}>
     Add `.zoom(.25, .75)`. The middle half of the bar is stretched out to fill the whole bar —
     beats 1 and 4 are gone, and what is left plays at half speed.
   </Step>
   <Step check={{ includes: '.linger(', match: { keys: ['s'] } }}
-        target={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").linger(.25)`}
+        target={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .linger(.25)`}
         hints={['One number: the fraction of the cycle to keep.']}
-        solution={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").linger(.25)`}>
+        solution={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .linger(.25)`}>
     Replace it with `.linger(.25)`. This one takes the first quarter and repeats it for the rest of
     the bar, at its original speed: an instant stutter.
   </Step>
   <Step check={{ includes: 'linger("<', cycles: 4, match: { keys: ['s'] } }}
-        target={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").linger("<1 .5 .25 .125>")`}
+        target={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .linger("<1 .5 .25 .125>")`}
         hints={['`< >`, one value per bar, starting at 1 for "the whole bar".']}
-        solution={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").linger("<1 .5 .25 .125>")`}>
+        solution={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .linger("<1 .5 .25 .125>")`}>
     Pattern it: `.linger("<1 .5 .25 .125>")`. Four bars that collapse in on themselves.
+  </Step>
+  <Step check={{ includes: '.rev()', excludes: 'linger', match: { keys: ['s'] } }}
+        target={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .rev()`}
+        hints={['You met `rev` at the top of this chapter.']}
+        solution={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .rev()`}>
+    Replace the `.linger(...)` line with `.rev()`. The whole bar plays backwards: the cowbell
+    comes first and the two kicks come last.
   </Step>
   <Step check={{ includes: '.inside(', match: { keys: ['s'] } }}
         hints={['`inside(n, f)` slows the pattern by n, applies f, and speeds it back up.', 'With n = 2 the function sees two bars at once, so it reverses half-bars.']}
-        solution={`s("bd*2 hh*3 [sd bd]*2 cb").bank("RolandTR707").inside(2, rev)`}>
-    Replace it with `.inside(2, rev)`. Instead of reversing the whole bar, `rev` now happens at
+        solution={`s("bd*2 hh*3 [sd bd]*2 cb")
+  .bank("RolandTR707")
+  .inside(2, rev)`}>
+    Change `.rev()` to `.inside(2, rev)`. Instead of reversing the whole bar, `rev` now happens at
     half-bar scale: each half is reversed where it stands.
   </Step>
 </Exercise>
@@ -537,16 +623,19 @@ or `iter` is operating on the wrong unit of time.
 
 ## Choosing between whole patterns
 
+`squeeze(index, list)` takes a list of patterns (a real JavaScript array) and an index pattern that
+says which one to play. The editor starts on index `"0"`: the first phrase, `g3 a3`, every bar.
+
 <Exercise id="pattern-functions/pick" title="squeeze and pick"
   goal="Select a sub-pattern with a number, and hear what changes when it is not squeezed to fit."
-  start={`note("g3 a3").s("gm_electric_guitar_muted")`}
+  start={`note(squeeze("0", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}
   target={`note(pick("0 1", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}>
-  <Step check={{ includes: 'squeeze(', cycles: 2, match: { keys: ['note'] } }}
+  <Step check={{ includes: '<0 1>', cycles: 2, match: { keys: ['note'] } }}
         target={`note(squeeze("<0 1>", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}
-        hints={['`squeeze(indexPattern, listOfPatterns)` goes *inside* `note(...)`.', 'The list is a real JavaScript array, in square brackets.']}
+        hints={['Only the first argument changes.', '`< >` gives one value per bar.']}
         solution={`note(squeeze("<0 1>", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}>
-    Replace the notes with `squeeze("<0 1>", ["g3 a3", "f3 g3 f3 g3"])`, keeping it inside
-    `note(...)`. Bar 1 plays the first phrase, bar 2 the second.
+    Change the index pattern from `"0"` to `"<0 1>"`. Bar 1 plays the first phrase, bar 2 the
+    second.
   </Step>
   <Step check={{ includes: 'squeeze("0 1"', match: { keys: ['note'] } }}
         target={`note(squeeze("0 1", ["g3 a3", "f3 g3 f3 g3"])).s("gm_electric_guitar_muted")`}

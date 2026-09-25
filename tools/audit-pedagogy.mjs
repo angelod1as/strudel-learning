@@ -18,8 +18,52 @@ const consts = fs.readFileSync(path.join(root, 'src/consts.ts'), 'utf8');
 const order = [...consts.matchAll(/slug:\s*'([a-z-]+)'/g)].map((m) => m[1]);
 const idx = Object.fromEntries(order.map((c, i) => [c, i]));
 
-const EX = /<Exercise\b((?:[^>]|\n)*?)(?:\/>|>([\s\S]*?)<\/Exercise>)/g;
-const STEP = /<Step\b((?:[^>]|\n)*?)>([\s\S]*?)<\/Step>/g;
+/**
+ * Find the end of a JSX opening tag, skipping over `>` that appears inside
+ * quotes, template literals, or braces — an arrow function in a prop (`x => x`)
+ * or an <L> inside a hint would otherwise cut the tag short and swallow the
+ * next exercise's steps.
+ */
+function openTagEnd(src, from) {
+  let depth = 0;
+  for (let i = from; i < src.length; i++) {
+    const c = src[i];
+    if (c === '\\') { i++; continue; }
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c;
+      for (i++; i < src.length; i++) {
+        if (src[i] === '\\') { i++; continue; }
+        if (src[i] === quote) break;
+      }
+      continue;
+    }
+    if (c === '{') depth++;
+    else if (c === '}') depth--;
+    else if (c === '>' && depth === 0) return i;
+  }
+  return -1;
+}
+
+/** Every <Tag ...> or <Tag ... /> block, with its attribute text and body. */
+function blocks(src, tag) {
+  const out = [];
+  const open = new RegExp(`<${tag}\\b`, 'g');
+  let m;
+  while ((m = open.exec(src))) {
+    const gt = openTagEnd(src, m.index + tag.length + 1);
+    if (gt === -1) break;
+    const attrs = src.slice(m.index + tag.length + 1, gt);
+    const selfClosing = src[gt - 1] === '/';
+    let body = '';
+    if (!selfClosing) {
+      const close = src.indexOf(`</${tag}>`, gt);
+      body = close === -1 ? '' : src.slice(gt + 1, close);
+    }
+    out.push({ attrs: selfClosing ? attrs.slice(0, -1) : attrs, body });
+    open.lastIndex = gt;
+  }
+  return out;
+}
 const FN = /\.([a-zA-Z][a-zA-Z0-9_]*)\s*\(|(?<![.\w])([a-z][a-zA-Z0-9_]*)\s*\(/g;
 
 const SKIP = new Set(['x','y','map','filter','fill','join','sort','toFixed','Array','Set','from','keys','split','replace','push','concat','reduce','round','floor','random','min','max','abs','pow','sqrt','String','Number','JSON','stringify','parse','values','slice','some']);
@@ -59,15 +103,15 @@ const retype = [], premature = [], dumps = [];
 for (const ch of order) {
   const s = read(ch);
   if (!s) continue;
-  for (const ex of s.matchAll(EX)) {
-    const id = (ex[1].match(/id="([^"]+)"/) || [, '?'])[1];
-    const start = attr(ex[1], 'start');
+  for (const ex of blocks(s, 'Exercise')) {
+    const id = (ex.attrs.match(/id="([^"]+)"/) || [, '?'])[1];
+    const start = attr(ex.attrs, 'start');
     let prev = start;
     const startFns = fnsIn(start);
     let i = 0;
-    for (const st of (ex[2] || '').matchAll(STEP)) {
+    for (const st of blocks(ex.body || '', 'Step')) {
       i++;
-      const sol = attr(st[1], 'solution');
+      const sol = attr(st.attrs, 'solution');
       if (!sol) continue;
       const newFns = [...fnsIn(sol)].filter((n) => !fnsIn(prev).has(n));
       if (prev.trim()) {

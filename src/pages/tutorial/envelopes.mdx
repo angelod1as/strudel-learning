@@ -96,26 +96,47 @@ reach anything in between.
 
 <Exercise id="envelopes/percussive" title="Percussive: sustain 0, short decay"
   goal="Turn a held sawtooth drone into plucks, then control exactly how long each pluck lasts."
-  start={`note("c2*8").s("sawtooth").lpf(1200)`}
-  target={`note("c2*8").s("sawtooth").lpf(1200).sustain(0).decay("<.05 .1 .2 .4>")`}>
+  start={`note("c2*8")
+  .s("sawtooth")
+  .lpf(1200)`}
+  target={`note("c2*8")
+  .s("sawtooth")
+  .lpf(1200)
+  .sustain(0)
+  .decay("<.05 .1 .2 .4>")`}>
   <Step check={{ includes: '.sustain(', has: { sustain: [0, 0.02] } }}
         hints={['With sustain at 0 the note has nowhere to hold, so the decay time becomes the whole length of the sound.']}
-        solution={`note("c2*8").s("sawtooth").lpf(1200).sustain(0)`}>
+        solution={`note("c2*8")
+  .s("sawtooth")
+  .lpf(1200)
+  .sustain(0)`}>
     Add `.sustain(0)`. Eight held notes become eight short blips. This one control is the
     difference between a synth pad and a synth drum.
   </Step>
   <Step check={{ has: { decay: [0.04, 0.12] } }}
-        solution={`note("c2*8").s("sawtooth").lpf(1200).sustain(0).decay(.08)`}>
+        solution={`note("c2*8")
+  .s("sawtooth")
+  .lpf(1200)
+  .sustain(0)
+  .decay(.08)`}>
     Add `.decay(.08)`. Now you are setting the blip length yourself: 80 ms, a tight pluck.
   </Step>
   <Step check={{ has: { decay: [0.25, 0.45] } }}
-        solution={`note("c2*8").s("sawtooth").lpf(1200).sustain(0).decay(.3)`}>
+        solution={`note("c2*8")
+  .s("sawtooth")
+  .lpf(1200)
+  .sustain(0)
+  .decay(.3)`}>
     Stretch it to `.decay(.3)`. Same attack, same notes, but each one now rings for a third of a
     second and they start overlapping.
   </Step>
   <Step check={{ includes: '<', cycles: 4, fn: "(h) => new Set(h.map((e) => e.value.decay)).size === 4 || 'Expected four different decay values, one per cycle.'" }}
         hints={['Envelope times take mini-notation like every other argument.', 'Four values inside angle brackets means one value per cycle.']}
-        solution={`note("c2*8").s("sawtooth").lpf(1200).sustain(0).decay("<.05 .1 .2 .4>")`}>
+        solution={`note("c2*8")
+  .s("sawtooth")
+  .lpf(1200)
+  .sustain(0)
+  .decay("<.05 .1 .2 .4>")`}>
     Pattern the decay: `.decay("<.05 .1 .2 .4>")`. Four bars, four pluck lengths, from a click to a
     short stab.
   </Step>
@@ -221,10 +242,11 @@ bassline, and it is the single biggest payoff in this chapter.
     Add `.lpenv(4)`. The cutoff now starts four octaves above 400 Hz and falls back to it over each
     note. That decaying sweep is the default shape, and it is what "a filter envelope" means.
   </Step>
-  <Step check={{ has: { lpq: [4, 12] } }}
+  <Step check={{ includes: '.lpq(', has: { lpq: [4, 12] } }}
         hints={['Resonance boosts whatever is sitting right at the cutoff, so it makes a moving cutoff audible as a distinct pitch.']}
         solution={`note("g1 bb1 <c2 eb2> d2").s("sawtooth").lpf(400).lpenv(4).lpq(8)`}>
-    Add `.lpq(8)`. The sweep suddenly has a voice — you can follow where the cutoff is, because the
+    Add `.lpq(8)`. `lpq` is the lowpass's resonance (its q): a boost right at the cutoff
+    frequency. The sweep suddenly has a voice — you can follow where the cutoff is, because the
     resonance sings at it.
   </Step>
   <Step check={{ includes: '.lpa(', has: { lpa: [0.1, 0.4] } }}
@@ -268,36 +290,65 @@ are about to build one.
 
 <Exercise id="envelopes/pitch" title="Build a kick out of a sine"
   goal="Take a plain sine tone and turn it into a kick drum using nothing but envelopes."
-  start={`note("g1*4").s("sine")`}
-  target={`note("g1*4").s("sine").penv(32).pdec(.5).pcurve(1).sustain(0).decay(.2)`}>
+  start={`note("g1*4")
+  .s("sine")`}
+  target={`note("g1*4")
+  .s("sine")
+  .penv(32)
+  .pdec(.5)
+  .pcurve(1)
+  .sustain(0)
+  .decay(.2)`}>
   <Step check={{ includes: '.penv(', has: { penv: [10, 14] } }}
         hints={['`penv` is a depth in semitones, like `lpenv` is a depth in octaves.']}
-        solution={`note("g1*4").s("sine").penv(12)`}>
+        solution={`note("g1*4")
+  .s("sine")
+  .penv(12)`}>
     Add `.penv(12)`. Each note now slides an octave: instead of a flat tone you get a bend.
   </Step>
   <Step check={{ has: { penv: [24, 40] } }}
-        solution={`note("g1*4").s("sine").penv(32)`}>
+        solution={`note("g1*4")
+  .s("sine")
+  .penv(32)`}>
     Push it to `.penv(32)`. Nearly three octaves of movement — too much to hear as a melody, so
     your ear stops hearing a note and starts hearing a hit.
   </Step>
   <Step check={{ includes: '.pdec(', has: { pdec: [0.3, 0.7] } }}
-        solution={`note("g1*4").s("sine").penv(32).pdec(.5)`}>
+        solution={`note("g1*4")
+  .s("sine")
+  .penv(32)
+  .pdec(.5)`}>
     Add `.pdec(.5)` — the pitch envelope's own decay time. Half a second is a slow, exaggerated
     drop, so you can hear the whole thing.
   </Step>
   <Step check={{ has: { pcurve: [1, 1] } }}
         hints={['0 is linear, 1 is exponential.']}
-        solution={`note("g1*4").s("sine").penv(32).pdec(.5).pcurve(1)`}>
+        solution={`note("g1*4")
+  .s("sine")
+  .penv(32)
+  .pdec(.5)
+  .pcurve(1)`}>
     Add `.pcurve(1)`. Linear is the default and it sounds like a slide-whistle; exponential drops
     fast and then settles, which is what a real drum head does.
   </Step>
   <Step check={{ has: { sustain: [0, 0.02] } }}
-        solution={`note("g1*4").s("sine").penv(32).pdec(.5).pcurve(1).sustain(0)`}>
+        solution={`note("g1*4")
+  .s("sine")
+  .penv(32)
+  .pdec(.5)
+  .pcurve(1)
+  .sustain(0)`}>
     The pitch is right but it still rings like an organ. Add `.sustain(0)` — the amplitude
     envelope, exactly as in the pluck exercise.
   </Step>
   <Step check={{ has: { decay: [0.1, 0.35] } }}
-        solution={`note("g1*4").s("sine").penv(32).pdec(.5).pcurve(1).sustain(0).decay(.2)`}>
+        solution={`note("g1*4")
+  .s("sine")
+  .penv(32)
+  .pdec(.5)
+  .pcurve(1)
+  .sustain(0)
+  .decay(.2)`}>
     Add `.decay(.2)` to set the length of the hit. That is a kick drum, from a sine wave and four
     envelope controls.
   </Step>
@@ -317,22 +368,31 @@ tells you where the note you actually wrote sits inside it.
 
 <Exercise id="envelopes/panchor" title="Where does the written note sit?"
   goal="Hear the same 12-semitone sweep land on two completely different pitches."
-  start={`note("c4*4").penv(12)`}
-  target={`note("c4*4").penv(12).panchor("<0 .5 1>")`}>
+  start={`note("c4*4")
+  .penv(12)`}
+  target={`note("c4*4")
+  .penv(12)
+  .panchor("<0 .5 1>")`}>
   <Step check={{ includes: '.panchor(', has: { panchor: [0, 0] } }}
-        solution={`note("c4*4").penv(12).panchor(0)`}>
+        solution={`note("c4*4")
+  .penv(12)
+  .panchor(0)`}>
     Add `.panchor(0)` and play it. Nothing changes, because 0 is the default: the sweep covers the
     range `[note, note+penv]`, so the `c4` you wrote is the **bottom** of it.
   </Step>
   <Step check={{ has: { panchor: [1, 1] } }}
         hints={['The anchor goes from 0 to 1, so there is only one other end to try.']}
-        solution={`note("c4*4").penv(12).panchor(1)`}>
+        solution={`note("c4*4")
+  .penv(12)
+  .panchor(1)`}>
     Change it to `.panchor(1)`. Same 12-semitone width, but the range is now `[note-penv, note]` —
     the `c4` is the **top**, and everything you hear is an octave lower than before.
   </Step>
   <Step check={{ includes: '<', cycles: 3, fn: "(h) => new Set(h.map((e) => e.value.panchor)).size === 3 || 'Expected three different anchor values, one per cycle.'" }}
         hints={['Angle brackets give you one value per cycle.']}
-        solution={`note("c4*4").penv(12).panchor("<0 .5 1>")`}>
+        solution={`note("c4*4")
+  .penv(12)
+  .panchor("<0 .5 1>")`}>
     Pattern it: `.panchor("<0 .5 1>")`. The middle value puts the written note halfway up the
     sweep, so the whole thing slides down bar by bar.
   </Step>
@@ -378,34 +438,59 @@ immediately before in the chain — and that second rule is easy to trip over.
 
 <Exercise id="envelopes/general" title="Attach an envelope to anything"
   goal="Watch env() pick its target from the chain, get it wrong, and then pin it down."
-  start={`s("saw").note("f1").lpf(500)`}
-  target={`s("saw").note("f1").lpf(500).lpq(4).env({ c: "lpf", a: 1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })`}>
+  start={`s("saw")
+  .note("f1")
+  .lpf(500)`}
+  target={`s("saw")
+  .note("f1")
+  .lpf(500)
+  .lpq(4)
+  .env({ c: "lpf", a: 1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })`}>
   <Step check={{ includes: '.env(', fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.control === 'cutoff' && v.attack >= 0.5))) || 'Expected an env() with about a one-second attack, attached to the cutoff.'" }}
         hints={['The object keys are the short names: `a` for attack, `d` for decay.']}
-        solution={`s("saw").note("f1").lpf(500).env({ a: 1 })`}>
+        solution={`s("saw")
+  .note("f1")
+  .lpf(500)
+  .env({ a: 1 })`}>
     Add `.env({ a: 1 })`. One long note, and its lowpass now takes a full second to open, because
     `lpf` was the last control in the chain and `env` attached itself to that.
   </Step>
   <Step check={{ fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.control === 'resonance'))) || 'Expected the env() to land on the resonance instead — put the .lpq() between the .lpf() and the .env().'" }}
         hints={['Insert it *before* the `.env(…)`, not after.']}
-        solution={`s("saw").note("f1").lpf(500).lpq(4).env({ a: 1 })`}>
+        solution={`s("saw")
+  .note("f1")
+  .lpf(500)
+  .lpq(4)
+  .env({ a: 1 })`}>
     Now insert `.lpq(4)` between the `.lpf(500)` and the `.env(…)`. The sweep disappears: `env` is
     now modulating the resonance, because that is what came immediately before it.
   </Step>
   <Step check={{ fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.control === 'cutoff') && e.value.resonance !== undefined)) || 'Keep the .lpq(4), and name the lowpass as the env target with c:.'" }}
         hints={['`c` is short for "control", and it takes the name you would have typed as a function.']}
-        solution={`s("saw").note("f1").lpf(500).lpq(4).env({ c: "lpf", a: 1 })`}>
+        solution={`s("saw")
+  .note("f1")
+  .lpf(500)
+  .lpq(4)
+  .env({ c: "lpf", a: 1 })`}>
     Keep the resonance, but take back control: make it `.env({ c: "lpf", a: 1 })`. The sweep is
     back, now with resonance on top of it.
   </Step>
   <Step check={{ fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.acurve !== undefined && v.dcurve !== undefined && v.decay > 0))) || 'Expected d, ac and dc in the env object.'" }}
         hints={['Curves run from -1 to 1.']}
-        solution={`s("saw").note("f1").lpf(500).lpq(4).env({ c: "lpf", a: 1, d: 1, ac: 0.8, dc: 0.3 })`}>
+        solution={`s("saw")
+  .note("f1")
+  .lpf(500)
+  .lpq(4)
+  .env({ c: "lpf", a: 1, d: 1, ac: 0.8, dc: 0.3 })`}>
     Add `d: 1, ac: 0.8, dc: 0.3`. `ac`, `dc` and `rc` bend the shape of each stage: -1 is relaxed,
     1 is snappy. Set `ac` to `-0.8` and listen to the attack go soft.
   </Step>
   <Step check={{ fn: "(h) => (h.length > 0 && h.every((e) => Object.values(e.value.env || {}).some((v) => v && v.depth > 1))) || 'Expected a depth in the env object.'" }}
-        solution={`s("saw").note("f1").lpf(500).lpq(4).env({ c: "lpf", a: 1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })`}>
+        solution={`s("saw")
+  .note("f1")
+  .lpf(500)
+  .lpq(4)
+  .env({ c: "lpf", a: 1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })`}>
     Add `depth: 50` — how far the control travels. The same envelope, now with a much bigger reach.
   </Step>
 </Exercise>

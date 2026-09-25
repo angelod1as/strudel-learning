@@ -113,28 +113,42 @@ $: s("~ cp ~ cp").duckorbit(3).duckdepth(.8).duckattack(.25)`}
   goal="Hear 0.1, 0.5 and 1, then compare them back to back in one line."
   start={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2)`}
+$: s("bd:4!4").beat("0,4,8,11,14",16)
+  .duckorbit(2)
+  .duckattack(0.2)`}
   target={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(0.4)`}>
+$: s("bd:4!4").beat("0,4,8,11,14",16)
+  .duckorbit(2)
+  .duckattack(0.2)
+  .duckdepth(0.4)`}>
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckdepth === 0.1)) || 'Add `.duckdepth(0.1)` to the kick lane.'; }" }}
         solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(0.1)`}>
-    Add `.duckdepth(0.1)`. Barely there — about 3 dB, which is the smallest move you can reliably
-    hear.
+$: s("bd:4!4").beat("0,4,8,11,14",16)
+  .duckorbit(2)
+  .duckattack(0.2)
+  .duckdepth(0.1)`}>
+    Add `.duckdepth(0.1)` on a new line at the end of the kick lane. Barely there — about 3 dB,
+    which is the smallest move you can reliably hear.
   </Step>
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckdepth === 0.5)) || 'Change it to `.duckdepth(0.5)`.'; }" }}
         solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(0.5)`}>
+$: s("bd:4!4").beat("0,4,8,11,14",16)
+  .duckorbit(2)
+  .duckattack(0.2)
+  .duckdepth(0.5)`}>
     Change it to `0.5`. That is roughly 11 dB — halfway along the knob, but nothing like halfway in
     loudness.
   </Step>
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckdepth === 1)) || 'Change it to `.duckdepth(1)`.'; }" }}
         solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(1)`}>
+$: s("bd:4!4").beat("0,4,8,11,14",16)
+  .duckorbit(2)
+  .duckattack(0.2)
+  .duckdepth(1)`}>
     Change it to `1`. About 40 dB down — a very deep duck, but listen closely and the bass is still
     faintly there. Depth 1 is not silence.
   </Step>
@@ -143,7 +157,10 @@ $: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(1)`
         hints={['Angle brackets step through one value per cycle.']}
         solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth("<1 .9 .6 0>")`}>
+$: s("bd:4!4").beat("0,4,8,11,14",16)
+  .duckorbit(2)
+  .duckattack(0.2)
+  .duckdepth("<1 .9 .6 0>")`}>
     Compare them in one go: make it `.duckdepth("<1 .9 .6 0>")`. Four bars — full, slightly less,
     moderate, off. Hear how little difference there is between 1 and .9, and how much between .6
     and 0.
@@ -152,7 +169,10 @@ $: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth("<1
                  fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckdepth === 0.4)) || 'Set `.duckdepth(0.4)`.'; }" }}
         solution={`$: n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2)
 
-$: s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth(0.4)`}>
+$: s("bd:4!4").beat("0,4,8,11,14",16)
+  .duckorbit(2)
+  .duckattack(0.2)
+  .duckdepth(0.4)`}>
     Settle on `.duckdepth(0.4)`. Somewhere in 0.3–0.6 is what most records actually use: enough to
     feel the pump, not enough to notice the gap.
   </Step>
@@ -356,7 +376,9 @@ pattern-level `gain` cannot do this, and the difference is easiest to hear on a 
   start={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)`}
   target={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
-$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)`}>
+$: s("bd*4").bank("RolandTR909")
+  .duckorbit(2).duckdepth(.8)
+  .duckattack(.25).duckonset(.01)`}>
   <Step check={{ includes: 'bd', events: 5 }}
         solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
@@ -374,17 +396,31 @@ $: s("bd*4").bank("RolandTR909")`}>
   </Step>
   <Step check={{ excludes: '.gain(',
                  fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckorbit === 2 && e.value.duckdepth === 0.8)) || 'Duck orbit 2 from the kick lane, with depth 0.8.'; }" }}
-        hints={['Four controls go on the kick lane: the orbit, the depth, the recovery and a small onset.']}
+        hints={['The orbit and the depth go on the kick lane, not the pad lane: the pad never mentions ducking.']}
         solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
-$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)`}>
-    Delete `.gain(.4)` and put `.duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)` on the
-    kick lane instead. Same note, same length, but the level now moves four times inside it.
+$: s("bd*4").bank("RolandTR909")
+  .duckorbit(2).duckdepth(.8)`}>
+    Delete `.gain(.4)` from the pad lane. Then, on a new line under the kick lane, aim the kick at
+    the pad's bus instead: `.duckorbit(2).duckdepth(.8)`. The pad's level is no longer set once per
+    note; every kick now pushes orbit 2 down.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckattack >= 0.2 && e.value.duckattack <= 0.3 && e.value.duckonset === 0.01)) || 'Add `.duckattack(.25).duckonset(.01)` to the kick lane.'; }" }}
+        hints={['Recovery first, then a small onset so the drop does not click, as in the duckonset section.']}
+        solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
+
+$: s("bd*4").bank("RolandTR909")
+  .duckorbit(2).duckdepth(.8)
+  .duckattack(.25).duckonset(.01)`}>
+    Shape it: add `.duckattack(.25).duckonset(.01)` on one more line. Same note, same length, but the
+    level now moves four times inside it.
   </Step>
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckattack >= 0.5)) || 'Stretch `.duckattack` to 0.6.'; }" }}
         solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
-$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.6).duckonset(.01)`}>
+$: s("bd*4").bank("RolandTR909")
+  .duckorbit(2).duckdepth(.8)
+  .duckattack(.6).duckonset(.01)`}>
     Stretch `.duckattack` to `.6`. At 126-ish BPM the swell barely finishes before the next kick
     starts the next one, so the pad never quite reaches full level. That is the classic
     over-pumped sound.
@@ -392,7 +428,9 @@ $: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.6).ducko
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => e.value.duckattack >= 0.2 && e.value.duckattack <= 0.3)) || 'Put `.duckattack` back to .25.'; }" }}
         solution={`$: note("<c2 eb2>").s("supersaw").sustain(1).lpf(900).room(.4).orbit(2)
 
-$: s("bd*4").bank("RolandTR909").duckorbit(2).duckdepth(.8).duckattack(.25).duckonset(.01)`}>
+$: s("bd*4").bank("RolandTR909")
+  .duckorbit(2).duckdepth(.8)
+  .duckattack(.25).duckonset(.01)`}>
     Back to `.duckattack(.25)`. Somewhere around a quarter of a second is where the swell finishes
     just in time — that is what people mean by "it breathes".
   </Step>
@@ -418,6 +456,10 @@ $: s("bd*16").duckorbit(2).duckdepth(1).duckattack(.03).duckonset(.003).postgain
   goal="A kick, a bass on orbit 2, a pad on orbit 3, ducked with different settings, and a top layer that is left alone."
   start={`setcpm(126/4)
 
+$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
+
 $: s("bd*4").bank("RolandTR909")`}
   target={`setcpm(126/4)
 
@@ -428,27 +470,8 @@ $: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).roo
 $: s("bd*4").bank("RolandTR909").duckorbit("2:3").duckdepth("1:0.6").duckattack("0.18:0.3").duckonset(0.01)
 
 $: s("[~ hh]*4, ~ cp").bank("RolandTR909").gain(.6).orbit(4)`}>
-  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'sawtooth'); return (k.length > 0 && k.every(e => e.value.orbit === 2)) || 'Add a bass lane on `.orbit(2)`.'; }" }}
-        solution={`setcpm(126/4)
-
-$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
-
-$: s("bd*4").bank("RolandTR909")`}>
-    Add the bass, on its own bus:
-    `$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)`
-  </Step>
-  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'gm_pad_warm'); return (k.length > 0 && k.every(e => e.value.orbit === 3)) || 'Add a pad lane on `.orbit(3)`.'; }" }}
-        solution={`setcpm(126/4)
-
-$: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
-
-$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
-
-$: s("bd*4").bank("RolandTR909")`}>
-    Add the pad on a third bus:
-    `$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)`
-  </Step>
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => JSON.stringify(e.value.duckorbit) === '[2,3]')) || 'The kick should duck orbits 2 and 3.'; }" }}
+        hints={['The kick is the lane doing the ducking, so the list of orbits goes on it.']}
         solution={`setcpm(126/4)
 
 $: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).orbit(2)
@@ -456,7 +479,9 @@ $: note("<c2 c2 eb2 g1>*4").s("sawtooth").lpf(500).lpq(4).decay(.2).sustain(0).o
 $: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.4).release(1.2).room(.8).gain(.45).orbit(3)
 
 $: s("bd*4").bank("RolandTR909").duckorbit("2:3")`}>
-    Add `.duckorbit("2:3")` to the kick lane. Everything melodic now gets out of the kick's way.
+    The bass is already on orbit 2 and the pad on orbit 3; the kick sits on the default bus and
+    ducks nothing yet. Add `.duckorbit("2:3")` to the kick lane. Everything melodic now gets out of
+    the kick's way.
   </Step>
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'bd'); return (k.length > 0 && k.every(e => JSON.stringify(e.value.duckdepth) === '[1,0.6]')) || 'Add `.duckdepth(\"1:0.6\")`.'; }" }}
         solution={`setcpm(126/4)
@@ -527,7 +552,10 @@ of it is the holes it makes.
   start={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)`}
   target={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
 
-$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7).duckattack(.4).duckonset(.005).postgain(0)`}>
+$: s("rim").beat("2,6,10,14",16)
+  .duckorbit(2).duckdepth(.7)
+  .duckattack(.4).duckonset(.005)
+  .postgain(0)`}>
   <Step check={{ includes: 'rim', events: 20 }}
         hints={['`beat(steps, n)` places hits on numbered steps of an n-step grid, counting from 0.']}
         solution={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
@@ -535,24 +563,41 @@ $: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7).duckattack(.4).ducko
 $: s("rim").beat("2,6,10,14",16)`}>
     Add `$: s("rim").beat("2,6,10,14",16)`. Four rims, all landing between the beats.
   </Step>
-  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.duckorbit === 2 && e.value.duckdepth === 0.7)) || 'Add `.duckorbit(2).duckdepth(.7).duckattack(.1).duckonset(.005)` to the rim lane.'; }" }}
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.duckorbit === 2 && e.value.duckdepth === 0.7)) || 'Add `.duckorbit(2).duckdepth(.7)` to the rim lane.'; }" }}
         solution={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
 
-$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7).duckattack(.1).duckonset(.005)`}>
-    Make it duck: add `.duckorbit(2).duckdepth(.7).duckattack(.1).duckonset(.005)`. The bass now
-    flinches four times a bar, off the beat.
+$: s("rim").beat("2,6,10,14",16)
+  .duckorbit(2).duckdepth(.7)`}>
+    Aim it at the bass: add `.duckorbit(2).duckdepth(.7)` on a new line under the rim lane. Every
+    rim now pushes orbit 2 down.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.duckattack === 0.1 && e.value.duckonset === 0.005)) || 'Add `.duckattack(.1).duckonset(.005)` to the rim lane.'; }" }}
+        hints={['Recovery, then onset: a tenth of a second back, five milliseconds down.']}
+        solution={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
+
+$: s("rim").beat("2,6,10,14",16)
+  .duckorbit(2).duckdepth(.7)
+  .duckattack(.1).duckonset(.005)`}>
+    Shape it: add `.duckattack(.1).duckonset(.005)` on the next line. The bass now flinches four
+    times a bar, off the beat.
   </Step>
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.postgain === 0)) || 'Add `.postgain(0)` to the rim lane.'; }" }}
         solution={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
 
-$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7).duckattack(.1).duckonset(.005).postgain(0)`}>
-    Add `.postgain(0)`. The rim is gone and the groove is unchanged — you are hearing a percussion
-    part made entirely of silence.
+$: s("rim").beat("2,6,10,14",16)
+  .duckorbit(2).duckdepth(.7)
+  .duckattack(.1).duckonset(.005)
+  .postgain(0)`}>
+    Add `.postgain(0)` on a last line. The rim is gone and the groove is unchanged — you are
+    hearing a percussion part made entirely of silence.
   </Step>
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.duckattack >= 0.3)) || 'Stretch `.duckattack` to .4.'; }" }}
         solution={`$: n("0 .. 15").scale("c:minor:pentatonic").s("sawtooth").delay(.6).orbit(2)
 
-$: s("rim").beat("2,6,10,14",16).duckorbit(2).duckdepth(.7).duckattack(.4).duckonset(.005).postgain(0)`}>
+$: s("rim").beat("2,6,10,14",16)
+  .duckorbit(2).duckdepth(.7)
+  .duckattack(.4).duckonset(.005)
+  .postgain(0)`}>
     Stretch `.duckattack` to `.4`. The holes stop being punches and become long swells, and the
     whole bass line starts to sound like it is being played through a volume pedal.
   </Step>

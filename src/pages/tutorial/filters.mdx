@@ -304,46 +304,47 @@ scaled into range with `range(lo, hi)`. That per-event part is a trap, and the n
 straight into it on purpose.
 
 <Exercise id="filters/move-signal" title="The signal trap"
-  goal="Drive a filter with a signal, then break it, then fix it twice."
+  goal="Drive a filter with a signal, then break it, then fix it with more events."
   start={`s("hh*16")`}
-  target={`s("supersaw").lpf(800).lfo({ r: 2, depthabs: 250 })`}>
+  target={`s("supersaw")
+  .seg(16)
+  .lpf(sine.range(500, 2000).slow(4))`}>
   <Step check={{ includes: 'range(', has: { lpf: [500, 2000] }, fn: "(h) => new Set(h.map((e) => e.value.cutoff)).size >= 12 || 'Each of the sixteen hats should get its own cutoff value.'" }}
         hints={['`saw` on its own runs 0 to 1; `range` maps it onto the two numbers you give it.']}
-        solution={`s("hh*16").lpf(saw.range(500, 2000))`}>
-    Add `.lpf(saw.range(500, 2000))`. Sixteen hats, and each one samples the ramp at a slightly
-    later point, so the hats climb from dull to bright and snap back at the bar line.
+        solution={`s("hh*16")
+  .lpf(saw.range(500, 2000))`}>
+    Add `.lpf(saw.range(500, 2000))` on a new line. Sixteen hats, and each one samples the ramp at
+    a slightly later point, so the hats climb from dull to bright and snap back at the bar line.
   </Step>
   <Step check={{ includes: 'sine.range(', fn: "(h) => (h.length > 8 && h[8].value.cutoff < h[4].value.cutoff) || 'With a sine the cutoff should come back down in the second half of the cycle.'" }}
-        solution={`s("hh*16").lpf(sine.range(500, 2000))`}>
+        solution={`s("hh*16")
+  .lpf(sine.range(500, 2000))`}>
     Swap `saw` for `sine`. Instead of climbing and snapping back it now rises and falls smoothly —
     same range, no seam at the bar line.
   </Step>
   <Step check={{ includes: '.slow(', cycles: 4, fn: "(h) => { const c = h.filter((e) => e.t < 1).map((e) => e.value.cutoff); return (c.length > 0 && Math.min(...c) > 1000) || 'The sweep should now take four cycles, so the first bar only climbs.' }" }}
         hints={['`.slow(4)` goes on the signal, not on the pattern.']}
-        solution={`s("hh*16").lpf(sine.range(500, 2000).slow(4))`}>
+        solution={`s("hh*16")
+  .lpf(sine.range(500, 2000).slow(4))`}>
     Stretch the sweep over four bars: `.lpf(sine.range(500, 2000).slow(4))`. One slow breath
     instead of one per bar.
   </Step>
   <Step check={{ includes: 'supersaw', events: 1 }}
         hints={['Replace the whole `s(...)` call, leaving the `.lpf(...)` exactly as it is.']}
-        solution={`s("supersaw").lpf(sine.range(500, 2000).slow(4))`}>
+        solution={`s("supersaw")
+  .lpf(sine.range(500, 2000).slow(4))`}>
     Now break it. Replace `s("hh*16")` with `s("supersaw")`: one long note per cycle instead of
     sixteen hats. The sweep is gone — the filter picks one value when the note starts and holds it
     for the whole bar, because **a signal is only read when an event is triggered**.
   </Step>
-  <Step check={{ code: "\\.seg(ment)?\\(", events: 16 }}
+  <Step check={{ code: '\\.seg(ment)?\\(', events: 16 }}
         hints={['You do not need more notes musically — you need more *events* for the signal to be sampled at.']}
-        solution={`s("supersaw").seg(16).lpf(sine.range(500, 2000).slow(4))`}>
+        solution={`s("supersaw")
+  .seg(16)
+  .lpf(sine.range(500, 2000).slow(4))`}>
     Fix it the cheap way: add `.seg(16)` before the `.lpf(...)`. That chops the long note into
     sixteen retriggered events, and each one re-samples the sine. It moves again — but listen for
     the sixteen little restarts, because they are really there.
-  </Step>
-  <Step check={{ includes: '.lfo(', events: 1 }}
-        hints={['`lfo` takes an object, not a number.']}
-        solution={`s("supersaw").lpf(800).lfo({ r: 2, depthabs: 250 })`}>
-    Fix it properly: replace everything after `s("supersaw")` with
-    `.lpf(800).lfo({ r: 2, depthabs: 250 })`. One event per cycle again — and the filter still
-    wobbles, because an LFO runs inside the audio engine rather than being sampled per event.
   </Step>
 </Exercise>
 
@@ -357,6 +358,25 @@ sparse pattern plus a signal equals a static filter, every time. Either add even
 
 `lfo()` modulates the parameter continuously inside the audio engine, no extra events needed. It
 gets <L to="/tutorial/lfo">its own chapter</L>.
+
+<Exercise id="filters/move-lfo" title="Fix it properly"
+  goal="Make one long supersaw note sweep its filter without adding a single event."
+  start={`s("supersaw")
+  .lpf(800)`}
+  target={`s("supersaw")
+  .lpf(800)
+  .lfo({ r: 2, depthabs: 250 })`}>
+  <Step check={{ includes: '.lfo(', events: 1 }}
+        hints={['`lfo` takes an object, not a number.']}
+        solution={`s("supersaw")
+  .lpf(800)
+  .lfo({ r: 2, depthabs: 250 })`}>
+    One event per cycle and a fixed cutoff, the same shape that broke the signal. Add
+    `.lfo({ r: 2, depthabs: 250 })` on a new line: `r` is its rate in Hz, and `depthabs` is how
+    far it swings the cutoff, in Hz. Still one event per cycle — and the filter wobbles, because an
+    LFO runs inside the audio engine rather than being sampled per event.
+  </Step>
+</Exercise>
 
 <Exercise id="filters/move-challenge" title="Challenge: make the pad sweep without an LFO"
   goal="This pad has one event per cycle, so the signal never re-samples and the filter sits still. Make it sweep — keeping the signal, and without touching lfo()."
@@ -376,26 +396,43 @@ a DJ mixer, where one direction takes the bass out and the other takes the highs
 
 <Exercise id="filters/djf" title="One knob, both directions"
   goal="Work the DJ filter by hand in both directions, then let a signal do it."
-  start={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw")`}
-  target={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(sine.range(0.2, 0.8).slow(8))`}>
+  start={`n(irand(16).seg(8))
+  .scale("d:phrygian")
+  .s("supersaw")`}
+  target={`n(irand(16).seg(8))
+  .scale("d:phrygian")
+  .s("supersaw")
+  .djf(sine.range(0.2, 0.8).slow(8))`}>
   <Step check={{ includes: '.djf(', has: { djf: [0.5, 0.5] } }}
-        solution={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(.5)`}>
+        solution={`n(irand(16).seg(8))
+  .scale("d:phrygian")
+  .s("supersaw")
+  .djf(.5)`}>
     Add `.djf(.5)`. Dead centre is neutral: nothing is removed, exactly as on a mixer with the knob
     at twelve o'clock.
   </Step>
   <Step check={{ has: { djf: [0.05, 0.35] } }}
-        solution={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(.2)`}>
+        solution={`n(irand(16).seg(8))
+  .scale("d:phrygian")
+  .s("supersaw")
+  .djf(.2)`}>
     Turn it down: `.djf(.2)`. Below 0.5 it is a lowpass, so the highs drop out. This is the
     transition where a track sinks underwater.
   </Step>
   <Step check={{ has: { djf: [0.6, 0.95] } }}
-        solution={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(.75)`}>
+        solution={`n(irand(16).seg(8))
+  .scale("d:phrygian")
+  .s("supersaw")
+  .djf(.75)`}>
     Turn it up past centre: `.djf(.75)`. Above 0.5 it is a highpass, so the bass leaves instead.
     This is the build.
   </Step>
   <Step check={{ includes: 'range(', cycles: 8, has: { djf: [0.15, 0.85] }, fn: "(h) => new Set(h.map((e) => e.value.djf)).size >= 8 || 'The knob should be moving continuously, not sitting on one value.'" }}
         hints={['A signal plus `range` gives you the hand on the knob — and this pattern has eight events per cycle, so it re-samples often enough to sound smooth.']}
-        solution={`n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf(sine.range(0.2, 0.8).slow(8))`}>
+        solution={`n(irand(16).seg(8))
+  .scale("d:phrygian")
+  .s("supersaw")
+  .djf(sine.range(0.2, 0.8).slow(8))`}>
     Let go of the knob: `.djf(sine.range(0.2, 0.8).slow(8))`. Eight bars from underwater to
     weightless and back, on one control.
   </Step>

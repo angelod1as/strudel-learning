@@ -24,25 +24,31 @@ separates a drum machine from a groove.
 
 <Exercise id="dynamics/gain-groove" title="Where groove comes from"
   goal="Turn sixteen identical hats into something with a pulse, using nothing but level."
-  start={`s("hh*16")`}
-  target={`s("hh*16").gain("[.25 1]*8").velocity(.6)`}>
+  start={`$: s("hh*16")`}
+  target={`$: s("hh*16")
+  .gain("[.25 1]*8")
+  .velocity(.6)`}>
   <Step check={{ includes: '.gain(', has: { gain: 0.4 } }}
         hints={['`gain` is a plain multiplier, not decibels: 1 is unchanged, 0 is silence.']}
-        solution={`s("hh*16").gain(.4)`}>
-    Add `.gain(.4)`. The line drops in level and stays exactly as flat: sixteen identical hats, just
-    quieter.
+        solution={`$: s("hh*16")
+  .gain(.4)`}>
+    Add `.gain(.4)` on a new line. The line drops in level and stays exactly as flat: sixteen
+    identical hats, just quieter.
   </Step>
   <Step check={{ fn: "(h) => { const g = h.map((e) => e.value.gain); return (g.length === 16 && new Set(g).size === 2 && g.every((v, i) => (i % 2 ? v > g[i - 1] : true))) || 'Expected 16 hats alternating quiet, loud.' }" }}
         hints={['The argument takes mini-notation, so one small pattern can cover all sixteen hats.', 'You need eight repeats of a two-value group.']}
-        solution={`s("hh*16").gain("[.25 1]*8")`}>
+        solution={`$: s("hh*16")
+  .gain("[.25 1]*8")`}>
     Change the argument to `"[.25 1]*8"`. The same sixteen hats, but every second one is accented —
     an eighth-note pulse made of nothing but volume.
   </Step>
   <Step check={{ includes: '.velocity(', has: { velocity: 0.6 } }}
         hints={['`velocity` multiplies `gain`, so the shape you just wrote survives untouched.']}
-        solution={`s("hh*16").gain("[.25 1]*8").velocity(.6)`}>
-    Add `.velocity(.6)`. Everything gets quieter and the accents keep their proportions. `velocity`
-    is the control MIDI-style expression data lands in.
+        solution={`$: s("hh*16")
+  .gain("[.25 1]*8")
+  .velocity(.6)`}>
+    Add `.velocity(.6)` on a last line. Everything gets quieter and the accents keep their
+    proportions. `velocity` is the control MIDI-style expression data lands in.
   </Step>
 </Exercise>
 
@@ -67,22 +73,29 @@ reacts to level. Distortion does.
 <Exercise id="dynamics/gain-vs-postgain" title="Before the dirt, or after"
   goal="Hear the same distortion at the same volume, once fed a quiet signal and once turned down afterwards."
   start={`s("bd*4")`}
-  target={`s("bd*4").distort(4).postgain(.3)`}>
+  target={`s("bd*4")
+  .distort(4)
+  .postgain(.3)`}>
   <Step check={{ includes: '.distort(', has: { distort: 4 } }}
         hints={['It chains on the end like any other control. Turn your monitors down first.']}
-        solution={`s("bd*4").distort(4)`}>
-    Add `.distort(4)`. It is a waveshaper — the next section covers it properly. For now it is just
-    something that reacts to how hard you hit it, and it is loud.
+        solution={`s("bd*4")
+  .distort(4)`}>
+    Add `.distort(4)` on a new line. It is a waveshaper — the next section covers it properly. For
+    now it is just something that reacts to how hard you hit it, and it is loud.
   </Step>
   <Step check={{ includes: '.gain(', has: { gain: 0.3, distort: 4 } }}
         hints={['`gain` is applied at the start of the chain, so the waveshaper sees a smaller signal.']}
-        solution={`s("bd*4").distort(4).gain(.3)`}>
-    Add `.gain(.3)`. Quieter, yes — but also **cleaner**. Less signal goes into the waveshaper, so
-    there is less for it to mangle.
+        solution={`s("bd*4")
+  .distort(4)
+  .gain(.3)`}>
+    Add `.gain(.3)` on the next line. Quieter, yes — but also **cleaner**. Less signal goes into the
+    waveshaper, so there is less for it to mangle.
   </Step>
   <Step check={{ excludes: '.gain(', includes: '.postgain(', has: { postgain: 0.3, distort: 4 } }}
         hints={['One of the two is applied before the effects, the other after all of them.']}
-        solution={`s("bd*4").distort(4).postgain(.3)`}>
+        solution={`s("bd*4")
+  .distort(4)
+  .postgain(.3)`}>
     Replace `.gain(.3)` with `.postgain(.3)`. Roughly the same level as the last step, but all the
     dirt is back: the waveshaper still gets the full signal and only the result is turned down.
   </Step>
@@ -158,30 +171,47 @@ the other like aliasing.
 
 <Exercise id="dynamics/lofi" title="Bits and sample rate"
   goal="Destroy a loop two different ways, then both at once."
-  start={`s("<bd sd>, hh*3").fast(2)`}
-  target={`s("<bd sd>, hh*3").fast(2).crush(6).coarse(8)`}>
+  start={`s("<bd sd>, hh*3")
+  .fast(2)`}
+  target={`s("<bd sd>, hh*3")
+  .fast(2)
+  .crush(6)
+  .coarse("<1 4 8 16 32>")`}>
   <Step check={{ includes: '.crush(', has: { crush: 8 } }}
         hints={['The number is bit depth: 16 is CD quality, 1 is a square wave.']}
-        solution={`s("<bd sd>, hh*3").fast(2).crush(8)`}>
-    Add `.crush(8)`. Eight bits: the tails get grainy and a faint hiss rides on top of everything.
+        solution={`s("<bd sd>, hh*3")
+  .fast(2)
+  .crush(8)`}>
+    Add `.crush(8)` on a new line. Eight bits: the tails get grainy and a faint hiss rides on top of
+    everything.
   </Step>
   <Step check={{ cycles: 6, fn: "(h) => new Set(h.map((e) => e.value.crush)).size === 6 || 'Expected six different bit depths, one per cycle.'" }}
         hints={['Every control argument takes mini-notation, including this one.', 'One value per cycle is `< >`.']}
-        solution={`s("<bd sd>, hh*3").fast(2).crush("<16 8 6 4 3 2>")`}>
+        solution={`s("<bd sd>, hh*3")
+  .fast(2)
+  .crush("<16 8 6 4 3 2>")`}>
     Walk it down: `.crush("<16 8 6 4 3 2>")`. Listen for where it stops being a drum kit — usually
     around 4.
   </Step>
   <Step check={{ excludes: 'crush', cycles: 5, fn: "(h) => new Set(h.map((e) => e.value.coarse)).size === 5 || 'Expected five different coarse values, one per cycle.'" }}
         hints={['`coarse(n)` keeps one sample in every n.', 'Same `< >` shape as before, different control.']}
-        solution={`s("<bd sd>, hh*3").fast(2).coarse("<1 4 8 16 32>")`}>
-    Replace the whole `.crush(…)` with `.coarse("<1 4 8 16 32>")`. This is a different flavour of
-    damage: not grainy but metallic, because throwing samples away folds high frequencies back down
-    into the audible range.
+        solution={`s("<bd sd>, hh*3")
+  .fast(2)
+  .coarse("<1 4 8 16 32>")`}>
+    Replace the whole `.crush(…)` line with `.coarse("<1 4 8 16 32>")`. This is a different flavour
+    of damage: not grainy but metallic, because throwing samples away folds high frequencies back
+    down into the audible range.
   </Step>
-  <Step check={{ has: { crush: 6, coarse: 8 } }}
+  <Step check={{ includes: '.crush(', cycles: 5, has: { crush: 6 },
+                 fn: "(h) => new Set(h.map((e) => e.value.coarse)).size === 5 || 'Keep the coarse walk: five values, one per cycle.'" }}
         hints={['Both chain onto the same pattern; order between them does not matter here.']}
-        solution={`s("<bd sd>, hh*3").fast(2).crush(6).coarse(8)`}>
-    Now both, at fixed values: `.crush(6).coarse(8)`. Together they are the entire lo-fi aesthetic.
+        solution={`s("<bd sd>, hh*3")
+  .fast(2)
+  .crush(6)
+  .coarse("<1 4 8 16 32>")`}>
+    Now both: keep the coarse walk and add `.crush(6)` on a line above it. Six bits all the way
+    through, with the sample rate still stepping down each cycle. Together they are the entire
+    lo-fi aesthetic.
   </Step>
 </Exercise>
 
@@ -313,28 +343,66 @@ filter sweep: it works by cancellation, so it thins the sound rather than darken
 
 <Exercise id="dynamics/phaser" title="Swoosh"
   goal="Add a phaser, speed it up cycle by cycle, then aim it at a part of the spectrum."
-  start={`n(run(8)).scale("D:pentatonic").s("sawtooth").release(.5)`}
-  target={`n(run(8)).scale("D:pentatonic").s("sawtooth").release(.5).phaser(2).phaserdepth(.75).phasercenter(1000).phasersweep(2000)`}>
+  start={`n(run(8))
+  .scale("D:pentatonic")
+  .s("sawtooth")
+  .release(.5)`}
+  target={`n(run(8))
+  .scale("D:pentatonic")
+  .s("sawtooth")
+  .release(.5)
+  .phaser(2)
+  .phaserdepth(.75)
+  .phasercenter(1000).phasersweep(2000)`}>
   <Step check={{ includes: '.phaser(', has: { phaser: 2 } }}
         hints={['The number is the sweep rate.']}
-        solution={`n(run(8)).scale("D:pentatonic").s("sawtooth").release(.5).phaser(2)`}>
-    Add `.phaser(2)`.
+        solution={`n(run(8))
+  .scale("D:pentatonic")
+  .s("sawtooth")
+  .release(.5)
+  .phaser(2)`}>
+    Add `.phaser(2)` on a new line at the end.
   </Step>
   <Step check={{ cycles: 4, fn: "(h) => new Set(h.map((e) => e.value.phaserrate)).size === 4 || 'Expected four different phaser rates, one per cycle.'" }}
         hints={['Four rates, one per cycle.']}
-        solution={`n(run(8)).scale("D:pentatonic").s("sawtooth").release(.5).phaser("<1 2 4 8>")`}>
+        solution={`n(run(8))
+  .scale("D:pentatonic")
+  .s("sawtooth")
+  .release(.5)
+  .phaser("<1 2 4 8>")`}>
     Speed it up over four cycles: `.phaser("<1 2 4 8>")`. At the top it stops sounding like movement
     and starts sounding like a new timbre.
   </Step>
+  <Step check={{ has: { phaserdepth: 0.75 } }}
+        hints={['Depth is how far the notches move.']}
+        solution={`n(run(8))
+  .scale("D:pentatonic")
+  .s("sawtooth")
+  .release(.5)
+  .phaser("<1 2 4 8>")
+  .phaserdepth(.75)`}>
+    Add `.phaserdepth(.75)` on a new line. At depth 0 nothing moves at all.
+  </Step>
   <Step check={{ has: { phaser: 2, phaserdepth: 0.75 } }}
-        hints={['Put the rate back to a single `2` first.', 'Depth is how far the notches move.']}
-        solution={`n(run(8)).scale("D:pentatonic").s("sawtooth").release(.5).phaser(2).phaserdepth(.75)`}>
-    Settle on `.phaser(2)` again and add `.phaserdepth(.75)`. At depth 0 nothing moves at all.
+        hints={['Only the rate line changes.']}
+        solution={`n(run(8))
+  .scale("D:pentatonic")
+  .s("sawtooth")
+  .release(.5)
+  .phaser(2)
+  .phaserdepth(.75)`}>
+    Settle on `.phaser(2)` again.
   </Step>
   <Step check={{ has: { phasercenter: 1000, phasersweep: 2000 } }}
         hints={['One says where the sweep sits, the other how wide it travels — both in Hz.']}
-        solution={`n(run(8)).scale("D:pentatonic").s("sawtooth").release(.5).phaser(2).phaserdepth(.75).phasercenter(1000).phasersweep(2000)`}>
-    Aim it: add `.phasercenter(1000).phasersweep(2000)`. Centre is where the notches live, sweep is
+        solution={`n(run(8))
+  .scale("D:pentatonic")
+  .s("sawtooth")
+  .release(.5)
+  .phaser(2)
+  .phaserdepth(.75)
+  .phasercenter(1000).phasersweep(2000)`}>
+    Aim it: add `.phasercenter(1000).phasersweep(2000)` on a last line. Centre is where the notches live, sweep is
     how far either side of it they travel.
   </Step>
 </Exercise>
@@ -392,26 +460,31 @@ filter sweep: it works by cancellation, so it thins the sound rather than darken
 
 <Exercise id="dynamics/pan" title="Move it across the stereo field"
   goal="Pan a pattern by hand, then per event, then with a continuous signal."
-  start={`s("bd rim sd rim bd ~ cp rim")`}
-  target={`s("bd rim sd rim bd ~ cp rim").pan(sine.slow(2))`}>
+  start={`$: s("bd rim sd rim bd ~ cp rim")`}
+  target={`$: s("bd rim sd rim bd ~ cp rim")
+  .pan(sine.slow(2))`}>
   <Step check={{ includes: '.pan(', has: { pan: 0 } }}
-        solution={`s("bd rim sd rim bd ~ cp rim").pan(0)`}>
-    Add `.pan(0)`. The whole pattern jumps into your left ear.
+        solution={`$: s("bd rim sd rim bd ~ cp rim")
+  .pan(0)`}>
+    Add `.pan(0)` on a new line. The whole pattern jumps into your left ear.
   </Step>
   <Step check={{ cycles: 2, fn: "(h) => { const l = h.filter((e) => e.t < 1); const r = h.filter((e) => e.t >= 1); return (l.length > 0 && r.length > 0 && l.every((e) => e.value.pan === 0) && r.every((e) => e.value.pan === 1)) || 'Expected one whole bar hard left, then one hard right.' }" }}
         hints={['One value per cycle.']}
-        solution={`s("bd rim sd rim bd ~ cp rim").pan("<0 1>")`}>
+        solution={`$: s("bd rim sd rim bd ~ cp rim")
+  .pan("<0 1>")`}>
     Change it to `.pan("<0 1>")`: a bar on the left, a bar on the right.
   </Step>
   <Step check={{ fn: "(h) => new Set(h.map((e) => e.value.pan)).size >= 4 || 'Expected each event to get its own pan position.'" }}
         hints={['Eight events in the pattern, so eight values in the pan pattern.', 'Sweep out and back: 0 up to 1 and down again.']}
-        solution={`s("bd rim sd rim bd ~ cp rim").pan("0 .25 .5 .75 1 .75 .5 .25")`}>
+        solution={`$: s("bd rim sd rim bd ~ cp rim")
+  .pan("0 .25 .5 .75 1 .75 .5 .25")`}>
     Now one position per hit: `.pan("0 .25 .5 .75 1 .75 .5 .25")`. The structure still comes from
     the left, so the pan pattern only supplies values — it never adds an event.
   </Step>
   <Step check={{ includes: 'sine', fn: "(h) => new Set(h.map((e) => e.value.pan)).size >= 4 || 'Expected a different pan value per event.'" }}
         hints={['`sine` is a continuous signal, sampled at each event. `.slow(2)` stretches it over two cycles.']}
-        solution={`s("bd rim sd rim bd ~ cp rim").pan(sine.slow(2))`}>
+        solution={`$: s("bd rim sd rim bd ~ cp rim")
+  .pan(sine.slow(2))`}>
     Replace the whole string with `sine.slow(2)`. A signal instead of a list: the position is read
     at the moment each event starts, so it drifts across two bars.
   </Step>
@@ -436,11 +509,13 @@ copy hard right. See <L to="/tutorial/pattern-functions">Pattern Functions</L>.
 <Exercise id="dynamics/squiz" title="Prove it is silent"
   goal="Add squiz to a kick and confirm with your own ears that nothing happens."
   start={`s("bd*4")`}
-  target={`s("bd*4").squiz("2 4/2 6 [8 16]")`}>
+  target={`s("bd*4")
+  .squiz("2 4/2 6 [8 16]")`}>
   <Step check={{ includes: '.squiz(', match: { keys: ['s'] } }}
         hints={['It takes a pattern like every other control, so anything with numbers in it will do.']}
-        solution={`s("bd*4").squiz("2 4/2 6 [8 16]")`}>
-    Add `.squiz("2 4/2 6 [8 16]")`. No error, no warning — and no change. In SuperDirt this is part
+        solution={`s("bd*4")
+  .squiz("2 4/2 6 [8 16]")`}>
+    Add `.squiz("2 4/2 6 [8 16]")` on a new line. No error, no warning — and no change. In SuperDirt this is part
     filter, part ring modulator, part pitch shifter.
   </Step>
 </Exercise>
@@ -494,8 +569,35 @@ bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").decay(.2).sustain(0)
     **Then level.** Add `.postgain(.8)` to the drums lane. Get the balance right with plain level
     before you add anything that might fix it for you.
   </Step>
-  <Step check={{ includes: ['duckorbit(', '.orbit(2)'], fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.orbit === 2)) || 'The bass lane needs .orbit(2) so the ducker can find it.' }" }}
-        hints={['The ducker names an orbit, so the bass has to be on one.', 'The new lane is a copy of the kick with `postgain(0)`, so you hear its effect and not the kick itself.']}
+  <Step check={{ includes: '.orbit(2)', fn: "(h) => { const b = h.filter((e) => e.value.s === 'sawtooth'); return (b.length > 0 && b.every((e) => e.value.orbit === 2)) || 'The bass lane needs .orbit(2) so the ducker can find it.' }" }}
+        hints={['The ducker names an orbit, so the bass has to be on one.']}
+        solution={`setcpm(130/4)
+
+drums: s("bd*4, [~ cp], [~ hh]*4").bank("RolandTR909")
+  .postgain(.8)
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").decay(.2).sustain(0)
+  .lpf(500).lpq(6).orbit(2)`}>
+    **Then ducking.** Give the kick room instead of turning the bass down — see
+    <L to="/tutorial/ducking">Ducking</L>. First the bass needs an address: add `.orbit(2)` to the
+    end of the bass lane. Nothing changes yet.
+  </Step>
+  <Step check={{ includes: 'duckorbit(', fn: "(h) => { const d = h.filter((e) => e.value.duckorbit === 2); return (d.length > 0 && d.every((e) => e.value.postgain === 0 && e.value.duckdepth === 1)) || 'Add a silent lane: duck: s(\"bd*4\").duckorbit(2).duckdepth(1).postgain(0).' }" }}
+        hints={['The new lane is a copy of the kick with `postgain(0)`, so you hear its effect and not the kick itself.']}
+        solution={`setcpm(130/4)
+
+drums: s("bd*4, [~ cp], [~ hh]*4").bank("RolandTR909")
+  .postgain(.8)
+
+bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").decay(.2).sustain(0)
+  .lpf(500).lpq(6).orbit(2)
+
+duck: s("bd*4").duckorbit(2).duckdepth(1).postgain(0)`}>
+    Add a silent ducking lane at the bottom: `duck: s("bd*4").duckorbit(2).duckdepth(1).postgain(0)`.
+    It plays nothing you can hear; its only job is to push orbit 2 down on every beat.
+  </Step>
+  <Step check={{ fn: "(h) => { const d = h.filter((e) => e.value.duckorbit === 2); return (d.length > 0 && d.every((e) => e.value.duckattack === 0.2 && e.value.duckonset === 0.01)) || 'The duck lane needs .duckattack(.2).duckonset(.01).' }" }}
+        hints={['Recovery first, then a small onset so the drop does not click.']}
         solution={`setcpm(130/4)
 
 drums: s("bd*4, [~ cp], [~ hh]*4").bank("RolandTR909")
@@ -505,9 +607,8 @@ bass: note("<c2 c2 eb2 g1>*2").s("sawtooth").decay(.2).sustain(0)
   .lpf(500).lpq(6).orbit(2)
 
 duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`}>
-    **Then ducking.** Put the bass on its own orbit with `.orbit(2)`, then add a silent ducking
-    lane: `duck: s("bd*4").duckorbit(2).duckdepth(1).duckattack(.2).duckonset(.01).postgain(0)`.
-    Give the kick room instead of turning the bass down — see <L to="/tutorial/ducking">Ducking</L>.
+    Shape the duck: insert `.duckattack(.2).duckonset(.01)` before the `.postgain(0)`. A fifth of a
+    second to come back, and ten milliseconds down so it does not click.
   </Step>
   <Step check={{ includes: '.compressor(', fn: "(h) => { const d = h.filter((e) => e.value.bank); return (d.length > 0 && d.every((e) => e.value.compressor === -18)) || 'The drums lane needs .compressor(\"-18:4:8:.003:.06\").' }" }}
         hints={['Back onto the drums lane, before the post-gain in the chain.']}

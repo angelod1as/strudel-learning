@@ -45,30 +45,41 @@ replaces the first. The next exercise makes that audible.
 <Exercise id="orbits/single-use" title="Two filters, one filter"
   goal="Prove that a second `.lpf()` does not filter again — it overwrites the first one."
   start={`s("bd*4, hh*8")`}
-  target={`s("bd*4, hh*8").distort(2).lpf(2000)`}>
+  target={`s("bd*4, hh*8")
+  .distort(2)
+  .lpf(2000)`}>
   <Step check={{ includes: '.lpf(', has: { lpf: [100, 400] }, events: 12 }}
         hints={['`lpf` is the lowpass cutoff in Hz; 200 is very low, so almost all of the hats go.']}
-        solution={`s("bd*4, hh*8").lpf(200)`}>
-    Add `.lpf(200)` to the end. Muffled: the hats nearly vanish and the kick loses its click.
+        solution={`s("bd*4, hh*8")
+  .lpf(200)`}>
+    Add `.lpf(200)` on a new line at the end. Muffled: the hats nearly vanish and the kick loses its
+    click.
   </Step>
   <Step check={{ includes: '.distort(', has: { lpf: [100, 400], distort: [1, 4] } }}
-        solution={`s("bd*4, hh*8").lpf(200).distort(2)`}>
-    Add `.distort(2)` after it. Dirty, but still dark — the distortion is running on the filtered
-    signal, which is what the chain order says.
+        solution={`s("bd*4, hh*8")
+  .lpf(200)
+  .distort(2)`}>
+    Add `.distort(2)` on the line after it. Dirty, but still dark — the distortion is running on the
+    filtered signal, which is what the chain order says.
   </Step>
   <Step check={{ has: { lpf: [1200, 4000] },
                  fn: "(h, code) => (code.match(/\\.lpf\\(/g) || []).length === 2 || 'Keep both `.lpf()` calls: the old one and the new one.'" }}
         hints={['Distortion adds a lot of fizz up top, so a filter after it is a normal thing to want.',
                 'Leave the first `.lpf(200)` exactly where it is and add the new one on the end.']}
-        solution={`s("bd*4, hh*8").lpf(200).distort(2).lpf(2000)`}>
-    Now try to tame the fizz: add a second `.lpf(2000)` at the very end. Listen carefully — it did
+        solution={`s("bd*4, hh*8")
+  .lpf(200)
+  .distort(2)
+  .lpf(2000)`}>
+    Now try to tame the fizz: add a second `.lpf(2000)` on a last line. Listen carefully — it did
     not get darker, it got **brighter than step 1 ever was**. The `lpf(200)` is gone.
   </Step>
   <Step check={{ excludes: 'lpf(200)', has: { lpf: [1200, 4000], distort: [1, 4] },
                  fn: "(h, code) => (code.match(/\\.lpf\\(/g) || []).length === 1 || 'Exactly one `.lpf()` should be left.'" }}
-        solution={`s("bd*4, hh*8").distort(2).lpf(2000)`}>
-    Delete `.lpf(200)`. Identical. It was never doing anything — there is one lowpass slot per
-    event and `2000` had already taken it.
+        solution={`s("bd*4, hh*8")
+  .distort(2)
+  .lpf(2000)`}>
+    Delete the `.lpf(200)` line. Identical. It was never doing anything — there is one lowpass slot
+    per event and `2000` had already taken it.
   </Step>
 </Exercise>
 
@@ -168,7 +179,11 @@ Orbits are buses, so use them the way you use buses in a DAW — one per *space*
 
 <Exercise id="orbits/allocate" title="Four buses, four spaces"
   goal="Build a four-orbit mix, then break it on purpose to hear why the throw needs its own bus."
-  start={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1)`}
+  start={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1)
+
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5)`}
   target={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
 
 $: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)
@@ -176,28 +191,35 @@ $: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).
 $: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)
 
 $: s("rim").beat("3,11",16).delay(".7:.1875:.75").gain(.6).orbit(4)`}>
-  <Step check={{ has: { orbit: 1 } }}
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.bank); return (k.length > 0 && k.every(e => e.value.orbit === 1)) || 'Add `.orbit(1)` to the drum lane.'; }" }}
         hints={['Orbit 1 is already the default; writing it makes the intent visible.']}
-        solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)`}>
-    Add `.orbit(1)` to the drum lane. Nothing changes — 1 is the default — but from here on every
-    lane says where it goes.
-  </Step>
-  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'sawtooth'); return (k.length > 0 && k.every(e => e.value.orbit === 2)) || 'Add a bass lane ending in `.orbit(2)`.'; }" }}
         solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
 
-$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)`}>
-    Add a bass lane on its own bus:
-    `$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)`
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5)`}>
+    Three lanes, all on the default bus: a drum kit with a short room, a bass, and a pad with a big
+    room. Read them, then add `.orbit(1)` to the end of the drum lane. Nothing changes — 1 is the
+    default — but from here on every lane says where it goes.
   </Step>
-  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'gm_pad_warm'); return (k.length > 0 && k.every(e => e.value.orbit === 3)) || 'Add a pad lane ending in `.orbit(3)`.'; }" }}
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'sawtooth'); return (k.length > 0 && k.every(e => e.value.orbit === 2)) || 'Add `.orbit(2)` to the end of the bass lane.'; }" }}
+        solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
+
+$: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)
+
+$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5)`}>
+    Add `.orbit(2)` to the end of the bass lane. The bass now has a bus of its own.
+  </Step>
+  <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'gm_pad_warm'); return (k.length > 0 && k.every(e => e.value.orbit === 3)) || 'Add `.orbit(3)` to the end of the pad lane.'; }" }}
         hints={['The big reverb goes here and nowhere else — that is the whole reason orbit 3 exists.']}
         solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
 
 $: note("<c2 c2 eb2 g1>*2").s("sawtooth").lpf(600).lpq(4).decay(.18).sustain(0).orbit(2)
 
 $: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)`}>
-    Add the pad, with the big room, on orbit 3:
-    `$: n("<0 3 5 3>").scale("C4:minor").s("gm_pad_warm").attack(.6).release(1.4).room(.9).rsize(6).gain(.5).orbit(3)`
+    Add `.orbit(3)` to the end of the pad lane. Until now the pad's `rsize(6)` and the drums'
+    `rsize(1)` were written to the same orbit, which has one reverb; now the big room has a bus to
+    itself.
   </Step>
   <Step check={{ fn: "(h) => { const k = h.filter(e => e.value.s === 'rim'); return (k.length > 0 && k.every(e => e.value.orbit === 4)) || 'Add a rim lane ending in `.orbit(4)`.'; }" }}
         solution={`$: s("bd*4, ~ cp, [~ hh]*4").bank("RolandTR909").room(.12).rsize(1).orbit(1)
@@ -258,24 +280,35 @@ makes a **copy** per orbit.
 
 <Exercise id="orbits/several" title="Copies, not sends"
   goal="Send one noise hit to three orbits and hear it get three times as loud."
-  start={`s("white").gain(.6)`}
-  target={`s("white").orbit("2,3,4").gain(.2)`}>
+  start={`s("white")
+  .gain(.6)`}
+  target={`s("white")
+  .gain(.2)
+  .orbit("2,3,4")`}>
   <Step check={{ has: { orbit: 2 }, events: 1 }}
-        solution={`s("white").orbit(2).gain(.6)`}>
-    Add `.orbit(2)`. One hit, one bus, same level as before.
+        solution={`s("white")
+  .gain(.6)
+  .orbit(2)`}>
+    Add `.orbit(2)` on a new line at the end. One hit, one bus, same level as before.
   </Step>
   <Step check={{ includes: 'orbit("2,3")', events: 2 }}
         hints={['A comma inside the quotes is the parallel operator — here it stacks two orbit values.']}
-        solution={`s("white").orbit("2,3").gain(.6)`}>
+        solution={`s("white")
+  .gain(.6)
+  .orbit("2,3")`}>
     Change it to `.orbit("2,3")`. One event became two, and since both buses reach the same
     speakers you just doubled the level.
   </Step>
   <Step check={{ events: 3, has: { orbit: [2, 4] } }}
-        solution={`s("white").orbit("2,3,4").gain(.6)`}>
+        solution={`s("white")
+  .gain(.6)
+  .orbit("2,3,4")`}>
     Go to `.orbit("2,3,4")`. Three copies now, and it is getting genuinely loud.
   </Step>
   <Step check={{ events: 3, has: { gain: [0.15, 0.25] } }}
-        solution={`s("white").orbit("2,3,4").gain(.2)`}>
+        solution={`s("white")
+  .gain(.2)
+  .orbit("2,3,4")`}>
     Compensate: change `.gain(.6)` to `.gain(.2)`. Back where you started, on three buses.
   </Step>
 </Exercise>
@@ -304,34 +337,56 @@ an orbit list.
 
 <Exercise id="orbits/postgain" title="Turn it down without cleaning it up"
   goal="Use `gain` and `postgain` on the same distorted kick and hear why they are not the same knob."
-  start={`s("bd*4").distort(3)`}
-  target={`s("bd*4").gain(2).distort(3).postgain(.3).room(.9).rsize(4).dry(0)`}>
+  start={`s("bd*4")
+  .distort(3)`}
+  target={`s("bd*4")
+  .gain(2)
+  .distort(3)
+  .postgain(.3)
+  .room(.9).rsize(4)
+  .dry(0)`}>
   <Step check={{ has: { gain: [0.2, 0.4], distort: [2, 4] } }}
-        solution={`s("bd*4").distort(3).gain(.3)`}>
-    Too loud. Add `.gain(.3)`. It is quieter — but also noticeably **cleaner**, because you turned
-    the signal down *before* it hit the distortion.
+        solution={`s("bd*4")
+  .distort(3)
+  .gain(.3)`}>
+    Too loud. Add `.gain(.3)` on a new line at the end. It is quieter — but also noticeably
+    **cleaner**, because you turned the signal down *before* it hit the distortion.
   </Step>
   <Step check={{ excludes: '.gain(', has: { postgain: [0.2, 0.4] } }}
         hints={['`.postgain(` does not contain `.gain(` — delete the old call, do not just rename it in place.']}
-        solution={`s("bd*4").distort(3).postgain(.3)`}>
+        solution={`s("bd*4")
+  .distort(3)
+  .postgain(.3)`}>
     Delete `.gain(.3)` and write `.postgain(.3)` instead. Same level, all the dirt back: the
     distortion saw the full-strength signal and you turned down what came out.
   </Step>
   <Step check={{ has: { gain: [1.5, 3], postgain: [0.2, 0.4] } }}
-        solution={`s("bd*4").gain(2).distort(3).postgain(.3)`}>
-    Now use both. Add `.gain(2)` before the distortion and keep `.postgain(.3)`. Harder into the
-    distortion, same level out — this is exactly how you drive a saturator in a DAW.
+        solution={`s("bd*4")
+  .gain(2)
+  .distort(3)
+  .postgain(.3)`}>
+    Now use both. Add `.gain(2)` on a line above the distortion and keep `.postgain(.3)`. Harder
+    into the distortion, same level out — this is exactly how you drive a saturator in a DAW.
   </Step>
   <Step check={{ has: { room: [0.5, 1] } }}
-        solution={`s("bd*4").gain(2).distort(3).postgain(.3).room(.9).rsize(4)`}>
-    Add `.room(.9).rsize(4)`. The kick now leaves the event by two routes at once: straight out,
-    and into the orbit's reverb.
+        solution={`s("bd*4")
+  .gain(2)
+  .distort(3)
+  .postgain(.3)
+  .room(.9).rsize(4)`}>
+    Add `.room(.9).rsize(4)` on a new line. The kick now leaves the event by two routes at once:
+    straight out, and into the orbit's reverb.
   </Step>
   <Step check={{ includes: '.dry(', has: { dry: 0 } }}
         hints={['`dry` is the level of the untreated signal — step 4 of the chain at the top.']}
-        solution={`s("bd*4").gain(2).distort(3).postgain(.3).room(.9).rsize(4).dry(0)`}>
-    Add `.dry(0)`. The direct kick disappears and only the reverb of it is left. You just muted
-    one of the three routes out of the event.
+        solution={`s("bd*4")
+  .gain(2)
+  .distort(3)
+  .postgain(.3)
+  .room(.9).rsize(4)
+  .dry(0)`}>
+    Add `.dry(0)` on a last line. The direct kick disappears and only the reverb of it is left. You
+    just muted one of the three routes out of the event.
   </Step>
 </Exercise>
 
@@ -354,31 +409,70 @@ than nesting.
 
 <Exercise id="orbits/fx" title="Build the chain yourself"
   goal="Reorder a chain, then do the thing the fixed chain cannot: distort twice."
-  start={`s("bd*4, hh*8").distort(2).lpf(700)`}
-  target={`s("bd*4, hh*8").FX(lpf(700)).FX(distort(2), distort(1.5))`}>
+  start={`s("bd*4, hh*8")
+  .distort(2)
+  .lpf(700)`}
+  target={`s("bd*4, hh*8")
+  .FX(
+    lpf(700),
+  )
+  .FX(
+    distort(2),
+    distort(1.5),
+  )`}>
+  <Step check={{ excludes: '.distort(', has: { lpf: 700 } }}
+        solution={`s("bd*4, hh*8")
+  .lpf(700)`}>
+    Take the distortion out of the fixed chain: delete the `.distort(2)` line. Only the lowpass is
+    left. Next you rebuild the same two-effect chain, in an order you write yourself.
+  </Step>
   <Step check={{ includes: '.FX(', excludes: '.distort(',
                  fn: "(h) => { const k = h.filter(e => Array.isArray(e.value.FX) && e.value.FX.length === 2); return (h.length > 0 && k.length === h.length) || 'Every event should carry an `FX` chain of exactly two effects.'; }" }}
-        hints={['Inside `FX()` the effects are written as plain calls, with no leading dot: `FX(distort(2), lpf(700))`.']}
-        solution={`s("bd*4, hh*8").FX(distort(2), lpf(700))`}>
-    Move both effects inside one call: `.FX(distort(2), lpf(700))`. It sounds the same as before —
-    distortion first, then the filter — but now that order is yours, not the chain's.
+        hints={['Inside `FX()` the effects are written as plain calls, with no leading dot, separated by commas.',
+                'One effect per line inside the parentheses makes the order easy to see and easy to change.']}
+        solution={`s("bd*4, hh*8")
+  .FX(
+    distort(2),
+    lpf(700),
+  )`}>
+    Replace the `.lpf(700)` line with one `.FX(…)` call that holds both effects, one per line:
+    `distort(2),` then `lpf(700),`. It sounds the same as the chain you started with — distortion
+    first, then the filter — but now that order is yours, not the chain's.
   </Step>
   <Step check={{ fn: "(h) => { const f = h[0] && h[0].value.FX; return (f && f.length === 2 && f[0].cutoff !== undefined && f[1].distort !== undefined) || 'The chain should be `lpf` first, then `distort`.'; }" }}
-        solution={`s("bd*4, hh*8").FX(lpf(700), distort(2))`}>
-    Swap them: `.FX(lpf(700), distort(2))`. Same two effects, audibly different result — filtering
-    first gives a round, fat drive; filtering last shaves the fizz off.
+        solution={`s("bd*4, hh*8")
+  .FX(
+    lpf(700),
+    distort(2),
+  )`}>
+    Swap the two lines inside `FX(…)`, so `lpf(700)` comes first. Same two effects, audibly
+    different result — filtering first gives a round, fat drive; filtering last shaves the fizz off.
   </Step>
   <Step check={{ fn: "(h) => { const f = h[0] && h[0].value.FX; return (f && f.length === 3 && f[1].distort !== undefined && f[2].distort !== undefined) || 'Three effects, ending in two distortions in a row.'; }" }}
         hints={['Stacking two mild distortions is not the same as one hard one — the second one works on the first one’s harmonics.']}
-        solution={`s("bd*4, hh*8").FX(lpf(700), distort(2), distort(1.5))`}>
-    Add a second distortion at the end: `.FX(lpf(700), distort(2), distort(1.5))`. Two of the same
-    effect in one chain, which the fixed order can never give you.
+        solution={`s("bd*4, hh*8")
+  .FX(
+    lpf(700),
+    distort(2),
+    distort(1.5),
+  )`}>
+    Add a second distortion as a last line inside `FX(…)`: `distort(1.5),`. Two of the same effect
+    in one chain, which the fixed order can never give you.
   </Step>
   <Step check={{ fn: "(h, code) => { const f = h[0] && h[0].value.FX; return ((code.match(/\\.FX\\(/g) || []).length === 2 && f && f.length === 3) || 'Two `.FX()` calls that still add up to three effects.'; }" }}
-        hints={['Split after the filter, so the first call holds one effect and the second holds two.']}
-        solution={`s("bd*4, hh*8").FX(lpf(700)).FX(distort(2), distort(1.5))`}>
-    Split it into two calls: `.FX(lpf(700)).FX(distort(2), distort(1.5))`. Identical sound — chains
-    concatenate, they do not nest, so you can build one up across several lines.
+        hints={['Split after the filter, so the first call holds one effect and the second holds two.',
+                'Close the first call with `)` and open the second with `.FX(` on the next line.']}
+        solution={`s("bd*4, hh*8")
+  .FX(
+    lpf(700),
+  )
+  .FX(
+    distort(2),
+    distort(1.5),
+  )`}>
+    Split it into two calls after the filter: close the first `FX(` with `)` and open a second
+    `.FX(` for the two distortions. Identical sound — chains concatenate, they do not nest, so you
+    can build one up across several lines.
   </Step>
 </Exercise>
 
