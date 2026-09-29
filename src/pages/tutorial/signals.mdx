@@ -66,6 +66,16 @@ one change per step, ctrl+enter, listen.
     Replace `square` with `rand`: a fresh random number every time it is read. Instant humanised
     velocity.
   </Step>
+  <Step check={{ includes: '.pan(', excludes: '.gain(' }}
+        hints={['`pan` is a control like any other: 0 is hard left, 1 is hard right.',
+                'Change only the control name — leave `rand` where it is.']}
+        solution={`s("hh*16").pan(
+  rand
+)`}>
+    A signal is not tied to loudness. Change `gain` to `pan`, leaving `rand` alone: the same wave,
+    now steering stereo position instead of volume, so the hats scatter left and right. Any control
+    that takes a number will take a signal — which is what the next challenge relies on.
+  </Step>
 </Exercise>
 
 ## The catalogue

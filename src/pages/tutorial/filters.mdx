@@ -133,7 +133,7 @@ filter is currently sitting on.
 <Exercise id="filters/resonance" title="From gentle to screaming"
   goal="Hear what resonance adds at a fixed cutoff, then sweep the resonance instead of the cutoff."
   start={`s("bd sd [~ bd] sd, hh*8").lpf(2000)`}
-  target={`s("bd sd [~ bd] sd, hh*8").lpf(2000).lpq("<0 10 20 30>")`}>
+  target={`s("bd sd [~ bd] sd, hh*8").lpf("2000:20")`}>
   <Step check={{ includes: '.lpq(', has: { lpq: [0, 0.2] } }}
         solution={`s("bd sd [~ bd] sd, hh*8").lpf(2000).lpq(0)`}>
     Add `.lpq(0)`. Nothing changes, because 0 is the default: no boost at the cutoff, just the
@@ -154,7 +154,23 @@ filter is currently sitting on.
     Pattern it: `.lpq("<0 10 20 30>")`. Same cutoff all four bars — the only thing changing is how
     hard the filter rings at it.
   </Step>
+  <Step check={{ includes: 'lpf("2000:', excludes: '.lpq(', has: { lpf: [2000, 2000], lpq: [18, 22] } }}
+        hints={['One string, two numbers, a colon between them.',
+                'Cutoff first, then the q — the same order you wrote the two calls in.']}
+        solution={`s("bd sd [~ bd] sd, hh*8").lpf("2000:20")`}>
+    Both numbers can travel in one string. Replace `.lpf(2000).lpq("<0 10 20 30>")` with
+    `.lpf("2000:20")` — cutoff first, then the q, separated by a colon. Settling on 20 it sounds
+    exactly like `.lpf(2000).lpq(20)` did, because it *is* that: the packed string sets both
+    controls at once.
+  </Step>
 </Exercise>
+
+<Box>
+That colon form turns up all over Strudel, always in a fixed order that you have to know:
+`lpf("freq:q")`, `hpf("freq:q")`, `delay("level:time:feedback")`, `room("level:size")`,
+`vib("rate:depth")`, `distort("amount:postgain")`. It is shorter, but the two-call form is the one
+you can read six months later — use whichever you will understand next time.
+</Box>
 
 <Exercise id="filters/resonance-challenge" title="Challenge: the freq:q shorthand"
   goal="Write the same cutoff and resonance as one lpf() call, using the colon shorthand, with no .lpq() left in the chain."

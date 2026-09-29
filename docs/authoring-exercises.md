@@ -92,21 +92,29 @@ checks are *well formed*; none of this is machine-checkable on its own.
 1. **A step changes the editor; it never retypes it.** "Replace it all with `<long chain>`" is
    transcription, not teaching. The learner must be able to see what moved and hear what that did.
    If a step's solution shares little with the previous one, it is not a step — it is a new
-   exercise. `node tools/audit-pedagogy.mjs` flags these.
-2. **Never make them type something you have not taught.** Not a function, not a syntax. `off()`
+   exercise. `node tools/audit-pedagogy.mjs` flags these. Note it tracks FUNCTION names only — it is blind to
+   notation, which is why `tools/audit-syntax.mjs` and `tools/audit-challenges.mjs` exist.
+2. **A challenge may only ask for what a step already showed.** A challenge is practice, not a
+   quiz on something new. The Filters chapter taught `.lpq()` as its own call and then demanded
+   `lpf("1000:20")` in the challenge, with the colon form explained only in an opt-in hint — the
+   learner: *"AGAIN throwing stuff you didn't teach. I said REVIEW... And give me the stuff before
+   calling for them."* If a challenge needs a notation or a function, a step in that chapter
+   demonstrates it first, or it belongs in the given `start` code as scenery.
+   `node tools/audit-challenges.mjs [fromChapter]` reports these.
+3. **Never make them type something you have not taught.** Not a function, not a syntax. `off()`
    belongs to Pattern Functions; using it in Notes means Notes has to teach it first, or not use
    it. Same for packed-colon arguments like `adsr("a:d:s:r")` — a hint does not count as teaching,
    because hints are opt-in. The audit flags functions; syntax is on you.
-3. **Verify every claim about what something sounds like.** The chapter said adding `.decay(.1)`
+4. **Verify every claim about what something sounds like.** The chapter said adding `.decay(.1)`
    changes nothing, on the strength of Strudel's own doc line "decay is only audible if sustain is
    lower than 1". The default sustain is not 1, so the note became a pluck and the text was simply
    wrong. If you write "listen: X happens", measure X first — hook the gain automation or count
    voices, do not reason from the pattern. See the measuring recipes below.
-4. **A silent failure is worse than an error.** `"<Dm7>".dict('lefthand').voicing()` yields zero
+5. **A silent failure is worse than an error.** `"<Dm7>".dict('lefthand').voicing()` yields zero
    events and logs nothing the learner will see, because `dict()` wraps the value and the chord
    symbol is lost — it needs `chord("<Dm7>")` first. Where a chain has a trap like this, teach the
    trap; do not step around it and leave them to find it.
-5. **Teach the rule, not the incantation.** If two exercises use different spellings of the same
+6. **Teach the rule, not the incantation.** If two exercises use different spellings of the same
    idea, say which is which and when each applies. A learner who generalises from your example and
    gets zero events was failed by the chapter, not by themselves.
 

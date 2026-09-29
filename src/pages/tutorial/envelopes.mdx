@@ -28,7 +28,7 @@ at a time.
 <Exercise id="envelopes/adsr" title="One stage at a time"
   goal="Build a full amplitude envelope, hearing what each of the four controls does on its own."
   start={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600)`}
-  target={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1).sustain(0)`}>
+  target={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).adsr(".01:.1:0:.5")`}>
   <Step check={{ includes: '.attack(', has: { attack: [0.3, 1] } }}
         hints={['`attack` is a time in seconds, chained on like any other control.']}
         solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.5)`}>
@@ -71,6 +71,14 @@ at a time.
         solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).attack(.01).release(.5).decay(.1).sustain(0)`}>
     Take the sustain back down to `0` for the full pluck. You now have all four: `attack` and
     `decay` and `release` are times, `sustain` is the level the decay aims at.
+  </Step>
+  <Step check={{ includes: '.adsr(', excludes: '.attack(', has: { attack: [0, 0.05], decay: [0.05, 0.3], sustain: [0, 0.02], release: [0.3, 0.7] } }}
+        hints={['One string, four numbers, colons between them.',
+                'The order is the name: attack, decay, sustain, release.']}
+        solution={`note("c3 bb2 f3 eb3").s("sawtooth").lpf(600).adsr(".01:.1:0:.5")`}>
+    Now collapse all four into one call: delete `.attack(.01).release(.5).decay(.1).sustain(0)` and
+    write `.adsr(".01:.1:0:.5")` instead. Identical sound — the four numbers go in the order the
+    name spells out, separated by colons.
   </Step>
 </Exercise>
 
