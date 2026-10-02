@@ -35,6 +35,22 @@ const errText = (e: unknown) =>
   e instanceof Error ? e.message : typeof e === 'string' ? e : String(e ?? 'unknown error');
 
 /**
+ * Hydra paints a fixed, full-viewport canvas and keeps rendering after the
+ * pattern stops — nothing in Strudel removes it, so stopping would leave the
+ * rest of the chapter buried. Clear it once no editor on the page is playing
+ * (an editor stopping because another took over must not kill the new visuals).
+ */
+function clearHydraWhenIdle() {
+  setTimeout(() => {
+    if (!document.getElementById('hydra-canvas')) return;
+    const playing = [...document.querySelectorAll<EditorEl>('strudel-editor')].some(
+      (el) => el.editor?.repl.scheduler.started,
+    );
+    if (!playing) (window as { clearHydra?: () => void }).clearHydra?.();
+  }, 100);
+}
+
+/**
  * Evaluate an editor's OWN text (never anything else: its highlighting maps
  * positions from the evaluated code onto its document). Empty code is silence.
  */
@@ -625,6 +641,7 @@ class ExerciseUI {
         play.classList.toggle('is-playing', started);
         play.setAttribute('aria-pressed', String(started));
       }
+      if (!started) clearHydraWhenIdle();
       if (typeof d.code === 'string' && d.code !== readAll()[this.id]?.code) this.save();
 
       const finished = this.wasPending && !d.pending;

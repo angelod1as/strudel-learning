@@ -101,6 +101,7 @@ checks are *well formed*; none of this is machine-checkable on its own.
    calling for them."* If a challenge needs a notation or a function, a step in that chapter
    demonstrates it first, or it belongs in the given `start` code as scenery.
    `node tools/audit-challenges.mjs [fromChapter]` reports these.
+   `node tools/audit-checks.mjs [chapter ...]` tests every check against its own answer.
 3. **Never make them type something you have not taught.** Not a function, not a syntax. `off()`
    belongs to Pattern Functions; using it in Notes means Notes has to teach it first, or not use
    it. Same for packed-colon arguments like `adsr("a:d:s:r")` — a hint does not count as teaching,
@@ -117,6 +118,24 @@ checks are *well formed*; none of this is machine-checkable on its own.
 6. **Teach the rule, not the incantation.** If two exercises use different spellings of the same
    idea, say which is which and when each applies. A learner who generalises from your example and
    gets zero events was failed by the chapter, not by themselves.
+
+## Visualisers: what actually draws on these pages
+
+Measured, not assumed — a visualiser that silently draws nothing is the worst kind of lesson.
+
+| Mechanism | Functions | On a chapter page |
+| --- | --- | --- |
+| `onPaint` (the editor's own drawer) | `punchcard`, `wordfall`, `spiral`, `pitchwheel` | **draws** |
+| `.draw()` (its own rAF loop, shared globals) | `pianoroll`, `scope`, `spectrum` | **nothing, and no error** |
+
+The `.draw()` family works fine on a page with a *single* editor and fails on our chapter pages,
+which carry ~25. Verified both ways. So do not write an exercise around `_scope`, `_spectrum` or
+`_pianoroll`; the Visuals chapter says plainly that they need strudel.cc.
+
+Each has two forms: `._x()` draws inline under the line, `.x()` draws on a page-wide canvas.
+Stopping clears the page-wide canvas, but **not** Hydra's — `clearHydra()` is never called by
+Strudel itself, so `src/scripts/exercise.ts` calls it once no editor on the page is still playing.
+
 
 ### Measuring what a change actually does
 

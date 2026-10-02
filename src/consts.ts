@@ -81,6 +81,12 @@ export const CHAPTERS: Chapter[] = [
   },
   {
     part: 'Shaping Sound',
+    slug: 'visuals',
+    title: 'Seeing What You Hear',
+    blurb: 'punchcard, spiral, pitchwheel, colour — and drawing a wave.',
+  },
+  {
+    part: 'Shaping Sound',
     slug: 'synths',
     title: 'Synths',
     blurb: 'Waveforms, FM, vibrato, supersaw, wavetables, ZZFX.',
@@ -120,6 +126,18 @@ export const CHAPTERS: Chapter[] = [
     slug: 'dynamics',
     title: 'Dynamics & Distortion',
     blurb: 'gain, postgain, compressor, distort, crush, tremolo, phaser.',
+  },
+  {
+    part: 'Hands On',
+    slug: 'controls',
+    title: 'Hands-On Controls',
+    blurb: 'slider, the mouse, the keyboard, MIDI in.',
+  },
+  {
+    part: 'Hands On',
+    slug: 'hydra',
+    title: 'Hydra Visuals',
+    blurb: 'initHydra, sources and transforms, H(), feedStrudel.',
   },
   {
     part: 'Performing',

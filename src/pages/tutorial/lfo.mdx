@@ -26,9 +26,9 @@ Strudel has two levels of modulation, and picking the right one matters:
 
 <Box kind="try">
 Every patch below is one held note or one repeated sound, on purpose: with a single event per bar,
-anything you hear moving is the LFO. Add `._spectrum({height: 300, width: 800})` on its own line to
-*watch* the filter move, and `._scope()` to watch the waveform. Both draw; neither makes sound, and
-neither is part of any answer.
+anything you hear moving is the LFO. An audio-rate LFO cannot be drawn — it lives inside the audio
+engine, below the level patterns can see — so these are exercises for your ears. The next chapter,
+<L to="/tutorial/visuals">Seeing What You Hear</L>, draws the *shapes* themselves.
 </Box>
 
 ## The positional rule
@@ -425,6 +425,43 @@ window. The default is `-0.5`.
     'Of the five shapes, exactly one has no values between its two extremes.',
     'You can write it as a name in quotes, or as its number from the table.',
   ]} />
+
+### Seeing those shapes
+
+An `lfo()` lives inside the audio engine, so there is nothing to draw. But the same five shapes
+exist at pattern level, and those you *can* draw — the quickest way to learn what each one does.
+
+<Exercise id="lfo/see-the-shape" title="Draw the wave you just heard"
+  goal="Draw the pattern-level twin of an LFO shape, then swap the shape and watch the picture change."
+  start={`note(sine.range(40, 52).segment(16))
+  .s("triangle")`}
+  target={`note(square.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard({ cycles: 1 })`}>
+  <Step check={{ includes: '_punchcard(' }}
+        hints={['It goes on its own line at the end, like any other chained call.']}
+        solution={`note(sine.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard()`}>
+    Add `._punchcard()` on its own line. Sixteen blocks trace a sine: up, over, down. `_punchcard`
+    draws events and changes no sound — the <L to="/tutorial/visuals">next chapter</L> is all about
+    it. `.segment(16)` is what turns the continuous signal into sixteen drawable steps.
+  </Step>
+  <Step check={{ includes: 'square.range', excludes: 'sine' }}
+        solution={`note(square.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard()`}>
+    Replace `sine` with `square`. Eight blocks low, eight high, nothing between — the same
+    `shape: 'square'` you used on the filter, seen rather than heard.
+  </Step>
+  <Step check={{ code: '_punchcard\\(\\s*\\{[^}]*cycles:\\s*1' }}
+        solution={`note(square.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard({ cycles: 1 })`}>
+    Add `{ cycles: 1 }` to the punchcard. It was drawing four bars at once; now one bar fills the
+    width, which is what you want when the shape is the point.
+  </Step>
+</Exercise>
 
 ### skew and curve
 
