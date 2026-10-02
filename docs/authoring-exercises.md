@@ -133,6 +133,15 @@ which carry ~25. Verified both ways. So do not write an exercise around `_scope`
 `_pianoroll`; the Visuals chapter says plainly that they need strudel.cc.
 
 Each has two forms: `._x()` draws inline under the line, `.x()` draws on a page-wide canvas.
+
+**The inline form needs a guard, and it is already in place.** Strudel names an inline widget's
+canvas after the widget's type and index within *its own* editor (`_widget__punchcard_0`), but finds
+it again with `document.getElementById`, which is page-wide. So the second editor on a page to draw
+one takes the first's canvas, and the two CodeMirror views fight over it until the tab locks up —
+no error, nothing in the console. `purgeForeignWidgets()` in `src/scripts/exercise.ts` detaches
+other editors' widget canvases before every evaluation, which is why a chapter can use inline
+visualisers in more than one exercise at all. Do not remove it, and keep it covering every path
+into `repl.evaluate` (the play button, ctrl+enter, checks and the hidden target editors).
 Stopping clears the page-wide canvas, but **not** Hydra's — `clearHydra()` is never called by
 Strudel itself, so `src/scripts/exercise.ts` calls it once no editor on the page is still playing.
 
