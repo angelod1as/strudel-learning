@@ -13,6 +13,8 @@ interface Repl {
 interface Mirror {
   code: string;
   repl: Repl;
+  /** The CodeMirror view. Its `dom` is how we tell this editor's widgets apart. */
+  editor?: { dom: HTMLElement };
   setCode(code: string): void;
   toggle(): Promise<void>;
   stop(): Promise<void>;
@@ -33,6 +35,45 @@ function serial<T>(job: () => Promise<T>): Promise<T> {
 
 const errText = (e: unknown) =>
   e instanceof Error ? e.message : typeof e === 'string' ? e : String(e ?? 'unknown error');
+
+/**
+ * Inline visualisers (`._punchcard()`, `._spiral()`, …) put their canvas in a
+ * DOM id built from the widget's type and index — `_widget__punchcard_0` — which
+ * is per *editor*, while the lookup that finds it is `document.getElementById`,
+ * which is per *page*. So the second editor to draw one finds the first
+ * editor's canvas, moves it into its own document, and the two CodeMirror views
+ * fight over it until the main thread locks up. No error is logged.
+ *
+ * Only one exercise plays at a time, so a widget canvas belonging to any other
+ * editor is already stale: detach it before evaluating and each editor builds
+ * its own. Measured on a two-editor page: without this the second evaluation
+ * never returns; with it, 4–17ms.
+ */
+const PARKED = '__parked';
+
+function purgeForeignWidgets(view: { dom: HTMLElement } | undefined) {
+  for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas[id^="_widget_"]')) {
+    if (view?.dom.contains(canvas) || canvas.id.endsWith(PARKED)) continue;
+    canvas.id += PARKED; // so getElementById can never hand it out again
+    canvas.remove(); // the owning editor re-inserts it, keeping its last frame
+  }
+}
+
+/**
+ * Every evaluation path — the play button, ctrl+enter inside the editor, our
+ * own checks and the hidden target editors — goes through `repl.evaluate`, so
+ * that is where the guard belongs.
+ */
+function guardWidgets(el: EditorEl) {
+  const repl = el.editor?.repl as (Repl & { __widgetGuard?: true }) | undefined;
+  if (!repl || repl.__widgetGuard) return;
+  repl.__widgetGuard = true;
+  const evaluate = repl.evaluate.bind(repl);
+  repl.evaluate = (code: string, autostart?: boolean) => {
+    purgeForeignWidgets(el.editor?.editor);
+    return evaluate(code, autostart);
+  };
+}
 
 /**
  * Hydra paints a fixed, full-viewport canvas and keeps rendering after the
@@ -57,6 +98,7 @@ function clearHydraWhenIdle() {
 function evaluateOwn(el: EditorEl, autostart?: boolean): Promise<Evaluated> {
   return serial(async () => {
     const ed = el.editor!;
+    guardWidgets(el); // hidden target editors upgrade late, so guard on use too
     if (!ed.code.trim()) return { pattern: null };
     try {
       const p = await ed.repl.evaluate(ed.code, autostart ?? ed.repl.scheduler.started);
@@ -189,6 +231,7 @@ class ExerciseUI {
     this.check = parseJSON<Check | undefined>(root.dataset.check, undefined);
     this.hints = parseJSON<string[]>(root.dataset.hints, []);
     this.editorEl = root.querySelector('.exercise-editor strudel-editor') as EditorEl;
+    guardWidgets(this.editorEl);
     this.feedback = this.q<HTMLElement>('[data-exercise-feedback]')!;
     this.status = this.q<HTMLElement>('[data-exercise-status]');
     this.steps = [...root.querySelectorAll<HTMLElement>('[data-step]')].map((el) => ({
@@ -259,6 +302,7 @@ class ExerciseUI {
     let t = this.targets.get(code);
     if (!t) {
       t = { el: hiddenEditor(this.root, code) };
+      guardWidgets(t.el);
       this.targets.set(code, t);
       t.el.addEventListener('update', () => this.renderTargetButton());
     }
@@ -282,7 +326,10 @@ class ExerciseUI {
       return;
     }
     const code = this.targetFor(this.targetStep);
-    if (code) void this.ensureTarget(code).el.editor!.toggle();
+    if (!code) return;
+    const target = this.ensureTarget(code);
+    guardWidgets(target.el);
+    void target.el.editor!.toggle();
   }
 
   /** A target's Pattern, evaluated once. Throws with a readable message. */
