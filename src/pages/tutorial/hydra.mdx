@@ -1,0 +1,232 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: hydra
+title: Hydra Visuals
+lede: 'Hydra is a live-coded video synthesiser, and Strudel ships with it. Two lines gets you moving graphics; one function lets your patterns drive them.'
+---
+
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
+
+Everything in <L to="/tutorial/visuals">Seeing What You Hear</L> draws your *pattern* — blocks,
+spirals, wheels. Hydra draws whatever you want. It is a separate synthesiser for video, with its own
+small language, bundled into Strudel and sharing the same editor.
+
+<Box kind="warn">
+Hydra paints a canvas across the **whole page**, behind this text — the lesson and the editor stay
+readable on top of it, but the page is now a video. Press stop (or ctrl+.) and it clears. It also
+downloads itself the first time you call `initHydra()`, so the first run needs a working connection
+and takes a moment.
+</Box>
+
+## Two lines
+
+<Exercise id="hydra/first" title="Switch it on"
+  goal="Start Hydra, put one oscillator on screen, and change what it looks like."
+  start={`s("bd*4, hh*8")`}
+  target={`await initHydra()
+osc(20, 0.1, 1.2).kaleid(5).out()
+
+s("bd*4, hh*8")`}>
+  <Step check={{ includes: 'initHydra()' }}
+        hints={['It is `await`ed, on its own line, before anything else.']}
+        solution={`await initHydra()
+
+s("bd*4, hh*8")`}>
+    Put `await initHydra()` on the first line, above the pattern. Play it: the drums are unchanged
+    and the page goes black, because Hydra is now running and drawing nothing.
+  </Step>
+  <Step check={{ includes: '.out()' }}
+        solution={`await initHydra()
+osc(20, 0.1, 1.2).out()
+
+s("bd*4, hh*8")`}>
+    Add `osc(20, 0.1, 1.2).out()` on the next line. Moving stripes. The arguments are frequency,
+    sync and colour offset — `osc` is Hydra's sine wave, and `.out()` is what sends a chain to the
+    screen, the way `.out()` works in any modular patch.
+  </Step>
+  <Step check={{ includes: '.rotate(' }}
+        solution={`await initHydra()
+osc(20, 0.1, 1.2).rotate(0.3).out()
+
+s("bd*4, hh*8")`}>
+    Insert `.rotate(0.3)` before `.out()`. The stripes tilt and keep turning — the argument is an
+    angle, and because Hydra redraws every frame, a constant angle reads as a steady spin.
+  </Step>
+  <Step check={{ includes: '.kaleid(' }}
+        solution={`await initHydra()
+osc(20, 0.1, 1.2).kaleid(5).out()
+
+s("bd*4, hh*8")`}>
+    Replace `.rotate(0.3)` with `.kaleid(5)`: a five-fold kaleidoscope. Hydra chains the way Strudel
+    does — a source, then transformations, then an output.
+  </Step>
+</Exercise>
+
+<Box kind="note">
+Other sources to try in place of `osc`: `shape(4)` a polygon, `noise(10)` clouds, `voronoi(8)`
+cells, `gradient()`, `solid(1, 0, 0)` a flat colour. Other transforms: `.rotate(0.5)`,
+`.pixelate(20)`, `.colorama(0.3)`, `.scale(1.5)`, `.modulate(osc(5))`.
+</Box>
+
+<Exercise id="hydra/first-challenge" title="Challenge: spinning cells"
+  goal="Fill the screen with Voronoi cells and set them rotating, over any pattern you like."
+  start={`await initHydra()
+
+s("bd*4")`}
+  target={`await initHydra()
+voronoi(8).rotate(0.3).out()
+
+s("bd*4")`}
+  check={{ includes: ['voronoi(', '.rotate(', '.out()'] }}
+  hints={[
+    'A source, then a transform, then the output — same chain shape as the oscillator.',
+    'The cells source takes a scale argument, like `voronoi(8)`.',
+    'Rotation takes an angle or speed, like `.rotate(0.3)`.',
+  ]} />
+
+## Letting the music drive it
+
+`H()` wraps a Strudel pattern so Hydra can read its current value. Anywhere Hydra wants a number,
+you can hand it a pattern instead.
+
+<Exercise id="hydra/driven" title="A pattern as a parameter"
+  goal="Replace a fixed Hydra number with a Strudel pattern, so the visuals change in time with the music."
+  start={`await initHydra()
+osc(20, 0.1, 1.2).kaleid(5).out()
+
+s("bd*4, hh*8")`}
+  target={`await initHydra()
+osc(H("<10 40 80 120>"), 0.1, 1.2).kaleid(H("<3 5 8>")).out()
+
+s("bd*4, hh*8")`}>
+  <Step check={{ includes: 'H("<10 40 80 120>")' }}
+        hints={['`H()` takes a pattern, so the mini-notation goes inside it, in quotes.']}
+        solution={`await initHydra()
+osc(H("<10 40 80 120>"), 0.1, 1.2).kaleid(5).out()
+
+s("bd*4, hh*8")`}>
+    Replace the `20` with `H("<10 40 80 120>")`. The stripe density now changes once per cycle, in
+    time with the drums, because it is reading the same clock they are.
+  </Step>
+  <Step check={{ includes: 'kaleid(H(' }}
+        solution={`await initHydra()
+osc(H("<10 40 80 120>"), 0.1, 1.2).kaleid(H("<3 5 8>")).out()
+
+s("bd*4, hh*8")`}>
+    Do the same to the kaleidoscope: `.kaleid(H("<3 5 8>"))`. Two patterns of different lengths
+    against each other — four bars of density against three of symmetry, drifting in and out of
+    phase, which is the same trick as any polymeter.
+  </Step>
+</Exercise>
+
+<Box kind="warn">
+`H()` asks the pattern for its value at one instant, so it needs a value at *every* instant. A
+continuous signal (`H(sine)`) or a pattern of plain values is safe; a pattern with rests in it has
+moments where there is nothing to read.
+</Box>
+
+<Exercise id="hydra/driven-challenge" title="Challenge: a wobbling kaleidoscope"
+  goal="Drive the number of kaleidoscope folds with a slow sine instead of a list, so it breathes rather than steps."
+  start={`await initHydra()
+osc(20, 0.1, 1.2).kaleid(5).out()
+
+s("bd*4, hh*8")`}
+  target={`await initHydra()
+osc(20, 0.1, 1.2).kaleid(H(sine.range(3, 9).slow(4))).out()
+
+s("bd*4, hh*8")`}
+  check={{ includes: ['kaleid(H(', 'sine'], code: 'H\\(\\s*sine' }}
+  hints={[
+    'A signal is a pattern, so it goes inside `H()` just like mini-notation did.',
+    '`sine` runs 0 to 1; `.range(3, 9)` puts it where the folds want it.',
+    'Make it slow with `.slow(4)` so it takes four cycles to go round.',
+  ]} />
+
+## Feeding Strudel's own drawing into Hydra
+
+The option `feedStrudel: true` hands Strudel's full-page canvas to Hydra as source `s0`. Your
+punchcard becomes video input, and you can mangle it like anything else.
+
+<Exercise id="hydra/feed" title="Mangle your own punchcard"
+  goal="Send a full-page punchcard through Hydra and bend it."
+  start={`await initHydra()
+
+s("bd sd [~ bd] sd, hh*8")
+  .punchcard({ labels: 1 })`}
+  target={`await initHydra({ feedStrudel: true })
+src(s0).kaleid(4).out()
+
+s("bd sd [~ bd] sd, hh*8")
+  .punchcard({ labels: 1 })`}>
+  <Step check={{ includes: 'feedStrudel' }}
+        solution={`await initHydra({ feedStrudel: true })
+
+s("bd sd [~ bd] sd, hh*8")
+  .punchcard({ labels: 1 })`}>
+    Pass the option: `await initHydra({ feedStrudel: true })`. The punchcard vanishes — Strudel's
+    canvas is now hidden, because it has been rerouted into Hydra instead of being shown.
+  </Step>
+  <Step check={{ includes: 'src(s0)' }}
+        solution={`await initHydra({ feedStrudel: true })
+src(s0).out()
+
+s("bd sd [~ bd] sd, hh*8")
+  .punchcard({ labels: 1 })`}>
+    Add `src(s0).out()` on the second line. The punchcard is back, but now it is a Hydra texture
+    rather than a drawing — `src()` reads an input, and `s0` is where `feedStrudel` put it.
+  </Step>
+  <Step check={{ includes: 'src(s0).kaleid(' }}
+        solution={`await initHydra({ feedStrudel: true })
+src(s0).kaleid(4).out()
+
+s("bd sd [~ bd] sd, hh*8")
+  .punchcard({ labels: 1 })`}>
+    Now bend it: `src(s0).kaleid(4).out()`. Your own rhythm drawing, folded into a mandala.
+  </Step>
+  <Step check={{ includes: '.pixelate(' }}
+        solution={`await initHydra({ feedStrudel: true })
+src(s0).pixelate(40).out()
+
+s("bd sd [~ bd] sd, hh*8")
+  .punchcard({ labels: 1 })`}>
+    Swap the fold for a resolution: `.pixelate(40)` instead of `.kaleid(4)`. Same input, coarsened
+    into blocks. `.modulate(osc(5))` and `.colorama(0.2)` go in the same slot.
+  </Step>
+</Exercise>
+
+<Box kind="warn">
+After `initHydra()`, two names belong to Hydra rather than Strudel: **`shape`** and **`speed`**.
+Called bare, they are now Hydra's polygon source and its global rate, which is why `clearHydra()`
+puts Strudel's versions back. Chained on a pattern — `.speed(2)` — they are unaffected; it is only
+the bare form that is shadowed.
+</Box>
+
+<Exercise id="hydra/feed-challenge" title="Challenge: a spiral through a kaleidoscope"
+  goal="Feed a full-page spiral into Hydra and pixelate it instead of folding it."
+  start={`await initHydra({ feedStrudel: true })
+
+s("bd ~ sd ~, hh*8")
+  .spiral()`}
+  target={`await initHydra({ feedStrudel: true })
+src(s0).pixelate(40).out()
+
+s("bd ~ sd ~, hh*8")
+  .spiral()`}
+  check={{ includes: ['src(s0)', '.pixelate(', '.out()'] }}
+  hints={[
+    'The chain is the same as the punchcard one; only the transform changes.',
+    'Pixelation takes a resolution, like `.pixelate(40)`.',
+    'The spiral has to be the full-page form — no leading underscore — or there is nothing to feed.',
+  ]} />
+
+<Box kind="note">
+One more option exists: `initHydra({ detectAudio: true })` gives Hydra an `a.fft` array to react
+to sound. Be aware it listens through your **microphone**, not Strudel's output, so it needs
+permission and it hears the room.
+</Box>
+
+<QA />

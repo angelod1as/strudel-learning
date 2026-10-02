@@ -1,0 +1,189 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: controls
+title: Hands-On Controls
+lede: 'A number you can drag while the music plays, drawn inside your code. Plus the mouse, the keyboard, and a MIDI controller if you have one — the difference between programming music and playing it.'
+---
+
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
+
+Everything so far you changed by editing and re-running. That is fine for building a patch and
+useless for playing one. This chapter is the other way round: the pattern keeps running and you
+move things in real time.
+
+## slider: a knob in your code
+
+Wrap any number in `slider()` and the editor draws a real draggable control right there in the
+line. Drag it and the sound follows immediately — no re-evaluation, no gap.
+
+<Exercise id="controls/slider" title="Drag a filter"
+  goal="Turn a fixed cutoff into a slider, then set its range, then snap it to useful steps."
+  start={`s("hh*8")
+  .lpf(800)`}
+  target={`s("hh*8")
+  .lpf(slider(800, 200, 5000, 100))`}>
+  <Step check={{ includes: 'slider(' }}
+        hints={['Wrap the number that is already there: `slider(800)`.']}
+        solution={`s("hh*8")
+  .lpf(slider(800))`}>
+    Replace `800` with `slider(800)`. Press play, then drag the little control that appeared next to
+    it. Almost nothing happens to the sound — and look at the number in your code as you drag: it is
+    being rewritten. With one argument the range is **0 to 1**, so you are sweeping the cutoff
+    between 0 Hz and 1 Hz.
+  </Step>
+  <Step check={{ includes: 'slider(800, 200, 5000)' }}
+        solution={`s("hh*8")
+  .lpf(slider(800, 200, 5000))`}>
+    Give it a range: `slider(800, 200, 5000)` — value, minimum, maximum. Drag again, with the
+    pattern still playing. That is the whole point: the hats keep going while you sweep.
+  </Step>
+  <Step check={{ includes: 'slider(800, 200, 5000, 100)' }}
+        solution={`s("hh*8")
+  .lpf(slider(800, 200, 5000, 100))`}>
+    Add a fourth argument: `slider(800, 200, 5000, 100)`. The drag now snaps in hundreds instead of
+    sliding continuously — easier to land on a round number, and easier to repeat.
+  </Step>
+</Exercise>
+
+<Box kind="warn">
+`slider` is handled by the **transpiler**, which reads your minimum and maximum straight out of the
+source text. They must be literal numbers: `slider(800, 200, 5000)` works, `slider(800, lo, hi)`
+silently falls back to 0 and 1. For the same reason each slider is identified by its position in the
+code, so editing the lines above it rebuilds it.
+</Box>
+
+<Exercise id="controls/slider-challenge" title="Challenge: two hands on one patch"
+  goal="Put a slider on the reverb amount (0 to 1) and another on the delay amount (0 to 1), both starting at 0.3, and ride them while it plays."
+  start={`s("bd ~ sd ~")
+  .room(0.3)
+  .delay(0.3)`}
+  target={`s("bd ~ sd ~")
+  .room(slider(0.3, 0, 1))
+  .delay(slider(0.3, 0, 1))`}
+  check={{ code: 'room\\(\\s*slider\\(\\s*0?\\.3[\\s\\S]*delay\\(\\s*slider\\(\\s*0?\\.3' }}
+  hints={[
+    'Each number gets its own `slider()` call, and each gets its own control in the editor.',
+    'Both ranges happen to be the default 0 to 1 — but write them out anyway, it is clearer.',
+    'Play first, then drag. Nothing needs re-running.',
+  ]} />
+
+## The mouse as a signal
+
+`mouseX` and `mouseY` are <L to="/tutorial/signals">signals</L> like `sine` or `perlin`, except you
+are the oscillator. Both run 0 to 1 across the window — `mouseY` is 0 at the top.
+
+<Exercise id="controls/mouse" title="Filter by pointer"
+  goal="Steer a cutoff with the mouse, then add a second parameter on the other axis."
+  start={`s("sawtooth")
+  .note("c2*8")
+  .lpf(800)`}
+  target={`s("sawtooth")
+  .note("c2*8")
+  .lpf(mouseX.range(200, 4000))
+  .lpq(mouseY.range(1, 20))`}>
+  <Step check={{ includes: 'mouseX' }}
+        hints={['`mouseX` on its own is 0 to 1; `.range(lo, hi)` maps it, exactly as with any signal.']}
+        solution={`s("sawtooth")
+  .note("c2*8")
+  .lpf(mouseX.range(200, 4000))`}>
+    Replace `800` with `mouseX.range(200, 4000)`. Play it and move the mouse across the window —
+    left is dark, right is bright. No dragging, no clicking, just position.
+  </Step>
+  <Step check={{ includes: 'mouseY' }}
+        solution={`s("sawtooth")
+  .note("c2*8")
+  .lpf(mouseX.range(200, 4000))
+  .lpq(mouseY.range(1, 20))`}>
+    Add `.lpq(mouseY.range(1, 20))`. Now the vertical axis controls resonance, so the whole window
+    is an X/Y pad: across for brightness, up for bite.
+  </Step>
+</Exercise>
+
+<Exercise id="controls/mouse-challenge" title="Challenge: a pan you steer"
+  goal="Make the mouse's horizontal position place the sound in the stereo field, left to right."
+  start={`s("hh*8")`}
+  target={`s("hh*8").pan(mouseX)`}
+  check={{ includes: ['pan(', 'mouseX'] }}
+  hints={[
+    '`pan` wants 0 (hard left) to 1 (hard right).',
+    'The horizontal mouse signal already runs 0 to 1, so it needs no `range()` at all.',
+    'One call, one signal, no arguments to it.',
+  ]} />
+
+## The keyboard as a switch
+
+`whenKey` applies a transformation only while a key is held. Key names follow the browser's own
+names, with handy aliases: `ctrl`, `alt`, `shift`, `up`, `down`, `left`, `right`. Combine them with
+a colon.
+
+<Exercise id="controls/keys" title="Hold a key, change the pattern"
+  goal="Make one key double the speed while held, then add a second key that does something else."
+  start={`s("bd(5,8)")`}
+  target={`s("bd(5,8)")
+  .whenKey("shift", x => x.fast(2))
+  .whenKey("alt", x => x.segment(16))`}>
+  <Step check={{ includes: '.whenKey(' }}
+        hints={['The shape is `whenKey("<key>", x => ...)` — a key name, then a function of the pattern.']}
+        solution={`s("bd(5,8)")
+  .whenKey("shift", x => x.fast(2))`}>
+    Add `.whenKey("shift", x => x.fast(2))`. Play it, then hold shift: twice the speed while your
+    finger is down, back to normal when you let go. Click the page background first so the key
+    presses reach the page rather than the editor.
+  </Step>
+  <Step check={{ code: 'whenKey[\\s\\S]*whenKey' }}
+        solution={`s("bd(5,8)")
+  .whenKey("shift", x => x.fast(2))
+  .whenKey("alt", x => x.segment(16))`}>
+    Chain a second one: `.whenKey("alt", x => x.segment(16))`. Two keys, two different mangles, and
+    holding both gives you both at once.
+  </Step>
+</Exercise>
+
+<Exercise id="controls/keys-challenge" title="Challenge: a kill switch"
+  goal="While you hold the control key, this pattern should go silent — and come back when you release."
+  start={`s("bd*4, hh*8")`}
+  target={`s("bd*4, hh*8").whenKey("ctrl", x => x.gain(0))`}
+  check={{ includes: ['whenKey', 'ctrl'], code: 'whenKey\\(\\s*"ctrl"' }}
+  hints={[
+    'Same shape as before: a key name and a function of the pattern.',
+    'Silence is just a gain of zero.',
+    'The alias for the control key is `ctrl`.',
+  ]} />
+
+## A MIDI controller
+
+If you have a controller plugged in, its knobs work the same way a slider does. This needs
+hardware, so there is nothing to check here — but the shape is worth knowing.
+
+```js
+const cc = await midin('Your Device Name')
+
+note("c a f e")
+  .s("sawtooth")
+  .lpf(cc(0).range(200, 4000))
+  .lpq(cc(1).range(1, 20))
+```
+
+`midin(device)` opens an input port and hands you a function: `cc(number)` is that CC's most recent
+value, already normalised to 0–1, so `.range()` maps it like any other signal. Pass a channel as
+the second argument to filter: `cc(0, 2)`.
+
+A keyboard works too, with the notes coming in as a pattern:
+
+```js
+const kb = await midikeys('Your Keyboard Name')
+
+kb().s("sawtooth").lpf(1200).room(0.3)
+```
+
+<Box kind="note">
+Both are `await`ed, because opening a port is asynchronous — the same `await` you will see on
+`initHydra()` in the <L to="/tutorial/hydra">next chapter</L>. Note lengths from `midikeys` are
+fixed; Strudel's engine wants a known duration, so a held key does not sustain indefinitely.
+</Box>
+
+<QA />

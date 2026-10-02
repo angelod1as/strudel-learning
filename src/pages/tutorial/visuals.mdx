@@ -1,0 +1,359 @@
+---
+layout: ../../layouts/Chapter.astro
+slug: visuals
+title: Seeing What You Hear
+lede: 'Strudel can draw what it is playing: events as blocks, cycles as a spiral, pitches on a wheel. The most useful thing it draws is a wave, which is how you finally see what a signal shape actually looks like.'
+---
+
+import Exercise from '../../components/Exercise.astro';
+import Step from '../../components/Step.astro';
+import Box from '../../components/Box.astro';
+import QA from '../../components/QA.astro';
+import L from '../../components/L.astro';
+
+Every visualiser is a method you chain on, and none of them changes a single sound. They are
+pure observation: add one, and the pattern plays exactly as before with a picture underneath.
+
+Each comes in two forms. `._punchcard()` — with the underscore — draws **inline**, in a little
+canvas under the line you typed it on. `.punchcard()` — without — draws on a canvas the size of
+the **whole page**, behind everything. Both are useful; the inline one is what you want while
+learning, because it sits next to the code that made it.
+
+<Box kind="warn">
+Three visualisers you will see in Strudel's own docs — `pianoroll`, `scope` and `spectrum` — do
+**not** draw anything inside these embedded editors. They run their own animation loop rather than
+using the editor's, and on a page with 25 editors on it that loop never paints. They fail silently,
+with no error. Everything taught in this chapter is verified to work here; if you want `scope` and
+`spectrum`, open <a href="https://strudel.cc" target="_blank" rel="noreferrer">strudel.cc</a>.
+</Box>
+
+## The drawing you already have
+
+Before you add anything: the mini-notation inside quotes lights up as it plays. That highlight is
+a visualiser too, and `.color()` is its control.
+
+<Exercise id="visuals/highlight" title="Colour the highlight"
+  goal="Change the colour of the active-event highlight, then give each sound its own colour."
+  start={`s("bd sd [~ bd] sd")`}
+  target={`s("bd sd [~ bd] sd").color("cyan magenta yellow orange")`}>
+  <Step hints={['Nothing to type yet — just listen and watch the quotes.']}>
+    Play it and watch the pattern inside the quotes: each event lights up on its own beat. You get
+    that for free, in every exercise on this site.
+  </Step>
+  <Step check={{ includes: '.color(' }}
+        solution={`s("bd sd [~ bd] sd").color("cyan")`}>
+    Add `.color("cyan")`. Same sound, and now the highlight is cyan instead of the default.
+  </Step>
+  <Step check={{ includes: '"<cyan magenta>"' }}
+        solution={`s("bd sd [~ bd] sd").color("<cyan magenta>")`}>
+    `color` is patternable like everything else. Replace `"cyan"` with `"<cyan magenta>"`: the
+    whole bar is cyan, then the whole bar is magenta.
+  </Step>
+  <Step check={{ includes: '"cyan magenta yellow orange"' }}
+        solution={`s("bd sd [~ bd] sd").color("cyan magenta yellow orange")`}>
+    Now drop the angle brackets: `"cyan magenta yellow orange"`. Four colours across the bar, so
+    each of the four slots gets its own — the colour pattern lines up with the event pattern.
+  </Step>
+</Exercise>
+
+<Exercise id="visuals/highlight-challenge" title="Challenge: tell the layers apart"
+  goal="Two stacked patterns, each with its own highlight colour — the drums white, the hats a colour of your choosing."
+  start={`$: s("bd sd [~ bd] sd")
+$: s("hh*8")`}
+  target={`$: s("bd sd [~ bd] sd").color("white")
+$: s("hh*8").color("orange")`}
+  check={{ code: 's\\("bd sd \\[~ bd\\] sd"\\)[\\s\\S]*\\.color\\(\\s*"white"', includes: ['hh*8', '.color('] }}
+  hints={[
+    '`.color()` attaches to one pattern, so each `$:` line gets its own call.',
+    'Any CSS colour name works — `white`, `orange`, `deeppink`.',
+    'The drums specifically need `white`; the hats are yours to pick.',
+  ]} />
+
+## punchcard: one block per event
+
+The workhorse. Every event becomes a block: time across, pitch up.
+
+<Exercise id="visuals/punchcard" title="Draw the pattern"
+  goal="Add an inline punchcard, then change how much time it shows, label it, and turn it on its side."
+  start={`note("c e g b")
+  .s("piano")`}
+  target={`note("c e g b")
+  .s("piano")
+  ._punchcard({ cycles: 2, labels: 1 })`}>
+  <Step check={{ includes: '_punchcard(' }}
+        solution={`note("c e g b")
+  .s("piano")
+  ._punchcard()`}>
+    Add `._punchcard()` on its own line. Four blocks appear under the code, climbing left to right
+    because the notes rise. The white line sweeping across is the playhead.
+  </Step>
+  <Step check={{ code: '_punchcard\\(\\s*\\{[^}]*cycles:\\s*1' }}
+        solution={`note("c e g b")
+  .s("piano")
+  ._punchcard({ cycles: 1 })`}>
+    Pass `{ cycles: 1 }`. The default is 4, so you were watching four bars at once; now the drawing
+    is one bar wide and the blocks are four times fatter.
+  </Step>
+  <Step check={{ code: '_punchcard\\(\\s*\\{[^}]*labels:\\s*1' }}
+        solution={`note("c e g b")
+  .s("piano")
+  ._punchcard({ cycles: 1, labels: 1 })`}>
+    Add `labels: 1` next to it. Each block now says which note it is — the fastest way to check
+    that a chord or a scale degree is what you think it is.
+  </Step>
+  <Step check={{ code: '_punchcard\\(\\s*\\{[^}]*vertical:\\s*1' }}
+        solution={`note("c e g b")
+  .s("piano")
+  ._punchcard({ cycles: 1, labels: 1, vertical: 1 })`}>
+    Add `vertical: 1`. Time now runs downwards, like a tracker or a DAW's piano roll turned
+    upright. Some people read rhythm much better this way.
+  </Step>
+  <Step check={{ code: '_punchcard\\(\\s*\\{[^}]*height:\\s*(1[0-9][0-9]|[2-9][0-9][0-9])' }}
+        hints={['`height` is in pixels, and the default is small on purpose.']}
+        solution={`note("c e g b")
+  .s("piano")
+  ._punchcard({ cycles: 1, labels: 1, vertical: 1, height: 200 })`}>
+    Remove `vertical: 1` if you prefer it flat, and add `height: 200`. `width` works the same way.
+    A cramped drawing hides everything; make it as big as you need.
+  </Step>
+</Exercise>
+
+<Exercise id="visuals/punchcard-challenge" title="Challenge: read a rhythm you cannot count"
+  goal="This polymetric line is hard to hear. Draw it, two bars at a time, with labels on."
+  start={`s("{bd sd cp, hh hh hh hh}%8")`}
+  target={`s("{bd sd cp, hh hh hh hh}%8")._punchcard({ cycles: 2, labels: 1 })`}
+  check={{ code: '_punchcard\\(\\s*\\{[^}]*(cycles:\\s*2[^}]*labels:\\s*1|labels:\\s*1[^}]*cycles:\\s*2)' }}
+  hints={[
+    'The inline form is the one with the leading underscore.',
+    'Two options, in one object: how many cycles, and whether to write names on the blocks.',
+    'Both were used in the exercise above — `cycles` and `labels`.',
+  ]} />
+
+## Drawing a wave
+
+This is the one worth the chapter. A <L to="/tutorial/signals">signal</L> like `sine` has a shape,
+but until now you could only hear what it did. Draw it instead.
+
+<Exercise id="visuals/waves" title="See the shapes"
+  goal="Turn a signal into a visible wave, then swap the shape and watch the drawing change."
+  start={`note(sine.range(40, 52))
+  .s("triangle")`}
+  target={`note(perlin.range(40, 52).segment(64))
+  .s("triangle")
+  ._punchcard({ cycles: 1 })`}>
+  <Step check={{ includes: '_punchcard(' }}
+        solution={`note(sine.range(40, 52))
+  .s("triangle")
+  ._punchcard()`}>
+    Add `._punchcard()`. One wide block per cycle, at one height — not a wave at all. A signal is
+    *continuous*: it has a value at every instant but no events of its own, so there is only one
+    thing to draw.
+  </Step>
+  <Step check={{ includes: '.segment(16)' }}
+        solution={`note(sine.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard()`}>
+    Add `.segment(16)` to the signal, inside the brackets: `sine.range(40, 52).segment(16)`.
+    Sixteen blocks now trace a sine — up, over, down. **That** is the shape you have been
+    modulating things with all along.
+  </Step>
+  <Step check={{ includes: 'tri.range', excludes: 'sine' }}
+        solution={`note(tri.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard()`}>
+    Replace `sine` with `tri`. Straight sides and a sharp corner at the top instead of a curve —
+    the same journey, linear rather than eased.
+  </Step>
+  <Step check={{ includes: 'saw.range', excludes: 'tri.range' }}
+        solution={`note(saw.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard()`}>
+    Replace `tri` with `saw`. It climbs the whole bar and then falls off a cliff back to the
+    bottom. Asymmetric: that vertical drop is why a saw sounds urgent and a triangle does not.
+  </Step>
+  <Step check={{ includes: 'isaw.range', excludes: 'saw.range(40, 52).segment(16))\n' }}
+        hints={['The `i` prefix means inverted.']}
+        solution={`note(isaw.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard()`}>
+    Replace `saw` with `isaw`. The mirror image: instant jump to the top, then a slow slide down.
+  </Step>
+  <Step check={{ includes: 'square.range' }}
+        solution={`note(square.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard()`}>
+    Replace `isaw` with `square`. Two heights and nothing in between — eight blocks low, eight
+    high. There is no such thing as a half-open square.
+  </Step>
+  <Step check={{ includes: 'perlin.range' }}
+        solution={`note(perlin.range(40, 52).segment(16))
+  .s("triangle")
+  ._punchcard()`}>
+    Replace `square` with `perlin`. Random, but *smooth* random — each block near the last one,
+    wandering. Compare it with `rand`, which jumps anywhere each time.
+  </Step>
+  <Step check={{ includes: '.segment(64)' }}
+        solution={`note(perlin.range(40, 52).segment(64))
+  .s("triangle")
+  ._punchcard()`}>
+    Change `.segment(16)` to `.segment(64)`. Sixty-four steps is fine enough to look like a curve
+    rather than a staircase. `segment` is the resolution of your drawing — and of your modulation.
+  </Step>
+  <Step check={{ code: '_punchcard\\(\\s*\\{[^}]*cycles:\\s*1' }}
+        solution={`note(perlin.range(40, 52).segment(64))
+  .s("triangle")
+  ._punchcard({ cycles: 1 })`}>
+    Add `{ cycles: 1 }`. One bar across the full width, so sixty-four steps have room to read as a
+    line rather than a smear.
+  </Step>
+</Exercise>
+
+<Box kind="note">
+These are the same five shapes `lfo({ shape })` names in <L to="/tutorial/lfo">LFOs</L>:
+`triangle`, `sine`, `ramp` (which is `saw` here), `saw` (which is `isaw`) and `square`. An
+audio-rate `lfo()` cannot be drawn — it lives inside the audio engine, below the level patterns can
+see — so drawing the pattern-level twin is how you look at the shape. `skew` and `curve` have no
+pattern-level equivalent; for those, your ears are the only instrument.
+</Box>
+
+<Exercise id="visuals/waves-challenge" title="Challenge: draw a slow descent"
+  goal="A wave that starts high and slides down over a whole bar, drawn at 32 steps, one cycle wide."
+  start={`note(sine.range(40, 52))
+  .s("triangle")`}
+  target={`note(isaw.range(40, 52).segment(32))
+  .s("triangle")
+  ._punchcard({ cycles: 1 })`}
+  check={{ includes: ['isaw', '.segment(32)'], code: '_punchcard\\(\\s*\\{[^}]*cycles:\\s*1' }}
+  hints={[
+    'Of the shapes you drew, two are asymmetric: one rises slowly, one falls slowly.',
+    'The falling one is the inverted sawtooth.',
+    'Three things to set: the shape, the segment count, and the punchcard’s `cycles`.',
+  ]} />
+
+## spiral: a cycle is a circle
+
+A punchcard draws time as a line. A spiral draws it as a circle, so the same beat lands in the same
+place every bar — which makes a pattern's *shape* obvious in a way a line never does.
+
+<Exercise id="visuals/spiral" title="Round instead of flat"
+  goal="Draw a rhythm as a spiral, make it bigger, and let it grow logarithmically."
+  start={`s("bd ~ sd ~, hh*8")`}
+  target={`s("bd ~ sd ~, hh*8")._spiral({ size: 320, logSpiral: 1 })`}>
+  <Step check={{ includes: '_spiral(' }}
+        solution={`s("bd ~ sd ~, hh*8")._spiral()`}>
+    Add `._spiral()`. Time winds outward from the centre; one full turn is one cycle. The hats make
+    a ring of eight, and the kick and snare sit opposite each other on that ring.
+  </Step>
+  <Step check={{ code: '_spiral\\(\\s*\\{[^}]*size:\\s*(2[0-9][0-9]|3[0-9][0-9]|[4-9][0-9][0-9])' }}
+        solution={`s("bd ~ sd ~, hh*8")._spiral({ size: 320 })`}>
+    Pass `{ size: 320 }`. `size` sets both width and height here, so the whole drawing scales.
+  </Step>
+  <Step check={{ code: '_spiral\\(\\s*\\{[^}]*logSpiral:\\s*1' }}
+        solution={`s("bd ~ sd ~, hh*8")._spiral({ size: 320, logSpiral: 1 })`}>
+    Add `logSpiral: 1`. The turns now grow apart as they go out instead of staying evenly spaced —
+    recent cycles get more room than old ones, which is easier to read while you play.
+  </Step>
+</Exercise>
+
+<Exercise id="visuals/spiral-challenge" title="Challenge: see the three against the four"
+  goal="Draw this three-over-four as a spiral, big enough to actually read — 300 pixels or more."
+  start={`s("bd*3, hh*4")`}
+  target={`s("bd*3, hh*4")._spiral({ size: 300 })`}
+  check={{ includes: '_spiral(', code: '_spiral\\(\\s*\\{[^}]*size:\\s*([3-9][0-9][0-9]|[1-9][0-9]{3,})' }}
+  hints={[
+    'Same inline-underscore rule as the punchcard.',
+    'One option controls how big it is drawn.',
+    'Watch where the three and the four line up: once per turn, at the top.',
+  ]} />
+
+## pitchwheel: pitch as a clock face
+
+Twelve pitch classes around a circle, octaves collapsed. For a keyboard player this is the useful
+one: a voicing's *shape* shows up immediately, and so does a voice-leading move.
+
+<Exercise id="visuals/pitchwheel" title="Chords on a wheel"
+  goal="Draw a progression as pitch classes, and watch how little actually moves between chords."
+  start={`chord("<C^7 A-7 D-7 G7>")
+  .dict('lefthand')
+  .voicing()
+  .s("gm_epiano1")`}
+  target={`chord("<C^7 A-7 D-7 G7>")
+  .dict('lefthand')
+  .voicing()
+  .s("gm_epiano1")
+  ._pitchwheel({ size: 300 })`}>
+  <Step check={{ includes: '_pitchwheel(' }}
+        solution={`chord("<C^7 A-7 D-7 G7>")
+  .dict('lefthand')
+  .voicing()
+  .s("gm_epiano1")
+  ._pitchwheel()`}>
+    Add `._pitchwheel()`. Each chord lights up its pitch classes on the circle. Watch the change
+    from one chord to the next: most of the lit points stay, one or two move a step. That is what
+    good voice leading looks like from above.
+  </Step>
+  <Step check={{ code: '_pitchwheel\\(\\s*\\{[^}]*size:\\s*(2[0-9][0-9]|3[0-9][0-9]|[4-9][0-9][0-9])' }}
+        solution={`chord("<C^7 A-7 D-7 G7>")
+  .dict('lefthand')
+  .voicing()
+  .s("gm_epiano1")
+  ._pitchwheel({ size: 300 })`}>
+    Pass `{ size: 300 }` so you can see which point is which.
+  </Step>
+</Exercise>
+
+<Exercise id="visuals/pitchwheel-challenge" title="Challenge: watch a scale go round"
+  goal="Draw a run up the C minor scale on a pitch wheel, 260 pixels or bigger."
+  start={`n("0 1 2 3 4 5 6 7").scale("C:minor").s("piano")`}
+  target={`n("0 1 2 3 4 5 6 7").scale("C:minor").s("piano")._pitchwheel({ size: 260 })`}
+  check={{ includes: '_pitchwheel(', code: '_pitchwheel\\(\\s*\\{[^}]*size:\\s*(2[6-9][0-9]|[3-9][0-9][0-9]|[1-9][0-9]{3,})' }}
+  hints={[
+    'The visualiser goes on the end of the chain, after the sound.',
+    'One option, the same one the chord exercise used.',
+    'Eight notes, but the wheel has twelve points — the gaps are the scale.',
+  ]} />
+
+## Taking over the whole page
+
+Drop the underscore and the drawing moves to a canvas the size of the window, behind the text. It
+is the performance view: no code, just the pattern, big. Stopping clears it.
+
+<Exercise id="visuals/fullpage" title="Big, and behind everything"
+  goal="Move a punchcard from inline to full-page, then switch it for falling labels."
+  start={`s("bd sd [~ bd] sd, hh*8")
+  ._punchcard({ labels: 1 })`}
+  target={`s("bd sd [~ bd] sd, hh*8")
+  .wordfall()`}>
+  <Step check={{ includes: '.punchcard(', excludes: '._punchcard(' }}
+        solution={`s("bd sd [~ bd] sd, hh*8")
+  .punchcard({ labels: 1 })`}>
+    Delete the underscore: `.punchcard({ labels: 1 })`. The little canvas is gone and the drawing
+    is now behind the whole page. Press stop and it clears itself.
+  </Step>
+  <Step check={{ includes: '.wordfall(' }}
+        solution={`s("bd sd [~ bd] sd, hh*8")
+  .wordfall()`}>
+    Replace `punchcard({ labels: 1 })` with `wordfall()`. Same drawing, turned vertical with labels
+    forced on — the names of the sounds fall down the page as they play. It is `punchcard` with a
+    different set of defaults, nothing more.
+  </Step>
+  <Step check={{ includes: '.spiral(', excludes: '._spiral(' }}
+        solution={`s("bd sd [~ bd] sd, hh*8")
+  .spiral()`}>
+    Every visualiser works this way, so try one more: `.spiral()` in place of `wordfall()`. The rule
+    is just the underscore — `._spiral()` inline, `.spiral()` page-wide.
+  </Step>
+</Exercise>
+
+<Exercise id="visuals/fullpage-challenge" title="Challenge: a full-page spiral"
+  goal="Put the spiral behind the whole page instead of inline, with logarithmic turns."
+  start={`s("bd ~ sd ~, hh*8")._spiral()`}
+  target={`s("bd ~ sd ~, hh*8").spiral({ logSpiral: 1 })`}
+  check={{ includes: '.spiral(', excludes: '._spiral(', code: 'spiral\\(\\s*\\{[^}]*logSpiral:\\s*1' }}
+  hints={[
+    'The difference between inline and full-page is one character.',
+    'The option for growing turns is the one you used earlier.',
+    'Stop playback to clear the page again.',
+  ]} />
+
+<QA />
